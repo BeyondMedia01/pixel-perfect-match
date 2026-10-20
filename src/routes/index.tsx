@@ -1,24 +1,56 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
+import { Scale } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "Docket — Case management for law firms" },
+      { name: "description", content: "A calm, secure workspace for matters, clients, deadlines and billing." },
+      { property: "og:title", content: "Docket — Case management for law firms" },
+      { property: "og:description", content: "A calm, secure workspace for matters, clients, deadlines and billing." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
   component: Index,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
 function Index() {
+  const navigate = useNavigate();
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) navigate({ to: "/dashboard", replace: true });
+    });
+  }, [navigate]);
+
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
+    <div className="flex min-h-screen flex-col bg-sidebar text-sidebar-foreground">
+      <header className="flex items-center justify-between px-8 py-6">
+        <div className="flex items-center gap-2 text-sidebar-accent-foreground">
+          <Scale className="h-5 w-5 text-sidebar-primary" />
+          <span className="font-serif text-xl">Docket</span>
+        </div>
+        <Button asChild variant="secondary" size="sm">
+          <Link to="/auth">Sign in</Link>
+        </Button>
+      </header>
+      <main className="mx-auto flex max-w-3xl flex-1 flex-col justify-center px-8 pb-24">
+        <p className="eyebrow !text-sidebar-primary">Case management</p>
+        <h1 className="mt-4 text-5xl leading-tight text-sidebar-accent-foreground md:text-6xl">
+          Every matter, deadline and hour — in order.
+        </h1>
+        <p className="mt-6 max-w-xl text-lg">
+          A quiet, secure workspace for partners, lawyers and staff, with a portal your clients can trust.
+        </p>
+        <div className="mt-10">
+          <Button asChild size="lg" className="bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90">
+            <Link to="/auth">Open your workspace</Link>
+          </Button>
+        </div>
+      </main>
     </div>
   );
 }
