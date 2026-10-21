@@ -31,13 +31,13 @@ export function NewMatterDialog({ defaultClientId, trigger }: { defaultClientId?
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
-    if (!f.client_id) return toast.error("Choose a client");
+    if (!f.client_id) { toast.error("Choose a client"); return; }
     const { data, error } = await supabase.from("matters").insert({
       ...f,
       responsible_lawyer_id: f.responsible_lawyer_id || me?.user.id || null,
-      created_by: me?.user.id,
+      created_by: me?.user.id ?? null,
     }).select("id").single();
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Matter opened");
     qc.invalidateQueries();
     setOpen(false);
