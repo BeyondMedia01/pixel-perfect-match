@@ -34,7 +34,7 @@ function MatterPage() {
         supabase.from("tasks").select("*, assignee:profiles(full_name)").eq("matter_id", id).order("due_date"),
         supabase.from("related_parties").select("*").eq("matter_id", id),
         supabase.from("matter_assignments").select("id, user_id, profiles(full_name, email)").eq("matter_id", id),
-        supabase.from("activity_log").select("*, who:profiles!activity_log_user_id_fkey(full_name)").eq("matter_id", id).order("created_at", { ascending: false }),
+        supabase.from("activity_log").select("*").eq("matter_id", id).order("created_at", { ascending: false }),
       ]);
       return {
         matter: m.data, notes: notes.data ?? [], events: events.data ?? [], tasks: tasks.data ?? [],
@@ -67,7 +67,7 @@ function MatterPage() {
   }
 
   const timeline = [
-    ...data.log.map((l) => ({ at: l.created_at, kind: "Activity", text: l.summary ?? l.action, who: l.who?.full_name })),
+    ...data.log.map((l) => ({ at: l.created_at, kind: "Activity", text: l.summary ?? l.action, who: undefined as string | undefined })),
     ...data.notes.map((n) => ({ at: n.created_at, kind: "Note", text: n.body, who: n.author?.full_name })),
     ...data.events.map((e) => ({ at: e.starts_at, kind: EVENT_LABELS[e.type], text: e.title, who: undefined as string | undefined })),
   ].sort((a, b) => +new Date(b.at) - +new Date(a.at));
@@ -98,7 +98,7 @@ function MatterPage() {
         <TabsContent value="overview">
           <div className="grid gap-6 lg:grid-cols-3">
             <dl className="grid gap-x-6 gap-y-4 rounded-lg border bg-card p-5 sm:grid-cols-2 lg:col-span-2">
-              <Item k="Responsible lawyer" v={m.lawyer?.full_name} />
+              <Item k="Responsible lawyer" v={m.lawyer?.full_name ?? null} />
               <Item k="Court / jurisdiction" v={m.court} />
               <Item k="Case number" v={m.case_number} mono />
               <Item k="Opposing party" v={m.opposing_party} />
