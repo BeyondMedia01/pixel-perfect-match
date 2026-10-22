@@ -1,0 +1,84 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { formatDistanceToNow } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
+import { useMe } from "@/lib/auth";
+import { areaLabel, INQUIRY_STATUS_LABELS } from "@/lib/legal";
+import { PageHeader, EmptyState } from "@/components/app-shell";
+import { NewInquiryDialog } from "@/components/inquiry-form";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+
+export const Route = createFileRoute("/_authenticated/inquiries/")({
+  head: () => ({ meta: [{ title: "Inquiries — Docket" }, { name: "description", content: "New-client intake: log every call and walk-in, run conflict checks, book consultations." }] }),
+  component: InquiriesPage,
+});
+
+function InquiriesPage() {
+  const { data: me } = useMe();
+  const { data: inquiries } = useQuery({
+    queryKey: ["inquiries"],
+    queryFn: async () =>
+      (await supabase.from("inquiries").select("*, consult:profiles!inquiries_consult_with_fkey(full_name), matter:matters(matter_number)").order("received_at", { ascending: false })).data ?? [],
+  });
+  const open = (inquiries ?? []).filter((i) => i.status === "new" || i.status === "consult");
+  const done = (inquiries ?? []).filter((i) => i.status === "accepted" || i.status === "declined");
+
+  return (
+    <div className="mx-auto max-w-6xl">
+      <PageHeader
+        eyebrow="New-client intake"
+        title="Inquiries"
+        actions={me && <NewInquiryDialog trigger={<Button>Log an inquiry</Button>} />}
+      />
+      <p className="-mt-4 mb-8 max-w-2xl text-sm text-muted-foreground">
+        Every call and walk-in is logged and conflict-checked before anyone books a consultation or opens a matter.
+      </p>
+      {inquiries?.length === 0 ? (
+        <EmptyState
+          title="No inquiries yet"
+          body="Log the first one — the conflict check runs automatically against matters, clients and declined prospects."
+          action={<NewInquiryDialog trigger={<Button>Log an inquiry</Button>} />}
+        />
+      ) : (
+        <div className="space-y-8">
+          <InquiryTable title="Open" rows={open} />
+          {done.length > 0 && <InquiryTable title="Decided" rows={done} />}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function InquiryTable({ title, rows }: { title: string; rows: any[] }) {
+  return (
+    <section>
+      <h2 className="eyebrow mb-3">{title} ({rows.length})</h2>
+      {rows.length === 0 ? (
+        <p className="rounded-lg border border-dashed px-4 py-6 text-center text-sm text-muted-foreground">Nothing here.</p>
+      ) : (
+        <ul className="divide-y rounded-lg border bg-card">
+          {rows.map((i) => (
+            <li key={i.id}>
+              <Link to="/inquiries/$id" params={{ id: i.id }} className="flex flex-wrap items-center gap-4 px-4 py-3 text-sm hover:bg-accent/50">
+                <span className="min-w-0 flex-1">
+                  <span className="font-medium">{i.name}</span>
+                  <span className="text-muted-foreground"> · {areaLabel(i.practice_area)}</span>
+                  {i.opposing_party && <span className="text-muted-foreground"> · v {i.opposing_party}</span>}
+                </span>
+                <span className="hidden text-xs text-muted-foreground md:block">
+                  {formatDistanceToNow(new Date(i.received_at), { addSuffix: true })}
+                  {i.status === "consult" && i.consult?.full_name && ` · with ${i.consult.full_name}`}
+                  {i.matter?.matter_number && <span className="tabular"> · {i.matter.matter_number}</span>}
+                </span>
+                <Badge variant={i.status === "declined" ? "quiet" : i.status === "accepted" ? "closed" : i.status === "new" ? "intake" : "hold"}>
+                  {INQUIRY_STATUS_LABELS[i.status]}
+                </Badge>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
