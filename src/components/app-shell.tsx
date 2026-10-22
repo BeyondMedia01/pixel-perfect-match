@@ -158,6 +158,7 @@ export function AppShell() {
             <kbd className="ml-auto rounded border bg-muted px-1.5 text-[10px]">⌘K</kbd>
           </button>
           <div className="ml-auto flex items-center gap-1">
+            <UserChip />
             <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="Toggle theme">{dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}</Button>
             <Button variant="ghost" size="icon" onClick={signOut} aria-label="Sign out"><LogOut className="h-4 w-4" /></Button>
           </div>
@@ -166,6 +167,19 @@ export function AppShell() {
       </div>
       <GlobalSearch open={open} setOpen={setOpen} />
     </div>
+  );
+}
+
+function UserChip() {
+  const { data: me } = useMe();
+  const name = me?.profile?.full_name;
+  if (!name) return null;
+  const initials = name.split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
+  return (
+    <Link to="/settings" className="mr-1 flex items-center gap-2 rounded-full py-1 pl-1 pr-3 transition-colors hover:bg-accent" aria-label="Your profile settings">
+      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-[11px] font-semibold text-primary-foreground">{initials}</span>
+      <span className="hidden max-w-32 truncate text-sm sm:block">{name}</span>
+    </Link>
   );
 }
 
