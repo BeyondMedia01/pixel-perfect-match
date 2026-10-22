@@ -282,6 +282,99 @@ export type Database = {
         }
         Relationships: []
       }
+      invoice_items: {
+        Row: {
+          description: string
+          id: string
+          invoice_id: string
+          quantity: number
+          unit_price: number
+        }
+        Insert: {
+          description: string
+          id?: string
+          invoice_id: string
+          quantity?: number
+          unit_price?: number
+        }
+        Update: {
+          description?: string
+          id?: string
+          invoice_id?: string
+          quantity?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          client_id: string
+          created_at: string
+          created_by: string | null
+          due_date: string
+          id: string
+          invoice_number: string
+          issue_date: string
+          matter_id: string
+          notes: string | null
+          status: Database["public"]["Enums"]["invoice_status"]
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          due_date?: string
+          id?: string
+          invoice_number: string
+          issue_date?: string
+          matter_id: string
+          notes?: string | null
+          status?: Database["public"]["Enums"]["invoice_status"]
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          due_date?: string
+          id?: string
+          invoice_number?: string
+          issue_date?: string
+          matter_id?: string
+          notes?: string | null
+          status?: Database["public"]["Enums"]["invoice_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_matter_id_fkey"
+            columns: ["matter_id"]
+            isOneToOne: false
+            referencedRelation: "matters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       matter_assignments: {
         Row: {
           created_at: string
@@ -593,6 +686,67 @@ export type Database = {
           },
         ]
       }
+      time_entries: {
+        Row: {
+          billable: boolean
+          created_at: string
+          description: string
+          entry_date: string
+          hourly_rate: number
+          hours: number
+          id: string
+          invoice_id: string | null
+          matter_id: string
+          user_id: string
+        }
+        Insert: {
+          billable?: boolean
+          created_at?: string
+          description: string
+          entry_date?: string
+          hourly_rate?: number
+          hours: number
+          id?: string
+          invoice_id?: string | null
+          matter_id: string
+          user_id: string
+        }
+        Update: {
+          billable?: boolean
+          created_at?: string
+          description?: string
+          entry_date?: string
+          hourly_rate?: number
+          hours?: number
+          id?: string
+          invoice_id?: string | null
+          matter_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "time_entries_invoice_fk"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_entries_matter_id_fkey"
+            columns: ["matter_id"]
+            isOneToOne: false
+            referencedRelation: "matters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_entries_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           id: string
@@ -637,6 +791,7 @@ export type Database = {
       is_frontdesk: { Args: { _user_id: string }; Returns: boolean }
       is_internal: { Args: { _user_id: string }; Returns: boolean }
       is_lawyerish: { Args: { _user_id: string }; Returns: boolean }
+      next_invoice_number: { Args: never; Returns: string }
     }
     Enums: {
       app_role:
@@ -655,6 +810,7 @@ export type Database = {
         | "filing_deadline"
         | "other"
       inquiry_status: "new" | "consult" | "accepted" | "declined"
+      invoice_status: "draft" | "sent" | "paid" | "void"
       matter_status: "intake" | "active" | "on_hold" | "closed"
       party_role:
         | "opposing_party"
@@ -817,6 +973,7 @@ export const Constants = {
         "other",
       ],
       inquiry_status: ["new", "consult", "accepted", "declined"],
+      invoice_status: ["draft", "sent", "paid", "void"],
       matter_status: ["intake", "active", "on_hold", "closed"],
       party_role: [
         "opposing_party",

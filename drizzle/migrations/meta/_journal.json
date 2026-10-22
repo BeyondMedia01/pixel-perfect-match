@@ -43,6 +43,13 @@
       "when": 1792679164385,
       "tag": "0005_matters_read_policy_ethical_walls",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792679426376,
+      "tag": "0006_create_billing",
+      "breakpoints": true
     }
   ]
 }
