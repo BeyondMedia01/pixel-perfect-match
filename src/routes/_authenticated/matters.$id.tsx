@@ -271,6 +271,94 @@ function ContactsTab({ matterId, parties, onChange, canEdit }: { matterId: strin
   );
 }
 
+function EthicalWallNote({ matterId }: { matterId: string }) {
+  const { data: walls } = useQuery({
+    queryKey: ["matter-walls", matterId],
+    queryFn: async () =>
+      (await supabase.from("matter_ethical_walls").select("id, reason, user:profiles!matter_ethical_walls_user_id_fkey(full_name)").eq("matter_id", matterId)).data ?? [],
+  });
+  if (!walls?.length) return null;
+  return (
+    <div className="rounded-lg border border-signal/40 bg-signal/10 p-5">
+      <h3 className="eyebrow mb-2 text-signal">Ethical wall</h3>
+      <ul className="space-y-1 text-sm">
+        {walls.map((w: any) => (
+          <li key={w.id}><strong>{w.user?.full_name ?? "—"}</strong> is screened from this matter. <span className="text-muted-foreground">{w.reason}</span></li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function ConfirmDeadlineButton({ eventId, onChange }: { eventId: string; onChange: () => void }) {
+  async function confirm() {
+    const { error } = await supabase.from("events").update({ confirmed_by: (await supabase.auth.getUser()).data.user?.id ?? null }).eq("id", eventId);
+    if (error) toast.error(error.message); else { toast.success("Deadline confirmed"); onChange(); }
+  }
+  return <Button size="sm" variant="outline" onClick={confirm}>Confirm</Button>;
+}
+
+function MarkFiledButton({ eventId, onChange }: { eventId: string; onChange: () => void }) {
+  async function file() {
+    const { error } = await supabase.from("events").update({ filed_at: new Date().toISOString() }).eq("id", eventId);
+    if (error) toast.error(error.message); else { toast.success("Marked as filed"); onChange(); }
+  }
+  return <Button size="sm" variant="outline" onClick={file}>Mark filed</Button>;
+}
+
+function AddDeadlineDialog({ matterId, me, onChange, trigger }: { matterId: string; me: any; onChange: () => void; trigger: React.ReactNode }) {
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [f, setF] = useState({ title: "", type: "filing_deadline" as EventType, date: "", time: "17:00", location: "" });
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    const lawyerish = isLawyerish(me?.role);
+    const { error } = await supabase.from("events").insert({
+      matter_id: matterId, title: f.title, type: f.type,
+      starts_at: new Date(`${f.date}T${f.time}`).toISOString(),
+      location: f.location || null,
+      owner_id: me?.user.id ?? null,
+      entered_by: me?.user.id ?? null,
+      confirmed_by: lawyerish ? me?.user.id ?? null : null,
+    });
+    setBusy(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success(lawyerish ? "Deadline added" : "Deadline added — a lawyer still needs to confirm it");
+    setOpen(false);
+    setF({ title: "", type: "filing_deadline", date: "", time: "17:00", location: "" });
+    onChange();
+  }
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      <DialogContent>
+        <DialogHeader><DialogTitle className="font-serif text-2xl font-normal">Add a court date or deadline</DialogTitle></DialogHeader>
+        <form onSubmit={save} className="grid gap-4 sm:grid-cols-2">
+          <Field label="Title" className="sm:col-span-2"><Input required value={f.title} onChange={(e) => setF((p) => ({ ...p, title: e.target.value }))} placeholder="e.g. File answering affidavit" /></Field>
+          <Field label="Type">
+            <Select value={f.type} onValueChange={(v) => setF((p) => ({ ...p, type: v as EventType }))}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="filing_deadline">Filing deadline</SelectItem>
+                <SelectItem value="court_date">Court date</SelectItem>
+                <SelectItem value="hearing">Hearing</SelectItem>
+              </SelectContent>
+            </Select>
+          </Field>
+          <Field label="Location"><Input value={f.location} onChange={(e) => setF((p) => ({ ...p, location: e.target.value }))} /></Field>
+          <Field label="Date"><Input type="date" required value={f.date} onChange={(e) => setF((p) => ({ ...p, date: e.target.value }))} /></Field>
+          <Field label="Time"><Input type="time" required value={f.time} onChange={(e) => setF((p) => ({ ...p, time: e.target.value }))} /></Field>
+          <div className="flex justify-end gap-2 sm:col-span-2">
+            <Button type="button" variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
+            <Button type="submit" disabled={busy}>{busy ? "Saving…" : "Add"}</Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function Item({ k, v, mono }: { k: string; v?: string | null; mono?: boolean }) {
   return (
     <div>
