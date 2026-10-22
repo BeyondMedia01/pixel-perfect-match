@@ -509,7 +509,14 @@ export type Database = {
       is_internal: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      app_role: "admin" | "lawyer" | "staff" | "client"
+      app_role:
+        | "admin"
+        | "lawyer"
+        | "staff"
+        | "client"
+        | "partner"
+        | "paralegal"
+        | "frontdesk"
       client_type: "individual" | "company"
       event_type:
         | "court_date"
@@ -517,6 +524,7 @@ export type Database = {
         | "meeting"
         | "filing_deadline"
         | "other"
+      inquiry_status: "new" | "consult" | "accepted" | "declined"
       matter_status: "intake" | "active" | "on_hold" | "closed"
       party_role:
         | "opposing_party"
@@ -661,7 +669,15 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "lawyer", "staff", "client"],
+      app_role: [
+        "admin",
+        "lawyer",
+        "staff",
+        "client",
+        "partner",
+        "paralegal",
+        "frontdesk",
+      ],
       client_type: ["individual", "company"],
       event_type: [
         "court_date",
@@ -670,6 +686,7 @@ export const Constants = {
         "filing_deadline",
         "other",
       ],
+      inquiry_status: ["new", "consult", "accepted", "declined"],
       matter_status: ["intake", "active", "on_hold", "closed"],
       party_role: [
         "opposing_party",
