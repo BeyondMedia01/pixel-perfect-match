@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { format, formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
-import { useMe } from "@/lib/auth";
+import { useMe, isPartner } from "@/lib/auth";
 import { EVENT_LABELS, isUrgent, statusMeta } from "@/lib/legal";
 import { PageHeader } from "@/components/app-shell";
 import { Badge } from "@/components/ui/badge";
@@ -68,10 +68,10 @@ function Dashboard() {
           )}
         </section>
         <section className="rounded-lg border bg-card p-5">
-          <h2 className="eyebrow mb-4">{me?.role === "admin" ? "Firm snapshot" : "This week"}</h2>
+          <h2 className="eyebrow mb-4">{isPartner(me?.role) ? "Firm snapshot" : "This week"}</h2>
           <div className="space-y-4">
             <Stat label="Unbilled hours this week" value="—" hint="Available once time tracking is added" />
-            {me?.role === "admin" && <Stat label="Revenue this month" value="—" hint="Available once billing is added" />}
+            {isPartner(me?.role) && <Stat label="Revenue this month" value="—" hint="Available once billing is added" />}
             <Stat label="Deadlines in 7 days" value={String(upcoming.length)} />
           </div>
         </section>

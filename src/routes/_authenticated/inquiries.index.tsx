@@ -72,7 +72,7 @@ function InquiryTable({ title, rows }: { title: string; rows: any[] }) {
                   {i.matter?.matter_number && <span className="tabular"> · {i.matter.matter_number}</span>}
                 </span>
                 <Badge variant={i.status === "declined" ? "quiet" : i.status === "accepted" ? "closed" : i.status === "new" ? "intake" : "hold"}>
-                  {INQUIRY_STATUS_LABELS[i.status]}
+                  {INQUIRY_STATUS_LABELS[i.status as keyof typeof INQUIRY_STATUS_LABELS]}
                 </Badge>
               </Link>
             </li>
