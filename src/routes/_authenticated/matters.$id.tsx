@@ -10,6 +10,7 @@ import { EmptyState } from "@/components/app-shell";
 import { Field } from "@/components/matter-form";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { DocumentList } from "@/components/document-list";
+import { MatterBilling } from "@/components/matter-billing";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -158,7 +159,7 @@ function MatterPage() {
         </TabsContent>
 
         <TabsContent value="documents"><DocumentList matterId={id} /></TabsContent>
-        <TabsContent value="billing"><EmptyState title="Time & billing are coming soon" body="Timers, time entries and invoices for this matter will appear here." /></TabsContent>
+        <TabsContent value="billing"><MatterBilling matterId={id} clientId={m.client_id} /></TabsContent>
 
         <TabsContent value="tasks">
           {data.tasks.length === 0 ? <EmptyState title="No tasks" body="Tasks linked to this matter will appear here." /> : (
