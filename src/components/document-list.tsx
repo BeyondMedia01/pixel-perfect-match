@@ -45,7 +45,7 @@ export function DocumentList({ matterId, clientId }: { matterId?: string; client
     let failed = 0;
     for (const file of Array.from(files)) {
       const path = `${me.user.id}/${crypto.randomUUID()}-${file.name}`;
-      const up = await supabase.storage.from(BUCKET).upload(path, file, { contentType: file.type || undefined });
+      const up = await supabase.storage.from(BUCKET).upload(path, file, file.type ? { contentType: file.type } : {});
       if (up.error) { failed++; toast.error(`${file.name}: ${up.error.message}`); continue; }
       const { error } = await supabase.from("documents").insert({
         matter_id: matterId ?? null,
