@@ -10,7 +10,7 @@
 - [x] Tasks page: overdue/today/upcoming/done groups, mine/all toggle
 - [x] Calendar page: day groups, type filter, deadline status
 - [x] Design: Cormorant Garamond + Inter fonts (brass accent already in tokens)
-- [ ] End-to-end browser verification of new flows
+- [x] End-to-end browser verification (inquiries, accept→matter, deadline confirm, walls, tasks, calendar)
 
 ## Later
 - [ ] Billing (time entries, invoices)

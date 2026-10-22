@@ -36,6 +36,13 @@
       "when": 1792678792113,
       "tag": "0004_roles_inquiries_walls_deadlines",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792679164385,
+      "tag": "0005_matters_read_policy_ethical_walls",
+      "breakpoints": true
     }
   ]
 }
