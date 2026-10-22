@@ -1,8 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useMe } from "@/lib/auth";
 import { PageHeader } from "@/components/app-shell";
+import { NewClientDialog } from "@/components/client-form";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export const Route = createFileRoute("/_authenticated/clients/")({
@@ -11,13 +15,20 @@ export const Route = createFileRoute("/_authenticated/clients/")({
 });
 
 function Clients() {
+  const { data: me } = useMe();
   const { data } = useQuery({
     queryKey: ["clients"],
     queryFn: async () => (await supabase.from("clients").select("*").order("name")).data ?? [],
   });
   return (
     <div className="mx-auto max-w-6xl">
-      <PageHeader eyebrow="Practice" title="Clients" />
+      <PageHeader
+        eyebrow="Practice"
+        title="Clients"
+        actions={me && me.role !== "client" ? (
+          <NewClientDialog trigger={<Button><Plus className="mr-2 h-4 w-4" /> New client</Button>} />
+        ) : undefined}
+      />
       <div className="overflow-x-auto rounded-lg border bg-card">
         <Table>
           <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Type</TableHead><TableHead>ID / Reg.</TableHead><TableHead>Email</TableHead><TableHead>Phone</TableHead></TableRow></TableHeader>

@@ -69,16 +69,17 @@ function GlobalSearch({ open, setOpen }: { open: boolean; setOpen: (o: boolean) 
     enabled: open && q.trim().length > 1,
     queryFn: async () => {
       const term = `%${q.trim()}%`;
-      const [m, c] = await Promise.all([
+      const [m, c, d] = await Promise.all([
         supabase.from("matters").select("id, title, matter_number").or(`title.ilike.${term},matter_number.ilike.${term},case_number.ilike.${term}`).limit(8),
         supabase.from("clients").select("id, name").ilike("name", term).limit(8),
+        supabase.from("documents").select("id, name, matter_id").ilike("name", term).limit(8),
       ]);
-      return { matters: m.data ?? [], clients: c.data ?? [] };
+      return { matters: m.data ?? [], clients: c.data ?? [], documents: d.data ?? [] };
     },
   });
   return (
     <CommandDialog open={open} onOpenChange={setOpen}>
-      <CommandInput placeholder="Search matters, clients… (documents coming soon)" value={q} onValueChange={setQ} />
+      <CommandInput placeholder="Search matters, clients, documents…" value={q} onValueChange={setQ} />
       <CommandList>
         <CommandEmpty>{q.length < 2 ? "Type at least 2 characters." : "No results."}</CommandEmpty>
         {!!data?.matters.length && (
@@ -95,6 +96,15 @@ function GlobalSearch({ open, setOpen }: { open: boolean; setOpen: (o: boolean) 
             {data.clients.map((c) => (
               <CommandItem key={c.id} value={`c-${c.id}-${c.name}`} onSelect={() => { setOpen(false); navigate({ to: "/clients/$id", params: { id: c.id } }); }}>
                 {c.name}
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        )}
+        {!!data?.documents.length && (
+          <CommandGroup heading="Documents">
+            {data.documents.map((d) => (
+              <CommandItem key={d.id} value={`d-${d.id}-${d.name}`} onSelect={() => { setOpen(false); navigate(d.matter_id ? { to: "/matters/$id", params: { id: d.matter_id } } : { to: "/documents" }); }}>
+                <FileText className="mr-2 h-4 w-4 text-muted-foreground" />{d.name}
               </CommandItem>
             ))}
           </CommandGroup>
