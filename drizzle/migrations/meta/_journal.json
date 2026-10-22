@@ -15,6 +15,13 @@
       "when": 1792489610934,
       "tag": "0001_fix_matter_policy",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792648952523,
+      "tag": "0002_create_documents",
+      "breakpoints": true
     }
   ]
 }

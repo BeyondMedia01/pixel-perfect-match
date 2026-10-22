@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { statusMeta } from "@/lib/legal";
 import { PageHeader } from "@/components/app-shell";
+import { DocumentList } from "@/components/document-list";
 import { Badge } from "@/components/ui/badge";
 
 export const Route = createFileRoute("/_authenticated/clients/$id")({
@@ -33,7 +34,8 @@ function ClientPage() {
             <div key={k}><dt className="text-xs text-muted-foreground">{k}</dt><dd>{v || "—"}</dd></div>
           ))}
         </dl>
-        <div className="rounded-lg border bg-card p-5 lg:col-span-2">
+        <div className="space-y-6 lg:col-span-2">
+        <div className="rounded-lg border bg-card p-5">
           <h2 className="eyebrow mb-3">Matters</h2>
           <ul className="divide-y">
             {data.matters.map((m) => (
@@ -44,6 +46,11 @@ function ClientPage() {
               </li>
             ))}
           </ul>
+        </div>
+        <div className="rounded-lg border bg-card p-5">
+          <h2 className="eyebrow mb-3">Documents</h2>
+          <DocumentList clientId={id} />
+        </div>
         </div>
       </div>
     </div>

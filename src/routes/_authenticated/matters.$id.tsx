@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMe, useProfiles } from "@/lib/auth";
 import { EVENT_LABELS, MATTER_STATUSES, TASK_STATUS_LABELS, areaLabel, isUrgent, statusMeta, type MatterStatus } from "@/lib/legal";
 import { EmptyState } from "@/components/app-shell";
+import { DocumentList } from "@/components/document-list";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -152,7 +153,7 @@ function MatterPage() {
           )}
         </TabsContent>
 
-        <TabsContent value="documents"><EmptyState title="Documents are coming next" body="Uploads, folders, versions and client sharing will live here." /></TabsContent>
+        <TabsContent value="documents"><DocumentList matterId={id} /></TabsContent>
         <TabsContent value="billing"><EmptyState title="Time & billing are coming soon" body="Timers, time entries and invoices for this matter will appear here." /></TabsContent>
 
         <TabsContent value="tasks">
