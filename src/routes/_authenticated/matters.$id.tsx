@@ -4,9 +4,11 @@ import { useState } from "react";
 import { format, formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useMe, useProfiles } from "@/lib/auth";
-import { EVENT_LABELS, MATTER_STATUSES, TASK_STATUS_LABELS, areaLabel, isUrgent, statusMeta, type MatterStatus } from "@/lib/legal";
+import { useMe, useProfiles, isInternalRole, isLawyerish, isPartner } from "@/lib/auth";
+import { EVENT_LABELS, MATTER_STATUSES, TASK_STATUS_LABELS, areaLabel, isDeadlineType, isUrgent, statusMeta, type MatterStatus, type EventType } from "@/lib/legal";
 import { EmptyState } from "@/components/app-shell";
+import { Field } from "@/components/matter-form";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { DocumentList } from "@/components/document-list";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -50,7 +52,8 @@ function MatterPage() {
   if (isLoading) return <p className="text-sm text-muted-foreground">Loading…</p>;
   if (!data?.matter) return <EmptyState title="Matter not found" body="It may have been deleted, or you may not be assigned to it." action={<Button asChild variant="outline"><Link to="/matters">Back to matters</Link></Button>} />;
   const m = data.matter;
-  const internal = me?.role !== "client";
+  const internal = isInternalRole(me?.role);
+  const lawyerish = isLawyerish(me?.role);
 
   async function changeStatus(s: MatterStatus) {
     const { error } = await supabase.from("matters").update({ status: s, date_closed: s === "closed" ? new Date().toISOString().slice(0, 10) : null }).eq("id", id);
@@ -119,6 +122,7 @@ function MatterPage() {
                 ))}
                 {!data.events.some((e) => new Date(e.starts_at) > new Date()) && <p className="text-sm text-muted-foreground">None scheduled.</p>}
               </div>
+              {isPartner(me?.role) && <EthicalWallNote matterId={id} />}
               <div className="rounded-lg border bg-card p-5">
                 <h3 className="eyebrow mb-3">Team</h3>
                 <ul className="mb-3 space-y-1 text-sm">
@@ -172,13 +176,33 @@ function MatterPage() {
         </TabsContent>
 
         <TabsContent value="calendar">
+          {internal && (
+            <div className="mb-4 flex justify-end">
+              <AddDeadlineDialog matterId={id} me={me} onChange={refresh} trigger={<Button variant="outline" size="sm">Add court date / deadline</Button>} />
+            </div>
+          )}
           {data.events.length === 0 ? <EmptyState title="No dates" body="Court dates and deadlines for this matter will appear here." /> : (
             <ul className="divide-y rounded-lg border bg-card">
               {data.events.map((e) => (
-                <li key={e.id} className="flex items-center gap-4 px-4 py-3 text-sm">
-                  <span className={"tabular w-36 text-xs " + (isUrgent(e.starts_at) ? "text-destructive" : "")}>{format(new Date(e.starts_at), "EEE d MMM, HH:mm")}</span>
-                  <span className="flex-1">{e.title}</span>
+                <li key={e.id} className="flex flex-wrap items-center gap-4 px-4 py-3 text-sm">
+                  <span className={"tabular w-36 text-xs " + (isUrgent(e.starts_at) && isDeadlineType(e.type) ? "font-semibold text-destructive" : "")}>{format(new Date(e.starts_at), "EEE d MMM, HH:mm")}</span>
+                  <span className="min-w-0 flex-1">
+                    {e.title}
+                    {isDeadlineType(e.type) && !e.confirmed_by && !e.filed_at && <span className="ml-2 text-xs text-warning">awaiting lawyer confirmation</span>}
+                  </span>
                   <span className="text-xs text-muted-foreground">{e.location}</span>
+                  {isDeadlineType(e.type) && (
+                    e.filed_at ? (
+                      <Badge variant="closed">Filed</Badge>
+                    ) : e.confirmed_by ? (
+                      <>
+                        <Badge variant="quiet">Confirmed</Badge>
+                        {internal && e.type === "filing_deadline" && <MarkFiledButton eventId={e.id} onChange={refresh} />}
+                      </>
+                    ) : lawyerish ? (
+                      <ConfirmDeadlineButton eventId={e.id} onChange={refresh} />
+                    ) : null
+                  )}
                   <Badge variant="quiet">{EVENT_LABELS[e.type]}</Badge>
                 </li>
               ))}
