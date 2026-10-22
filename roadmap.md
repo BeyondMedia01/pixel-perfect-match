@@ -12,6 +12,11 @@
 - [x] Design: Cormorant Garamond + Inter fonts (brass accent already in tokens)
 - [x] End-to-end browser verification (inquiries, accept→matter, deadline confirm, walls, tasks, calendar)
 
+## Billing
+- [x] DB: time_entries, invoices, invoice_items, invoice numbering, RLS (own entries, partner manages invoices)
+- [x] Matter Time & Billing tab: log time, unbilled summary, create invoice from unbilled entries, invoice status
+- [x] Billing page: unbilled / outstanding / paid-this-month cards, invoice list, recent time entries
+- [x] End-to-end browser verification (log time, create invoice, no console errors)
+
 ## Later
-- [ ] Billing (time entries, invoices)
 - [ ] Reports
