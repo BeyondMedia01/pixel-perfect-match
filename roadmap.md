@@ -1,14 +1,17 @@
-# Roadmap — adopt Makoni & Partners demo as design/features reference
+# Roadmap
 
-Decisions: build all four features; adopt demo roles (partner, lawyer, paralegal, frontdesk); keep current app name.
+## Makoni & Partners reference build
+- [x] DB: roles (partner/lawyer/paralegal/frontdesk), inquiries, ethical walls, deadline confirm fields, conflict_check update, conflict_check_count
+- [x] Seed demo data (3 inquiries, 1 ethical wall)
+- [x] Role labels + useMe role resolution (legal.ts, auth.ts)
+- [x] Inquiries: list + detail pages, log dialog with live conflict check, book consultation, accept → client + matter, decline, partner sign-off
+- [x] Deadline confirmation: add deadline dialog, lawyer confirm, mark filed (matter page + calendar)
+- [x] Ethical walls: Settings management (partner), matter overview note, nav/search
+- [x] Tasks page: overdue/today/upcoming/done groups, mine/all toggle
+- [x] Calendar page: day groups, type filter, deadline status
+- [x] Design: Cormorant Garamond + Inter fonts (brass accent already in tokens)
+- [ ] End-to-end browser verification of new flows
 
-- [ ] DB: add partner/paralegal/frontdesk roles, backfill admin→partner, staff→paralegal; helpers (partner = admin-equivalent; frontdesk limited)
-- [ ] DB: inquiries table + RLS + history via activity_log
-- [ ] DB: ethical walls table; can_access_matter excludes walled users (incl. partners)
-- [ ] DB: deadline confirmation (events.entered_by/confirmed_by/filed_at, inquiry consultations)
-- [ ] UI: Inquiries list + detail (log, conflict check, book consult, accept→matter, decline, partner sign-off)
-- [ ] UI: deadline confirmation workflow on matter Deadlines tab
-- [ ] UI: ethical walls in Settings + matter overview note
-- [ ] UI: full Tasks page (overdue/today/upcoming/done, mine/all) and Calendar page (day groups)
-- [ ] Design: brass accent, Cormorant Garamond headings
-- [ ] Verify in browser end-to-end
+## Later
+- [ ] Billing (time entries, invoices)
+- [ ] Reports
