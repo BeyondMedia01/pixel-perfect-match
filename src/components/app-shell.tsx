@@ -2,7 +2,7 @@ import { Link, Outlet, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  LayoutDashboard, Briefcase, Users, CalendarDays, CheckSquare, FileText, Receipt, BarChart3,
+  LayoutDashboard, Briefcase, Users, CalendarDays, CheckSquare, FileText, Receipt, BarChart3, Inbox,
   Settings, Scale, Search, LogOut, Moon, Sun, Menu,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
