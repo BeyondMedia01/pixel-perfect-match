@@ -10,6 +10,7 @@ import { EmptyState } from "@/components/app-shell";
 import { Field } from "@/components/matter-form";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { DocumentList } from "@/components/document-list";
+import { MatterBilling } from "@/components/matter-billing";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
