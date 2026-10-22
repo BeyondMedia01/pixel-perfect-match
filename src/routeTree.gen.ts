@@ -22,6 +22,7 @@ import { Route as AuthenticatedTasksRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedClientsIndexRouteImport } from './routes/_authenticated/clients.index'
 import { Route as AuthenticatedClientsIdRouteImport } from './routes/_authenticated/clients.$id'
 import { Route as AuthenticatedInquiriesIndexRouteImport } from './routes/_authenticated/inquiries.index'
+import { Route as AuthenticatedInquiriesIdRouteImport } from './routes/_authenticated/inquiries.$id'
 import { Route as AuthenticatedMattersIndexRouteImport } from './routes/_authenticated/matters.index'
 import { Route as AuthenticatedMattersIdRouteImport } from './routes/_authenticated/matters.$id'
 
@@ -91,6 +92,12 @@ const AuthenticatedInquiriesIndexRoute =
     path: '/inquiries/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedInquiriesIdRoute =
+  AuthenticatedInquiriesIdRouteImport.update({
+    id: '/inquiries/$id',
+    path: '/inquiries/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedMattersIndexRoute =
   AuthenticatedMattersIndexRouteImport.update({
     id: '/matters/',
@@ -114,6 +121,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthenticatedSettingsRoute
   '/tasks': typeof AuthenticatedTasksRoute
   '/clients/$id': typeof AuthenticatedClientsIdRoute
+  '/inquiries/$id': typeof AuthenticatedInquiriesIdRoute
   '/matters/$id': typeof AuthenticatedMattersIdRoute
   '/clients/': typeof AuthenticatedClientsIndexRoute
   '/inquiries/': typeof AuthenticatedInquiriesIndexRoute
@@ -130,6 +138,7 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsRoute
   '/tasks': typeof AuthenticatedTasksRoute
   '/clients/$id': typeof AuthenticatedClientsIdRoute
+  '/inquiries/$id': typeof AuthenticatedInquiriesIdRoute
   '/matters/$id': typeof AuthenticatedMattersIdRoute
   '/clients': typeof AuthenticatedClientsIndexRoute
   '/inquiries': typeof AuthenticatedInquiriesIndexRoute
@@ -148,6 +157,7 @@ export interface FileRoutesById {
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/tasks': typeof AuthenticatedTasksRoute
   '/_authenticated/clients/$id': typeof AuthenticatedClientsIdRoute
+  '/_authenticated/inquiries/$id': typeof AuthenticatedInquiriesIdRoute
   '/_authenticated/matters/$id': typeof AuthenticatedMattersIdRoute
   '/_authenticated/clients/': typeof AuthenticatedClientsIndexRoute
   '/_authenticated/inquiries/': typeof AuthenticatedInquiriesIndexRoute
@@ -166,6 +176,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/tasks'
     | '/clients/$id'
+    | '/inquiries/$id'
     | '/matters/$id'
     | '/clients/'
     | '/inquiries/'
@@ -182,6 +193,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/tasks'
     | '/clients/$id'
+    | '/inquiries/$id'
     | '/matters/$id'
     | '/clients'
     | '/inquiries'
@@ -199,6 +211,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings'
     | '/_authenticated/tasks'
     | '/_authenticated/clients/$id'
+    | '/_authenticated/inquiries/$id'
     | '/_authenticated/matters/$id'
     | '/_authenticated/clients/'
     | '/_authenticated/inquiries/'
@@ -304,6 +317,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedInquiriesIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/inquiries/$id': {
+      id: '/_authenticated/inquiries/$id'
+      path: '/inquiries/$id'
+      fullPath: '/inquiries/$id'
+      preLoaderRoute: typeof AuthenticatedInquiriesIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/matters/': {
       id: '/_authenticated/matters/'
       path: '/matters'
@@ -330,6 +350,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedTasksRoute: typeof AuthenticatedTasksRoute
   AuthenticatedClientsIdRoute: typeof AuthenticatedClientsIdRoute
+  AuthenticatedInquiriesIdRoute: typeof AuthenticatedInquiriesIdRoute
   AuthenticatedMattersIdRoute: typeof AuthenticatedMattersIdRoute
   AuthenticatedClientsIndexRoute: typeof AuthenticatedClientsIndexRoute
   AuthenticatedInquiriesIndexRoute: typeof AuthenticatedInquiriesIndexRoute
@@ -345,6 +366,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedTasksRoute: AuthenticatedTasksRoute,
   AuthenticatedClientsIdRoute: AuthenticatedClientsIdRoute,
+  AuthenticatedInquiriesIdRoute: AuthenticatedInquiriesIdRoute,
   AuthenticatedMattersIdRoute: AuthenticatedMattersIdRoute,
   AuthenticatedClientsIndexRoute: AuthenticatedClientsIndexRoute,
   AuthenticatedInquiriesIndexRoute: AuthenticatedInquiriesIndexRoute,
