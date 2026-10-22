@@ -26,7 +26,13 @@ export function useConflictHits(terms: string[], enabled = true) {
           return (data ?? []).map((r) => ({ term, ...r })) as ConflictHit[];
         }),
       );
-      return results.flat();
+      const seen = new Set<string>();
+      return results.flat().filter((h) => {
+        const key = `${h.name}|${h.source}|${h.matter_number ?? ""}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
     },
   });
 }
