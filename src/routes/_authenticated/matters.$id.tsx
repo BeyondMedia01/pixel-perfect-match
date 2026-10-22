@@ -158,7 +158,7 @@ function MatterPage() {
         </TabsContent>
 
         <TabsContent value="documents"><DocumentList matterId={id} /></TabsContent>
-        <TabsContent value="billing"><EmptyState title="Time & billing are coming soon" body="Timers, time entries and invoices for this matter will appear here." /></TabsContent>
+        <TabsContent value="billing"><MatterBilling matterId={id} clientId={m.client_id} /></TabsContent>
 
         <TabsContent value="tasks">
           {data.tasks.length === 0 ? <EmptyState title="No tasks" body="Tasks linked to this matter will appear here." /> : (
