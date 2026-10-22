@@ -170,6 +170,19 @@ export function AppShell() {
   );
 }
 
+function UserChip() {
+  const { data: me } = useMe();
+  const name = me?.profile?.full_name;
+  if (!name) return null;
+  const initials = name.split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
+  return (
+    <Link to="/settings" className="mr-1 flex items-center gap-2 rounded-full py-1 pl-1 pr-3 transition-colors hover:bg-accent" aria-label="Your profile settings">
+      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-[11px] font-semibold text-primary-foreground">{initials}</span>
+      <span className="hidden max-w-32 truncate text-sm sm:block">{name}</span>
+    </Link>
+  );
+}
+
 export function PageHeader({ eyebrow, title, actions }: { eyebrow?: string; title: string; actions?: React.ReactNode }) {
   return (
     <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
