@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useMe } from "@/lib/auth";
+import { useMe, isPartner } from "@/lib/auth";
 import { ROLE_LABELS, type AppRole } from "@/lib/legal";
 import { PageHeader } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
@@ -23,7 +23,8 @@ function Settings() {
     <div className="mx-auto max-w-4xl space-y-10">
       <PageHeader title="Settings" />
       <ProfileSection />
-      {me?.role === "admin" && <TeamSection currentUserId={me.user.id} />}
+      {isPartner(me?.role) && <TeamSection currentUserId={me!.user.id} />}
+      {isPartner(me?.role) && <EthicalWallsSection />}
     </div>
   );
 }
@@ -63,7 +64,7 @@ function ProfileSection() {
   );
 }
 
-const ROLES: AppRole[] = ["admin", "lawyer", "staff", "client"];
+const ROLES: AppRole[] = ["partner", "lawyer", "paralegal", "frontdesk", "client"];
 
 function TeamSection({ currentUserId }: { currentUserId: string }) {
   const qc = useQueryClient();
@@ -75,7 +76,7 @@ function TeamSection({ currentUserId }: { currentUserId: string }) {
         supabase.from("user_roles").select("user_id, role"),
       ]);
       const rolesByUser = new Map((r.data ?? []).map((x) => [x.user_id, x.role as AppRole]));
-      return (p.data ?? []).map((u) => ({ ...u, role: rolesByUser.get(u.id) ?? ("staff" as AppRole) }));
+      return (p.data ?? []).map((u) => ({ ...u, role: rolesByUser.get(u.id) ?? ("paralegal" as AppRole) }));
     },
   });
 
@@ -116,6 +117,82 @@ function TeamSection({ currentUserId }: { currentUserId: string }) {
           );
         })}
       </ul>
+    </section>
+  );
+}
+
+function EthicalWallsSection() {
+  const qc = useQueryClient();
+  const [matterId, setMatterId] = useState("");
+  const [userId, setUserId] = useState("");
+  const [reason, setReason] = useState("");
+  const { data } = useQuery({
+    queryKey: ["ethical-walls"],
+    queryFn: async () => {
+      const [walls, matters, profiles] = await Promise.all([
+        supabase.from("matter_ethical_walls").select("*, matter:matters(title, matter_number), user:profiles!matter_ethical_walls_user_id_fkey(full_name)").order("created_at", { ascending: false }),
+        supabase.from("matters").select("id, title, matter_number").neq("status", "closed").order("matter_number"),
+        supabase.from("profiles").select("id, full_name, email").order("full_name"),
+      ]);
+      return { walls: walls.data ?? [], matters: matters.data ?? [], profiles: profiles.data ?? [] };
+    },
+  });
+
+  async function add(e: React.FormEvent) {
+    e.preventDefault();
+    if (!matterId || !userId || !reason.trim()) { toast.error("Fill in matter, person and reason"); return; }
+    const { error } = await supabase.from("matter_ethical_walls").insert({ matter_id: matterId, user_id: userId, reason });
+    if (error) toast.error(error.message);
+    else { toast.success("Ethical wall added"); setReason(""); setMatterId(""); setUserId(""); qc.invalidateQueries({ queryKey: ["ethical-walls"] }); }
+  }
+  async function remove(id: string) {
+    const { error } = await supabase.from("matter_ethical_walls").delete().eq("id", id);
+    if (error) toast.error(error.message);
+    else { toast.success("Ethical wall removed"); qc.invalidateQueries({ queryKey: ["ethical-walls"] }); }
+  }
+
+  return (
+    <section className="rounded-lg border bg-card p-5">
+      <h2 className="eyebrow mb-1">Ethical walls</h2>
+      <p className="mb-4 text-sm text-muted-foreground">
+        Screening someone from a matter hides it from them everywhere — they can't open it, and it won't appear in their lists or search.
+      </p>
+      <form onSubmit={add} className="mb-5 flex flex-wrap items-end gap-3">
+        <div className="w-full max-w-xs space-y-1.5">
+          <Label>Matter</Label>
+          <Select value={matterId} onValueChange={setMatterId}>
+            <SelectTrigger><SelectValue placeholder="Select matter" /></SelectTrigger>
+            <SelectContent>{data?.matters.map((m) => <SelectItem key={m.id} value={m.id}><span className="tabular mr-1 text-xs">{m.matter_number}</span>{m.title}</SelectItem>)}</SelectContent>
+          </Select>
+        </div>
+        <div className="w-full max-w-xs space-y-1.5">
+          <Label>Person screened out</Label>
+          <Select value={userId} onValueChange={setUserId}>
+            <SelectTrigger><SelectValue placeholder="Select person" /></SelectTrigger>
+            <SelectContent>{data?.profiles.map((p) => <SelectItem key={p.id} value={p.id}>{p.full_name || p.email}</SelectItem>)}</SelectContent>
+          </Select>
+        </div>
+        <div className="w-full max-w-xs space-y-1.5">
+          <Label>Reason</Label>
+          <Input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="e.g. Previously advised the opposing party" />
+        </div>
+        <Button type="submit" variant="outline">Add wall</Button>
+      </form>
+      {data?.walls.length ? (
+        <ul className="divide-y">
+          {data.walls.map((w: any) => (
+            <li key={w.id} className="flex flex-wrap items-center gap-3 py-3 text-sm">
+              <div className="min-w-0 flex-1">
+                <div className="font-medium">{w.user?.full_name ?? "—"} <span className="text-muted-foreground">screened from</span> <span className="tabular">{w.matter?.matter_number}</span> {w.matter?.title}</div>
+                <div className="text-xs text-muted-foreground">{w.reason}</div>
+              </div>
+              <Button size="sm" variant="ghost" onClick={() => remove(w.id)}>Remove</Button>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-sm text-muted-foreground">No ethical walls in place.</p>
+      )}
     </section>
   );
 }

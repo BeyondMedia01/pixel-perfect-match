@@ -4,9 +4,11 @@ import { useState } from "react";
 import { format, formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useMe, useProfiles } from "@/lib/auth";
-import { EVENT_LABELS, MATTER_STATUSES, TASK_STATUS_LABELS, areaLabel, isUrgent, statusMeta, type MatterStatus } from "@/lib/legal";
+import { useMe, useProfiles, isInternalRole, isLawyerish, isPartner } from "@/lib/auth";
+import { EVENT_LABELS, MATTER_STATUSES, TASK_STATUS_LABELS, areaLabel, isDeadlineType, isUrgent, statusMeta, type MatterStatus, type EventType } from "@/lib/legal";
 import { EmptyState } from "@/components/app-shell";
+import { Field } from "@/components/matter-form";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { DocumentList } from "@/components/document-list";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -50,7 +52,8 @@ function MatterPage() {
   if (isLoading) return <p className="text-sm text-muted-foreground">Loading…</p>;
   if (!data?.matter) return <EmptyState title="Matter not found" body="It may have been deleted, or you may not be assigned to it." action={<Button asChild variant="outline"><Link to="/matters">Back to matters</Link></Button>} />;
   const m = data.matter;
-  const internal = me?.role !== "client";
+  const internal = isInternalRole(me?.role);
+  const lawyerish = isLawyerish(me?.role);
 
   async function changeStatus(s: MatterStatus) {
     const { error } = await supabase.from("matters").update({ status: s, date_closed: s === "closed" ? new Date().toISOString().slice(0, 10) : null }).eq("id", id);
@@ -119,6 +122,7 @@ function MatterPage() {
                 ))}
                 {!data.events.some((e) => new Date(e.starts_at) > new Date()) && <p className="text-sm text-muted-foreground">None scheduled.</p>}
               </div>
+              {isPartner(me?.role) && <EthicalWallNote matterId={id} />}
               <div className="rounded-lg border bg-card p-5">
                 <h3 className="eyebrow mb-3">Team</h3>
                 <ul className="mb-3 space-y-1 text-sm">
@@ -172,13 +176,33 @@ function MatterPage() {
         </TabsContent>
 
         <TabsContent value="calendar">
+          {internal && (
+            <div className="mb-4 flex justify-end">
+              <AddDeadlineDialog matterId={id} me={me} onChange={refresh} trigger={<Button variant="outline" size="sm">Add court date / deadline</Button>} />
+            </div>
+          )}
           {data.events.length === 0 ? <EmptyState title="No dates" body="Court dates and deadlines for this matter will appear here." /> : (
             <ul className="divide-y rounded-lg border bg-card">
               {data.events.map((e) => (
-                <li key={e.id} className="flex items-center gap-4 px-4 py-3 text-sm">
-                  <span className={"tabular w-36 text-xs " + (isUrgent(e.starts_at) ? "text-destructive" : "")}>{format(new Date(e.starts_at), "EEE d MMM, HH:mm")}</span>
-                  <span className="flex-1">{e.title}</span>
+                <li key={e.id} className="flex flex-wrap items-center gap-4 px-4 py-3 text-sm">
+                  <span className={"tabular w-36 text-xs " + (isUrgent(e.starts_at) && isDeadlineType(e.type) ? "font-semibold text-destructive" : "")}>{format(new Date(e.starts_at), "EEE d MMM, HH:mm")}</span>
+                  <span className="min-w-0 flex-1">
+                    {e.title}
+                    {isDeadlineType(e.type) && !e.confirmed_by && !e.filed_at && <span className="ml-2 text-xs text-warning">awaiting lawyer confirmation</span>}
+                  </span>
                   <span className="text-xs text-muted-foreground">{e.location}</span>
+                  {isDeadlineType(e.type) && (
+                    e.filed_at ? (
+                      <Badge variant="closed">Filed</Badge>
+                    ) : e.confirmed_by ? (
+                      <>
+                        <Badge variant="quiet">Confirmed</Badge>
+                        {internal && e.type === "filing_deadline" && <MarkFiledButton eventId={e.id} onChange={refresh} />}
+                      </>
+                    ) : lawyerish ? (
+                      <ConfirmDeadlineButton eventId={e.id} onChange={refresh} />
+                    ) : null
+                  )}
                   <Badge variant="quiet">{EVENT_LABELS[e.type]}</Badge>
                 </li>
               ))}
@@ -244,6 +268,94 @@ function ContactsTab({ matterId, parties, onChange, canEdit }: { matterId: strin
         </ul>
       )}
     </div>
+  );
+}
+
+function EthicalWallNote({ matterId }: { matterId: string }) {
+  const { data: walls } = useQuery({
+    queryKey: ["matter-walls", matterId],
+    queryFn: async () =>
+      (await supabase.from("matter_ethical_walls").select("id, reason, user:profiles!matter_ethical_walls_user_id_fkey(full_name)").eq("matter_id", matterId)).data ?? [],
+  });
+  if (!walls?.length) return null;
+  return (
+    <div className="rounded-lg border border-signal/40 bg-signal/10 p-5">
+      <h3 className="eyebrow mb-2 text-signal">Ethical wall</h3>
+      <ul className="space-y-1 text-sm">
+        {walls.map((w: any) => (
+          <li key={w.id}><strong>{w.user?.full_name ?? "—"}</strong> is screened from this matter. <span className="text-muted-foreground">{w.reason}</span></li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function ConfirmDeadlineButton({ eventId, onChange }: { eventId: string; onChange: () => void }) {
+  async function confirm() {
+    const { error } = await supabase.from("events").update({ confirmed_by: (await supabase.auth.getUser()).data.user?.id ?? null }).eq("id", eventId);
+    if (error) toast.error(error.message); else { toast.success("Deadline confirmed"); onChange(); }
+  }
+  return <Button size="sm" variant="outline" onClick={confirm}>Confirm</Button>;
+}
+
+function MarkFiledButton({ eventId, onChange }: { eventId: string; onChange: () => void }) {
+  async function file() {
+    const { error } = await supabase.from("events").update({ filed_at: new Date().toISOString() }).eq("id", eventId);
+    if (error) toast.error(error.message); else { toast.success("Marked as filed"); onChange(); }
+  }
+  return <Button size="sm" variant="outline" onClick={file}>Mark filed</Button>;
+}
+
+function AddDeadlineDialog({ matterId, me, onChange, trigger }: { matterId: string; me: any; onChange: () => void; trigger: React.ReactNode }) {
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [f, setF] = useState({ title: "", type: "filing_deadline" as EventType, date: "", time: "17:00", location: "" });
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    const lawyerish = isLawyerish(me?.role);
+    const { error } = await supabase.from("events").insert({
+      matter_id: matterId, title: f.title, type: f.type,
+      starts_at: new Date(`${f.date}T${f.time}`).toISOString(),
+      location: f.location || null,
+      owner_id: me?.user.id ?? null,
+      entered_by: me?.user.id ?? null,
+      confirmed_by: lawyerish ? me?.user.id ?? null : null,
+    });
+    setBusy(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success(lawyerish ? "Deadline added" : "Deadline added — a lawyer still needs to confirm it");
+    setOpen(false);
+    setF({ title: "", type: "filing_deadline", date: "", time: "17:00", location: "" });
+    onChange();
+  }
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      <DialogContent>
+        <DialogHeader><DialogTitle className="font-serif text-2xl font-normal">Add a court date or deadline</DialogTitle></DialogHeader>
+        <form onSubmit={save} className="grid gap-4 sm:grid-cols-2">
+          <Field label="Title" className="sm:col-span-2"><Input required value={f.title} onChange={(e) => setF((p) => ({ ...p, title: e.target.value }))} placeholder="e.g. File answering affidavit" /></Field>
+          <Field label="Type">
+            <Select value={f.type} onValueChange={(v) => setF((p) => ({ ...p, type: v as EventType }))}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="filing_deadline">Filing deadline</SelectItem>
+                <SelectItem value="court_date">Court date</SelectItem>
+                <SelectItem value="hearing">Hearing</SelectItem>
+              </SelectContent>
+            </Select>
+          </Field>
+          <Field label="Location"><Input value={f.location} onChange={(e) => setF((p) => ({ ...p, location: e.target.value }))} /></Field>
+          <Field label="Date"><Input type="date" required value={f.date} onChange={(e) => setF((p) => ({ ...p, date: e.target.value }))} /></Field>
+          <Field label="Time"><Input type="time" required value={f.time} onChange={(e) => setF((p) => ({ ...p, time: e.target.value }))} /></Field>
+          <div className="flex justify-end gap-2 sm:col-span-2">
+            <Button type="button" variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
+            <Button type="submit" disabled={busy}>{busy ? "Saving…" : "Add"}</Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
 

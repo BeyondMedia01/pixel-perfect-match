@@ -145,9 +145,13 @@ export type Database = {
       }
       events: {
         Row: {
+          confirmed_by: string | null
           created_at: string
           ends_at: string | null
+          entered_by: string | null
+          filed_at: string | null
           id: string
+          inquiry_id: string | null
           location: string | null
           matter_id: string | null
           owner_id: string | null
@@ -157,9 +161,13 @@ export type Database = {
           type: Database["public"]["Enums"]["event_type"]
         }
         Insert: {
+          confirmed_by?: string | null
           created_at?: string
           ends_at?: string | null
+          entered_by?: string | null
+          filed_at?: string | null
           id?: string
+          inquiry_id?: string | null
           location?: string | null
           matter_id?: string | null
           owner_id?: string | null
@@ -169,9 +177,13 @@ export type Database = {
           type?: Database["public"]["Enums"]["event_type"]
         }
         Update: {
+          confirmed_by?: string | null
           created_at?: string
           ends_at?: string | null
+          entered_by?: string | null
+          filed_at?: string | null
           id?: string
+          inquiry_id?: string | null
           location?: string | null
           matter_id?: string | null
           owner_id?: string | null
@@ -181,6 +193,13 @@ export type Database = {
           type?: Database["public"]["Enums"]["event_type"]
         }
         Relationships: [
+          {
+            foreignKeyName: "events_inquiry_id_fkey"
+            columns: ["inquiry_id"]
+            isOneToOne: false
+            referencedRelation: "inquiries"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "events_matter_id_fkey"
             columns: ["matter_id"]
@@ -196,6 +215,72 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      inquiries: {
+        Row: {
+          consult_event_id: string | null
+          consult_with: string | null
+          contact: string | null
+          created_at: string
+          decline_reason: string | null
+          id: string
+          logged_by: string | null
+          matter_id: string | null
+          name: string
+          opposing_party: string
+          practice_area: Database["public"]["Enums"]["practice_area"]
+          received_at: string
+          related_names: string | null
+          signoff_at: string | null
+          signoff_basis: string | null
+          signoff_by: string | null
+          signoff_note: string | null
+          status: Database["public"]["Enums"]["inquiry_status"]
+          summary: string | null
+        }
+        Insert: {
+          consult_event_id?: string | null
+          consult_with?: string | null
+          contact?: string | null
+          created_at?: string
+          decline_reason?: string | null
+          id?: string
+          logged_by?: string | null
+          matter_id?: string | null
+          name: string
+          opposing_party?: string
+          practice_area?: Database["public"]["Enums"]["practice_area"]
+          received_at?: string
+          related_names?: string | null
+          signoff_at?: string | null
+          signoff_basis?: string | null
+          signoff_by?: string | null
+          signoff_note?: string | null
+          status?: Database["public"]["Enums"]["inquiry_status"]
+          summary?: string | null
+        }
+        Update: {
+          consult_event_id?: string | null
+          consult_with?: string | null
+          contact?: string | null
+          created_at?: string
+          decline_reason?: string | null
+          id?: string
+          logged_by?: string | null
+          matter_id?: string | null
+          name?: string
+          opposing_party?: string
+          practice_area?: Database["public"]["Enums"]["practice_area"]
+          received_at?: string
+          related_names?: string | null
+          signoff_at?: string | null
+          signoff_basis?: string | null
+          signoff_by?: string | null
+          signoff_note?: string | null
+          status?: Database["public"]["Enums"]["inquiry_status"]
+          summary?: string | null
+        }
+        Relationships: []
       }
       matter_assignments: {
         Row: {
@@ -226,6 +311,48 @@ export type Database = {
           },
           {
             foreignKeyName: "matter_assignments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      matter_ethical_walls: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          matter_id: string
+          reason: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          matter_id: string
+          reason?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          matter_id?: string
+          reason?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "matter_ethical_walls_matter_id_fkey"
+            columns: ["matter_id"]
+            isOneToOne: false
+            referencedRelation: "matters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matter_ethical_walls_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -499,6 +626,7 @@ export type Database = {
           source: string
         }[]
       }
+      conflict_check_count: { Args: { q: string }; Returns: number }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -506,10 +634,19 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_frontdesk: { Args: { _user_id: string }; Returns: boolean }
       is_internal: { Args: { _user_id: string }; Returns: boolean }
+      is_lawyerish: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      app_role: "admin" | "lawyer" | "staff" | "client"
+      app_role:
+        | "admin"
+        | "lawyer"
+        | "staff"
+        | "client"
+        | "partner"
+        | "paralegal"
+        | "frontdesk"
       client_type: "individual" | "company"
       event_type:
         | "court_date"
@@ -517,6 +654,7 @@ export type Database = {
         | "meeting"
         | "filing_deadline"
         | "other"
+      inquiry_status: "new" | "consult" | "accepted" | "declined"
       matter_status: "intake" | "active" | "on_hold" | "closed"
       party_role:
         | "opposing_party"
@@ -661,7 +799,15 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "lawyer", "staff", "client"],
+      app_role: [
+        "admin",
+        "lawyer",
+        "staff",
+        "client",
+        "partner",
+        "paralegal",
+        "frontdesk",
+      ],
       client_type: ["individual", "company"],
       event_type: [
         "court_date",
@@ -670,6 +816,7 @@ export const Constants = {
         "filing_deadline",
         "other",
       ],
+      inquiry_status: ["new", "consult", "accepted", "declined"],
       matter_status: ["intake", "active", "on_hold", "closed"],
       party_role: [
         "opposing_party",
