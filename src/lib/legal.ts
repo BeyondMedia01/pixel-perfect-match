@@ -25,11 +25,29 @@ export const PRACTICE_AREAS: { value: PracticeArea; label: string }[] = [
 ];
 
 export const ROLE_LABELS: Record<AppRole, string> = {
-  admin: "Partner / Admin",
+  partner: "Partner",
   lawyer: "Lawyer",
-  staff: "Paralegal / Staff",
+  paralegal: "Paralegal",
+  frontdesk: "Front desk",
   client: "Client",
+  // legacy values kept for older records
+  admin: "Partner",
+  staff: "Paralegal",
 };
+
+export type InquiryStatus = Database["public"]["Enums"]["inquiry_status"];
+export const INQUIRY_STATUS_LABELS: Record<InquiryStatus, string> = {
+  new: "New",
+  consult: "Consultation booked",
+  accepted: "Accepted",
+  declined: "Declined",
+};
+
+/** Event types that count as deadlines (court dates and filings). */
+export const DEADLINE_TYPES: EventType[] = ["court_date", "filing_deadline"];
+export function isDeadlineType(t: EventType) {
+  return DEADLINE_TYPES.includes(t);
+}
 
 export const EVENT_LABELS: Record<EventType, string> = {
   court_date: "Court date",

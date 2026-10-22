@@ -6,7 +6,7 @@ import {
   Settings, Scale, Search, LogOut, Moon, Sun, Menu,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useMe } from "@/lib/auth";
+import { useMe, isPartner } from "@/lib/auth";
 import { ROLE_LABELS } from "@/lib/legal";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,12 +16,13 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 
 const NAV = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/inquiries", label: "Inquiries", icon: Inbox },
   { to: "/matters", label: "Matters", icon: Briefcase },
-  { to: "/clients", label: "Clients", icon: Users },
+  { to: "/clients", label: "Clients", icon: Users, hideFor: ["frontdesk"] },
   { to: "/calendar", label: "Calendar", icon: CalendarDays },
-  { to: "/tasks", label: "Tasks", icon: CheckSquare },
-  { to: "/documents", label: "Documents", icon: FileText },
-  { to: "/billing", label: "Billing", icon: Receipt, hideFor: ["staff"] },
+  { to: "/tasks", label: "Tasks", icon: CheckSquare, hideFor: ["frontdesk"] },
+  { to: "/documents", label: "Documents", icon: FileText, hideFor: ["frontdesk"] },
+  { to: "/billing", label: "Billing", icon: Receipt, hideFor: ["staff", "paralegal", "frontdesk"] },
   { to: "/reports", label: "Reports", icon: BarChart3, adminOnly: true },
   { to: "/settings", label: "Settings", icon: Settings },
 ] as const;
@@ -37,7 +38,7 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
       </div>
       <nav className="flex-1 space-y-0.5 px-3">
         {NAV.filter((n) => {
-          if ("adminOnly" in n && n.adminOnly) return role === "admin";
+          if ("adminOnly" in n && n.adminOnly) return isPartner(role);
           if ("hideFor" in n) return !(n.hideFor as readonly string[]).includes(role ?? "");
           return true;
         }).map((n) => (
