@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
-import { useMe } from "@/lib/auth";
+import { useMe, useProfiles } from "@/lib/auth";
 import { areaLabel, INQUIRY_STATUS_LABELS } from "@/lib/legal";
 import { PageHeader, EmptyState } from "@/components/app-shell";
 import { NewInquiryDialog } from "@/components/inquiry-form";
@@ -16,10 +16,21 @@ export const Route = createFileRoute("/_authenticated/inquiries/")({
 
 function InquiriesPage() {
   const { data: me } = useMe();
+  const { data: profiles } = useProfiles();
   const { data: inquiries } = useQuery({
     queryKey: ["inquiries"],
-    queryFn: async () =>
-      (await supabase.from("inquiries").select("*, consult:profiles!inquiries_consult_with_fkey(full_name), matter:matters(matter_number)").order("received_at", { ascending: false })).data ?? [],
+    queryFn: async () => {
+      const [inq, matters] = await Promise.all([
+        supabase.from("inquiries").select("*").order("received_at", { ascending: false }),
+        supabase.from("matters").select("id, matter_number"),
+      ]);
+      const numberByMatter = new Map((matters.data ?? []).map((m) => [m.id, m.matter_number]));
+      return (inq.data ?? []).map((i) => ({
+        ...i,
+        consultName: profiles?.find((p) => p.id === i.consult_with)?.full_name,
+        matterNumber: i.matter_id ? numberByMatter.get(i.matter_id) : undefined,
+      }));
+    },
   });
   const open = (inquiries ?? []).filter((i) => i.status === "new" || i.status === "consult");
   const done = (inquiries ?? []).filter((i) => i.status === "accepted" || i.status === "declined");
@@ -68,8 +79,8 @@ function InquiryTable({ title, rows }: { title: string; rows: any[] }) {
                 </span>
                 <span className="hidden text-xs text-muted-foreground md:block">
                   {formatDistanceToNow(new Date(i.received_at), { addSuffix: true })}
-                  {i.status === "consult" && i.consult?.full_name && ` · with ${i.consult.full_name}`}
-                  {i.matter?.matter_number && <span className="tabular"> · {i.matter.matter_number}</span>}
+                  {i.status === "consult" && i.consultName && ` · with ${i.consultName}`}
+                  {i.matterNumber && <span className="tabular"> · {i.matterNumber}</span>}
                 </span>
                 <Badge variant={i.status === "declined" ? "quiet" : i.status === "accepted" ? "closed" : i.status === "new" ? "intake" : "hold"}>
                   {INQUIRY_STATUS_LABELS[i.status as keyof typeof INQUIRY_STATUS_LABELS]}

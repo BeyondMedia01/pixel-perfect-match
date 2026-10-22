@@ -41,10 +41,10 @@ function InquiryPage() {
     queryKey: ["inquiry", id],
     queryFn: async () => {
       const [inq, history] = await Promise.all([
-        supabase.from("inquiries").select("*, consult:profiles!inquiries_consult_with_fkey(full_name), signed:profiles!inquiries_signoff_by_fkey(full_name), logger:profiles!inquiries_logged_by_fkey(full_name)").eq("id", id).maybeSingle(),
+        supabase.from("inquiries").select("*").eq("id", id).maybeSingle(),
         supabase.from("activity_log").select("*").eq("entity_type", "inquiry").eq("entity_id", id).order("created_at", { ascending: false }),
       ]);
-      return { inquiry: inq.data as (Inquiry & { consult?: { full_name: string } | null; signed?: { full_name: string } | null; logger?: { full_name: string } | null }) | null, history: history.data ?? [] };
+      return { inquiry: inq.data as Inquiry | null, history: history.data ?? [] };
     },
   });
 
@@ -58,7 +58,7 @@ function InquiryPage() {
   return (
     <div className="mx-auto max-w-5xl">
       <div className="mb-8">
-        <p className="eyebrow">Inquiry · {format(new Date(i.received_at), "d MMMM yyyy, HH:mm")} · logged by {i.logger?.full_name ?? "—"}</p>
+        <p className="eyebrow">Inquiry · {format(new Date(i.received_at), "d MMMM yyyy, HH:mm")} · logged by {profiles?.find((p) => p.id === i.logged_by)?.full_name ?? "—"}</p>
         <div className="mt-1 flex flex-wrap items-start justify-between gap-4">
           <h1 className="page-title">{i.name}</h1>
           <Badge variant={i.status === "declined" ? "quiet" : i.status === "accepted" ? "closed" : i.status === "new" ? "intake" : "hold"}>{INQUIRY_STATUS_LABELS[i.status]}</Badge>
@@ -73,7 +73,7 @@ function InquiryPage() {
             <Item k="Opposing party" v={i.opposing_party} />
             <Item k="Related names" v={i.related_names} />
             <div className="sm:col-span-2"><Item k="Summary" v={i.summary} /></div>
-            {i.status === "consult" && <Item k="Consultation with" v={i.consult?.full_name ?? "—"} />}
+            {i.status === "consult" && <Item k="Consultation with" v={profiles?.find((p) => p.id === i.consult_with)?.full_name ?? "—"} />}
             {i.status === "declined" && <div className="sm:col-span-2"><Item k="Decline reason" v={fd ? "Recorded (restricted)" : i.decline_reason} /></div>}
           </dl>
 
@@ -82,7 +82,7 @@ function InquiryPage() {
           {i.signoff_by && (
             <div className="rounded-lg border bg-card p-5 text-sm">
               <h3 className="eyebrow mb-2">Partner sign-off</h3>
-              <p>Approved by <strong>{i.signed?.full_name ?? "—"}</strong> on {i.signoff_at ? format(new Date(i.signoff_at), "d MMM yyyy") : "—"}.</p>
+              <p>Approved by <strong>{profiles?.find((p) => p.id === i.signoff_by)?.full_name ?? "—"}</strong> on {i.signoff_at ? format(new Date(i.signoff_at), "d MMM yyyy") : "—"}.</p>
               <p className="text-muted-foreground">Basis: {i.signoff_basis === "no_adverse" ? "No adverse match" : i.signoff_basis === "waiver" ? "Informed consent (waiver)" : "Other"} — {i.signoff_note}</p>
             </div>
           )}
@@ -139,7 +139,7 @@ function ConflictBox({ inquiry, frontdesk }: { inquiry: Inquiry; frontdesk: bool
   );
 }
 
-function NextSteps({ inquiry: i, me, profiles, onChange }: { inquiry: Inquiry & { consult?: { full_name: string } | null }; me: any; profiles: any[] | undefined; onChange: () => void }) {
+function NextSteps({ inquiry: i, me, profiles, onChange }: { inquiry: Inquiry; me: any; profiles: any[] | undefined; onChange: () => void }) {
   const navigate = useNavigate();
   const [dialog, setDialog] = useState<"consult" | "accept" | "decline" | "signoff" | null>(null);
   const [busy, setBusy] = useState(false);
