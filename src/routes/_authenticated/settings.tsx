@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useMe } from "@/lib/auth";
+import { useMe, isPartner } from "@/lib/auth";
 import { ROLE_LABELS, type AppRole } from "@/lib/legal";
 import { PageHeader } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
@@ -23,7 +23,8 @@ function Settings() {
     <div className="mx-auto max-w-4xl space-y-10">
       <PageHeader title="Settings" />
       <ProfileSection />
-      {me?.role === "admin" && <TeamSection currentUserId={me.user.id} />}
+      {isPartner(me?.role) && <TeamSection currentUserId={me!.user.id} />}
+      {isPartner(me?.role) && <EthicalWallsSection />}
     </div>
   );
 }
@@ -63,7 +64,7 @@ function ProfileSection() {
   );
 }
 
-const ROLES: AppRole[] = ["admin", "lawyer", "staff", "client"];
+const ROLES: AppRole[] = ["partner", "lawyer", "paralegal", "frontdesk", "client"];
 
 function TeamSection({ currentUserId }: { currentUserId: string }) {
   const qc = useQueryClient();
@@ -75,7 +76,7 @@ function TeamSection({ currentUserId }: { currentUserId: string }) {
         supabase.from("user_roles").select("user_id, role"),
       ]);
       const rolesByUser = new Map((r.data ?? []).map((x) => [x.user_id, x.role as AppRole]));
-      return (p.data ?? []).map((u) => ({ ...u, role: rolesByUser.get(u.id) ?? ("staff" as AppRole) }));
+      return (p.data ?? []).map((u) => ({ ...u, role: rolesByUser.get(u.id) ?? ("paralegal" as AppRole) }));
     },
   });
 
