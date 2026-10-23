@@ -50,17 +50,22 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
             key={n.to}
             to={n.to}
             onClick={onNavigate}
-            className="flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-            activeProps={{ className: "bg-sidebar-accent text-sidebar-accent-foreground" }}
+            className="relative flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground [&_svg]:text-sidebar-quiet"
+            activeProps={{ className: "bg-sidebar-accent text-sidebar-accent-foreground before:absolute before:bottom-2 before:left-0 before:top-2 before:w-0.5 before:rounded before:bg-sidebar-primary [&_svg]:text-sidebar-primary" }}
           >
-            <n.icon className="h-4 w-4" />
+            <n.icon className="h-[18px] w-[18px]" />
             {n.label}
           </Link>
         ))}
       </nav>
-      <div className="border-t border-sidebar-border p-4 text-xs">
-        <div className="truncate text-sm text-sidebar-accent-foreground">{me?.profile?.full_name ?? "…"}</div>
-        <div className="text-sidebar-primary">{role ? ROLE_LABELS[role] : ""}</div>
+      <div className="flex items-center gap-3 border-t border-sidebar-border p-4">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sidebar-primary/20 text-xs font-semibold text-sidebar-primary">
+          {(me?.profile?.full_name ?? "…").split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase()}
+        </span>
+        <div className="min-w-0 leading-tight">
+          <div className="truncate text-[13px] font-medium text-sidebar-accent-foreground">{me?.profile?.full_name ?? "…"}</div>
+          <div className="text-xs text-sidebar-quiet">{role ? ROLE_LABELS[role] : ""}</div>
+        </div>
       </div>
     </div>
   );
