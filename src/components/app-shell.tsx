@@ -32,9 +32,13 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const role = me?.role;
   return (
     <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
-      <div className="flex items-center gap-2 px-5 py-5 text-sidebar-accent-foreground">
-        <Scale className="h-5 w-5 text-sidebar-primary" />
-        <span className="font-serif text-xl">Docket</span>
+      <div className="px-5 pb-4 pt-6">
+        <div className="flex items-center gap-2.5">
+          <Scale className="h-[22px] w-[22px] text-sidebar-primary" />
+          <span className="font-serif text-[15px] font-semibold uppercase tracking-[0.08em] text-sidebar-accent-foreground">Docket</span>
+        </div>
+        <div className="ml-[31px] mt-3 h-px w-8 bg-sidebar-primary" />
+        <p className="ml-[31px] mt-2 text-xs text-sidebar-quiet">Case management</p>
       </div>
       <nav className="flex-1 space-y-0.5 px-3">
         {NAV.filter((n) => {
@@ -46,17 +50,22 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
             key={n.to}
             to={n.to}
             onClick={onNavigate}
-            className="flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-            activeProps={{ className: "bg-sidebar-accent text-sidebar-accent-foreground" }}
+            className="relative flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground [&_svg]:text-sidebar-quiet"
+            activeProps={{ className: "bg-sidebar-accent text-sidebar-accent-foreground before:absolute before:bottom-2 before:left-0 before:top-2 before:w-0.5 before:rounded before:bg-sidebar-primary [&_svg]:text-sidebar-primary" }}
           >
-            <n.icon className="h-4 w-4" />
+            <n.icon className="h-[18px] w-[18px]" />
             {n.label}
           </Link>
         ))}
       </nav>
-      <div className="border-t border-sidebar-border p-4 text-xs">
-        <div className="truncate text-sm text-sidebar-accent-foreground">{me?.profile?.full_name ?? "…"}</div>
-        <div className="text-sidebar-primary">{role ? ROLE_LABELS[role] : ""}</div>
+      <div className="flex items-center gap-3 border-t border-sidebar-border p-4">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sidebar-primary/20 text-xs font-semibold text-sidebar-primary">
+          {(me?.profile?.full_name ?? "…").split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase()}
+        </span>
+        <div className="min-w-0 leading-tight">
+          <div className="truncate text-[13px] font-medium text-sidebar-accent-foreground">{me?.profile?.full_name ?? "…"}</div>
+          <div className="text-xs text-sidebar-quiet">{role ? ROLE_LABELS[role] : ""}</div>
+        </div>
       </div>
     </div>
   );
@@ -152,7 +161,7 @@ export function AppShell() {
         <SheetContent side="left" className="w-64 border-0 p-0"><SidebarNav onNavigate={() => setMobile(false)} /></SheetContent>
       </Sheet>
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-10 flex h-14 items-center gap-3 border-b bg-background/90 px-4 backdrop-blur md:px-8">
+        <header className="sticky top-0 z-10 flex h-14 items-center gap-3 border-b bg-card px-4 md:px-8">
           <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setMobile(true)} aria-label="Menu"><Menu className="h-4 w-4" /></Button>
           <button onClick={() => setOpen(true)} className="flex h-9 w-full max-w-md items-center gap-2 rounded-md border bg-card px-3 text-sm text-muted-foreground hover:bg-accent">
             <Search className="h-4 w-4" /> Search…
