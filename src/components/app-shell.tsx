@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   LayoutDashboard, Briefcase, Users, CalendarDays, CheckSquare, FileText, Receipt, BarChart3, Inbox,
-  Settings, Scale, Search, LogOut, Moon, Sun, Menu,
+  Settings, Scale, Search, LogOut, Moon, Sun, Menu, Megaphone,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useMe, isPartner } from "@/lib/auth";
@@ -22,7 +22,8 @@ const NAV = [
   { to: "/calendar", label: "Calendar", icon: CalendarDays },
   { to: "/tasks", label: "Tasks", icon: CheckSquare, hideFor: ["frontdesk"] },
   { to: "/documents", label: "Documents", icon: FileText, hideFor: ["frontdesk"] },
-  { to: "/billing", label: "Billing", icon: Receipt, hideFor: ["staff", "paralegal", "frontdesk"] },
+  { to: "/billing", label: "Billing", icon: Receipt, hideFor: ["staff", "paralegal", "frontdesk", "client"] },
+  { to: "/announcements", label: "Announcements", icon: Megaphone, hideFor: ["frontdesk"] },
   { to: "/reports", label: "Reports", icon: BarChart3, adminOnly: true },
   { to: "/settings", label: "Settings", icon: Settings },
 ] as const;
