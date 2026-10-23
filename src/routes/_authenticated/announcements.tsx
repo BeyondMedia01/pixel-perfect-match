@@ -52,7 +52,7 @@ function NewAnnouncementDialog() {
       created_by: me.user.id,
     });
     setSaving(false);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Announcement posted");
     setOpen(false); setTitle(""); setBody(""); setMatterId("firm");
     qc.invalidateQueries({ queryKey: ["announcements"] });
