@@ -32,9 +32,13 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const role = me?.role;
   return (
     <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
-      <div className="flex items-center gap-2 px-5 py-5 text-sidebar-accent-foreground">
-        <Scale className="h-5 w-5 text-sidebar-primary" />
-        <span className="font-serif text-xl">Docket</span>
+      <div className="px-5 pb-4 pt-6">
+        <div className="flex items-center gap-2.5">
+          <Scale className="h-[22px] w-[22px] text-sidebar-primary" />
+          <span className="font-serif text-[15px] font-semibold uppercase tracking-[0.08em] text-sidebar-accent-foreground">Docket</span>
+        </div>
+        <div className="ml-[31px] mt-3 h-px w-8 bg-sidebar-primary" />
+        <p className="ml-[31px] mt-2 text-xs text-sidebar-quiet">Case management</p>
       </div>
       <nav className="flex-1 space-y-0.5 px-3">
         {NAV.filter((n) => {
