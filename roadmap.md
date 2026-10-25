@@ -20,3 +20,6 @@
 
 ## Later
 - [ ] Reports
+
+## Client communications
+- [ ] Email and automated WhatsApp delivery — awaiting recipient scope, email sending setup, and WhatsApp Business connection.
