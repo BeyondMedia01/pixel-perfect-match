@@ -22,4 +22,4 @@
 - [ ] Reports
 
 ## Client communications
-- [ ] Email and automated WhatsApp delivery — awaiting recipient scope, email sending setup, and WhatsApp Business connection.
+- [ ] Email and automated WhatsApp delivery for individual case updates and group announcements — email service connection declined; awaiting the user's sending-service choice and WhatsApp Business connection.
