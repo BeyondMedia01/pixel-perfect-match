@@ -8,6 +8,8 @@ import { PageHeader, EmptyState } from "@/components/app-shell";
 import { NewInquiryDialog } from "@/components/inquiry-form";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Copy, ExternalLink } from "lucide-react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/inquiries/")({
   head: () => ({ meta: [{ title: "Inquiries — Docket" }, { name: "description", content: "New-client intake: log every call and walk-in, run conflict checks, book consultations." }] }),
@@ -40,7 +42,10 @@ function InquiriesPage() {
       <PageHeader
         eyebrow="New-client intake"
         title="Inquiries"
-        actions={me && <NewInquiryDialog trigger={<Button>Log an inquiry</Button>} />}
+        actions={me && <div className="flex flex-wrap gap-2"><Button variant="outline" onClick={async () => {
+          try { await navigator.clipboard.writeText(`${window.location.origin}/intake`); toast.success("Intake link copied"); }
+          catch { toast.error("Could not copy the link. Open the intake form to copy its address."); }
+        }}><Copy className="mr-2 h-4 w-4" />Copy intake link</Button><Button asChild variant="outline" size="icon" title="Open intake form"><Link to="/intake" target="_blank" aria-label="Open intake form"><ExternalLink className="h-4 w-4" /></Link></Button><NewInquiryDialog trigger={<Button>Log an inquiry</Button>} /></div>}
       />
       <p className="-mt-4 mb-8 max-w-2xl text-sm text-muted-foreground">
         Every call and walk-in is logged and conflict-checked before anyone books a consultation or opens a matter.

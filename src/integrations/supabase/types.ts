@@ -92,6 +92,41 @@ export type Database = {
           },
         ]
       }
+      client_intake_submissions: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          inquiry_id: string
+          name: string
+          phone: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          inquiry_id: string
+          name: string
+          phone?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          inquiry_id?: string
+          name?: string
+          phone?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_intake_submissions_inquiry_id_fkey"
+            columns: ["inquiry_id"]
+            isOneToOne: false
+            referencedRelation: "inquiries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           address: string | null
@@ -321,6 +356,24 @@ export type Database = {
           signoff_note?: string | null
           status?: Database["public"]["Enums"]["inquiry_status"]
           summary?: string | null
+        }
+        Relationships: []
+      }
+      intake_rate_limits: {
+        Row: {
+          key: string
+          requests: number
+          window_start: string
+        }
+        Insert: {
+          key: string
+          requests?: number
+          window_start: string
+        }
+        Update: {
+          key?: string
+          requests?: number
+          window_start?: string
         }
         Relationships: []
       }
@@ -609,6 +662,24 @@ export type Database = {
           },
         ]
       }
+      notification_dismissals: {
+        Row: {
+          dismissed_at: string
+          notification_key: string
+          user_id: string
+        }
+        Insert: {
+          dismissed_at?: string
+          notification_key: string
+          user_id: string
+        }
+        Update: {
+          dismissed_at?: string
+          notification_key?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -834,6 +905,19 @@ export type Database = {
       is_internal: { Args: { _user_id: string }; Returns: boolean }
       is_lawyerish: { Args: { _user_id: string }; Returns: boolean }
       next_invoice_number: { Args: never; Returns: string }
+      submit_client_intake: {
+        Args: {
+          _area: Database["public"]["Enums"]["practice_area"]
+          _email: string
+          _ip_hash?: string
+          _name: string
+          _opposing: string
+          _phone: string
+          _related: string
+          _summary: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       app_role:

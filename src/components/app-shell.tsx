@@ -13,6 +13,7 @@ import {
   CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
 } from "@/components/ui/command";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { NotificationBell } from "@/components/notification-bell";
 
 const NAV = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -169,6 +170,7 @@ export function AppShell() {
             <kbd className="ml-auto rounded border bg-muted px-1.5 text-[10px]">⌘K</kbd>
           </button>
           <div className="ml-auto flex items-center gap-1">
+            <NotificationBell />
             <UserChip />
             <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="Toggle theme">{dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}</Button>
             <Button variant="ghost" size="icon" onClick={signOut} aria-label="Sign out"><LogOut className="h-4 w-4" /></Button>
