@@ -21,5 +21,10 @@
 ## Later
 - [ ] Reports
 
+## Notifications and public intake
+- [ ] Staff bell: new inquiries, own tasks due today, deadlines awaiting confirmation; dismiss and refresh.
+- [ ] Public client intake: validated, rate-limited submissions saved into Inquiries; shareable link.
+- [ ] Verify public submission and signed-in staff alerts end-to-end.
+
 ## Client communications
 - [ ] Email and automated WhatsApp delivery for individual case updates and group announcements — email service connection declined; awaiting the user's sending-service choice and WhatsApp Business connection.
