@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/_authenticated/calendar")({
-  head: () => ({ meta: [{ title: "Calendar — Docket" }, { name: "description", content: "Court dates, deadlines, hearings and consultations." }] }),
+  head: () => ({ meta: [{ title: "Calendar — Docket" }, { name: "description", content: "Court dates, deadlines, hearings and consultations." }, { property: "og:title", content: "Calendar — Docket" }, { property: "og:description", content: "Court dates, deadlines, hearings and consultations." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
   component: CalendarPage,
 });
 

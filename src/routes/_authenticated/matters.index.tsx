@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export const Route = createFileRoute("/_authenticated/matters/")({
-  head: () => ({ meta: [{ title: "Matters — Docket" }, { name: "description", content: "All matters you have access to." }] }),
+  head: () => ({ meta: [{ title: "Matters — Docket" }, { name: "description", content: "All matters you have access to." }, { property: "og:title", content: "Matters — Docket" }, { property: "og:description", content: "All matters you have access to." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
   component: Matters,
 });
 

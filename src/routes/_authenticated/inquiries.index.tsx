@@ -12,7 +12,7 @@ import { Copy, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/inquiries/")({
-  head: () => ({ meta: [{ title: "Inquiries — Docket" }, { name: "description", content: "New-client intake: log every call and walk-in, run conflict checks, book consultations." }] }),
+  head: () => ({ meta: [{ title: "Inquiries — Docket" }, { name: "description", content: "New-client intake: log every call and walk-in, run conflict checks, book consultations." }, { property: "og:title", content: "Inquiries — Docket" }, { property: "og:description", content: "New-client intake: log every call and walk-in, run conflict checks, book consultations." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
   component: InquiriesPage,
 });
 

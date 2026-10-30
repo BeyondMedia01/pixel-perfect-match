@@ -20,7 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 export const Route = createFileRoute("/_authenticated/inquiries/$id")({
-  head: () => ({ meta: [{ title: "Inquiry — Docket" }, { name: "description", content: "Inquiry details, conflict check and intake decision." }] }),
+  head: () => ({ meta: [{ title: "Inquiry — Docket" }, { name: "description", content: "Inquiry details, conflict check and intake decision." }, { property: "og:title", content: "Inquiry — Docket" }, { property: "og:description", content: "Inquiry details, conflict check and intake decision." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
   component: InquiryPage,
 });
 

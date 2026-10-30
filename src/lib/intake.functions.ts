@@ -13,7 +13,7 @@ export const submitIntake = createServerFn({ method: "POST" })
       _name: data.name, _email: data.email, _phone: data.phone,
       _area: data.practice_area, _opposing: data.opposing_party,
       _related: data.related_names, _summary: data.summary,
-      _ip_hash: ipHash ?? undefined,
+      ...(ipHash ? { _ip_hash: ipHash } : {}),
     });
     if (error) return { ok: false, error: error.message.includes("INTAKE_RATE_LIMIT") ? "Too many requests. Please try again in an hour." : "Your inquiry could not be saved. Please try again." };
     return { ok: true, error: null };
