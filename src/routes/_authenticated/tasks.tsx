@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 export const Route = createFileRoute("/_authenticated/tasks")({
-  head: () => ({ meta: [{ title: "Tasks — Docket" }, { name: "description", content: "Your tasks across all matters, grouped by due date." }] }),
+  head: () => ({ meta: [{ title: "Tasks — Docket" }, { name: "description", content: "Your tasks across all matters, grouped by due date." }, { property: "og:title", content: "Tasks — Docket" }, { property: "og:description", content: "Your tasks across all matters, grouped by due date." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
   component: TasksPage,
 });
 

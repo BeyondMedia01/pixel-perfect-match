@@ -16,7 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/_authenticated/announcements")({
-  head: () => ({ meta: [{ title: "Announcements — Docket" }, { name: "description", content: "Firm announcements and updates shared with clients." }] }),
+  head: () => ({ meta: [{ title: "Announcements — Docket" }, { name: "description", content: "Firm announcements and updates shared with clients." }, { property: "og:title", content: "Announcements — Docket" }, { property: "og:description", content: "Firm announcements and updates shared with clients." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
   component: AnnouncementsPage,
 });
 

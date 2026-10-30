@@ -19,7 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/_authenticated/matters/$id")({
-  head: () => ({ meta: [{ title: "Matter — Docket" }, { name: "description", content: "Matter details, timeline and team." }] }),
+  head: () => ({ meta: [{ title: "Matter — Docket" }, { name: "description", content: "Matter details, timeline and team." }, { property: "og:title", content: "Matter — Docket" }, { property: "og:description", content: "Matter details, timeline and team." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
   component: MatterPage,
 });
 

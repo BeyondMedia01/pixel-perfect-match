@@ -10,7 +10,7 @@ import { Plus } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export const Route = createFileRoute("/_authenticated/clients/")({
-  head: () => ({ meta: [{ title: "Clients — Docket" }, { name: "description", content: "Firm clients." }] }),
+  head: () => ({ meta: [{ title: "Clients — Docket" }, { name: "description", content: "Firm clients." }, { property: "og:title", content: "Clients — Docket" }, { property: "og:description", content: "Firm clients." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
   component: Clients,
 });
 
