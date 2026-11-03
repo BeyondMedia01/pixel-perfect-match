@@ -67,11 +67,11 @@ function AuthPage() {
 
   return (
     <div className="grid min-h-screen md:grid-cols-2">
-      <div className="hidden flex-col justify-between bg-[#022636] p-10 text-mist md:flex">
-        <div className="flex items-center gap-2 text-primary-foreground">
+      <div className="hidden flex-col justify-between bg-brand p-10 text-mist md:flex">
+        <div className="flex items-center gap-2 text-brand-foreground">
           <ActaLogo />
         </div>
-        <blockquote className="font-semibold tracking-tight text-2xl leading-snug text-primary-foreground">
+        <blockquote className="font-semibold tracking-tight text-2xl leading-snug text-brand-foreground">
           Every matter, on record.
         </blockquote>
         <p className="text-xs">Access is restricted to authorised personnel and clients.</p>
