@@ -4,7 +4,7 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import { Download, Trash2, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useMe, useProfiles } from "@/lib/auth";
+import { isPartner, useMe, useProfiles } from "@/lib/auth";
 import { EmptyState } from "./app-shell";
 import { Button } from "@/components/ui/button";
 
@@ -71,8 +71,9 @@ export function DocumentList({ matterId, clientId }: { matterId?: string; client
   }
 
   async function remove(doc: { id: string; file_path: string; name: string }) {
-    const { error } = await supabase.from("documents").delete().eq("id", doc.id);
+    const { data: deleted, error } = await supabase.from("documents").delete().eq("id", doc.id).select("id");
     if (error) { toast.error(error.message); return; }
+    if (!deleted?.length) { toast.error("Only the person who uploaded this file or a partner can delete it."); return; }
     await supabase.storage.from(BUCKET).remove([doc.file_path]);
     qc.invalidateQueries({ queryKey: ["documents"] });
     toast.success(`Deleted ${doc.name}`);
@@ -103,7 +104,9 @@ export function DocumentList({ matterId, clientId }: { matterId?: string; client
               <span className="hidden w-28 truncate text-xs text-muted-foreground md:block">{uploaderName(d.uploaded_by)}</span>
               <span className="tabular w-24 text-xs text-muted-foreground">{format(new Date(d.created_at), "d MMM yyyy")}</span>
               <Button variant="ghost" size="icon" aria-label={`Download ${d.name}`} onClick={() => download(d)}><Download className="h-4 w-4" /></Button>
-              <Button variant="ghost" size="icon" aria-label={`Delete ${d.name}`} onClick={() => remove(d)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+              {(d.uploaded_by === me?.user.id || isPartner(me?.role)) && (
+                <Button variant="ghost" size="icon" aria-label={`Delete ${d.name}`} onClick={() => remove(d)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+              )}
             </li>
           ))}
         </ul>

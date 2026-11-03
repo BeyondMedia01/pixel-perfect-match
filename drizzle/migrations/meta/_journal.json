@@ -71,6 +71,13 @@
       "when": 1793729681428,
       "tag": "0009_notification_preferences",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1793734392945,
+      "tag": "0010_approval_signup_document_walls",
+      "breakpoints": true
     }
   ]
 }

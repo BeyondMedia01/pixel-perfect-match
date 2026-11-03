@@ -30,7 +30,8 @@ export function useMe() {
             : roleList.includes("frontdesk")
               ? "frontdesk"
               : "client";
-      return { user: u.user, profile, role };
+      // No role yet = signed up but not approved by a partner.
+      return { user: u.user, profile, role, pending: roleList.length === 0 };
     },
   });
 }

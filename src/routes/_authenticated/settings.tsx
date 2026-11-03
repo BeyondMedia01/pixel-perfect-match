@@ -76,7 +76,10 @@ function TeamSection({ currentUserId }: { currentUserId: string }) {
         supabase.from("user_roles").select("user_id, role"),
       ]);
       const rolesByUser = new Map((r.data ?? []).map((x) => [x.user_id, x.role as AppRole]));
-      return (p.data ?? []).map((u) => ({ ...u, role: rolesByUser.get(u.id) ?? ("paralegal" as AppRole) }));
+      // People with no role are waiting for approval; list them first.
+      return (p.data ?? [])
+        .map((u) => ({ ...u, role: rolesByUser.get(u.id) ?? null }))
+        .sort((a, b) => Number(a.role !== null) - Number(b.role !== null));
     },
   });
 
@@ -92,7 +95,8 @@ function TeamSection({ currentUserId }: { currentUserId: string }) {
     <section className="rounded-lg border bg-card p-5">
       <h2 className="eyebrow mb-1">Team &amp; roles</h2>
       <p className="mb-4 text-sm text-muted-foreground">
-        Roles control what each person can see and do. To add someone new, ask them to sign up — they appear here automatically.
+        Roles control what each person can see and do. To add someone new, ask them to sign up. They appear here as
+        awaiting approval and can't see any firm data until you give them a role.
       </p>
       <ul className="divide-y">
         {data?.map((u) => {
@@ -103,11 +107,12 @@ function TeamSection({ currentUserId }: { currentUserId: string }) {
                 <div className="truncate font-medium">{u.full_name || u.email}{isSelf && <span className="text-muted-foreground"> (you)</span>}</div>
                 <div className="truncate text-xs text-muted-foreground">{u.email}</div>
               </div>
+              {!isSelf && !u.role && <Badge variant="hold">Awaiting approval</Badge>}
               {isSelf ? (
-                <Badge variant="quiet">{ROLE_LABELS[u.role]}</Badge>
+                <Badge variant="quiet">{u.role ? ROLE_LABELS[u.role] : "No role"}</Badge>
               ) : (
-                <Select value={u.role} onValueChange={(v) => setRole(u.id, v as AppRole)}>
-                  <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+                <Select value={u.role ?? undefined} onValueChange={(v) => setRole(u.id, v as AppRole)}>
+                  <SelectTrigger className="w-44" aria-label={`Role for ${u.full_name || u.email}`}><SelectValue placeholder="Choose a role" /></SelectTrigger>
                   <SelectContent>
                     {ROLES.map((r) => <SelectItem key={r} value={r}>{ROLE_LABELS[r]}</SelectItem>)}
                   </SelectContent>

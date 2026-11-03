@@ -129,6 +129,7 @@ export function AppShell() {
   const [dark, setDark] = useState(false);
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const { data: me } = useMe();
 
   useEffect(() => {
     setDark(document.documentElement.classList.contains("dark"));
@@ -152,6 +153,8 @@ export function AppShell() {
     await supabase.auth.signOut();
     navigate({ to: "/auth", replace: true });
   }
+
+  if (me?.pending) return <PendingApproval email={me.user.email} onSignOut={signOut} />;
 
   return (
     <div className="flex min-h-screen">
@@ -177,6 +180,24 @@ export function AppShell() {
       </div>
       <GlobalSearch open={open} setOpen={setOpen} />
     </div>
+  );
+}
+
+function PendingApproval({ email, onSignOut }: { email: string | undefined; onSignOut: () => void }) {
+  return (
+    <main className="flex min-h-screen items-center justify-center p-6">
+      <div className="w-full max-w-sm">
+        <ActaLogo />
+        <h1 className="page-title mt-8">Waiting for approval</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Your account{email ? <> (<strong>{email}</strong>)</> : null} has been created. A partner at your firm needs
+          to give you a role before you can see any matters or client records.
+        </p>
+        <Button variant="outline" className="mt-6" onClick={onSignOut}>
+          <LogOut className="mr-2 h-4 w-4" /> Sign out
+        </Button>
+      </div>
+    </main>
   );
 }
 

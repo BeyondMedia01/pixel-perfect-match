@@ -81,31 +81,3 @@ CREATE POLICY "partner updates invoice items" ON public.invoice_items FOR UPDATE
 CREATE POLICY "partner deletes invoice items" ON public.invoice_items FOR DELETE TO authenticated
   USING (public.has_role(auth.uid(),'admin'));
 
--- demo billing data on seeded matters
-INSERT INTO public.time_entries (matter_id, user_id, entry_date, description, hours, hourly_rate)
-SELECT m.id, p.id, current_date - 12, 'Initial consultation and case assessment', 1.5, 250
-FROM public.matters m, public.profiles p WHERE m.matter_number = '2026-0001' AND p.email = 'bechanibk@gmail.com';
-INSERT INTO public.time_entries (matter_id, user_id, entry_date, description, hours, hourly_rate)
-SELECT m.id, p.id, current_date - 9, 'Draft letter of demand to Sable Mining', 2.0, 250
-FROM public.matters m, public.profiles p WHERE m.matter_number = '2026-0001' AND p.email = 'bechanibk@gmail.com';
-INSERT INTO public.time_entries (matter_id, user_id, entry_date, description, hours, hourly_rate)
-SELECT m.id, p.id, current_date - 4, 'Review of supply contract and breach analysis', 3.5, 250
-FROM public.matters m, public.profiles p WHERE m.matter_number = '2026-0001' AND p.email = 'bechanibk@gmail.com';
-INSERT INTO public.time_entries (matter_id, user_id, entry_date, description, hours, hourly_rate, billable)
-SELECT m.id, p.id, current_date - 2, 'Internal team briefing (non-billable)', 1.0, 0, false
-FROM public.matters m, public.profiles p WHERE m.matter_number = '2026-0001' AND p.email = 'bechanibk@gmail.com';
-INSERT INTO public.time_entries (matter_id, user_id, entry_date, description, hours, hourly_rate)
-SELECT m.id, p.id, current_date - 6, 'Consultation on estate planning options', 2.0, 220
-FROM public.matters m, public.profiles p WHERE m.matter_number = '2026-0003' AND p.email = 'bechanibk@gmail.com';
-INSERT INTO public.time_entries (matter_id, user_id, entry_date, description, hours, hourly_rate)
-SELECT m.id, p.id, current_date - 3, 'Draft will and testament', 2.5, 220
-FROM public.matters m, public.profiles p WHERE m.matter_number = '2026-0003' AND p.email = 'bechanibk@gmail.com';
-
--- one paid invoice on 2026-0003 covering two earlier entries
-INSERT INTO public.invoices (invoice_number, matter_id, client_id, status, issue_date, due_date, created_by)
-SELECT 'INV-2026-0001', m.id, m.client_id, 'paid', current_date - 20, current_date - 20 + 30, p.id
-FROM public.matters m, public.profiles p WHERE m.matter_number = '2026-0003' AND p.email = 'bechanibk@gmail.com';
-INSERT INTO public.invoice_items (invoice_id, description, quantity, unit_price)
-SELECT i.id, 'Estate planning consultation', 2.0, 220 FROM public.invoices i WHERE i.invoice_number = 'INV-2026-0001';
-INSERT INTO public.invoice_items (invoice_id, description, quantity, unit_price)
-SELECT i.id, 'Drafting of will', 1.0, 440 FROM public.invoices i WHERE i.invoice_number = 'INV-2026-0001';

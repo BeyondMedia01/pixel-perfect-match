@@ -80,11 +80,11 @@ function AuthPage() {
         <div className="w-full max-w-sm">
           <h1 className="page-title">{mode === "signin" ? "Welcome back" : "Create your account"}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {mode === "signin" ? "Sign in to your firm workspace." : "The first account becomes the firm administrator."}
+            {mode === "signin" ? "Sign in to your firm workspace." : "A partner at your firm approves new accounts before they can see any firm data."}
           </p>
           {sent ? (
             <div className="mt-8 rounded-md border bg-card p-4 text-sm">
-              Check <strong>{email}</strong> for a confirmation link, then come back to sign in.
+              Check <strong>{email}</strong> for a confirmation link, then come back to sign in. You'll have access once a partner approves your account.
             </div>
           ) : (
             <>
