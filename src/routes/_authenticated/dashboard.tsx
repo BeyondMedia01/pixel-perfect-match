@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  head: () => ({ meta: [{ title: "Dashboard — Docket" }, { name: "description", content: "Today's court dates, deadlines and tasks." }, { property: "og:title", content: "Dashboard — Docket" }, { property: "og:description", content: "Today's court dates, deadlines and tasks." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
+  head: () => ({ meta: [{ title: "Dashboard — Acta" }, { name: "description", content: "Today's court dates, deadlines and tasks." }, { property: "og:title", content: "Dashboard — Acta" }, { property: "og:description", content: "Today's court dates, deadlines and tasks." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
   component: Dashboard,
 });
 

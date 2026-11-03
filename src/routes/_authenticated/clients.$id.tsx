@@ -7,7 +7,7 @@ import { DocumentList } from "@/components/document-list";
 import { Badge } from "@/components/ui/badge";
 
 export const Route = createFileRoute("/_authenticated/clients/$id")({
-  head: () => ({ meta: [{ title: "Client — Docket" }, { name: "description", content: "Client details and matters." }, { property: "og:title", content: "Client — Docket" }, { property: "og:description", content: "Client details and matters." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
+  head: () => ({ meta: [{ title: "Client — Acta" }, { name: "description", content: "Client details and matters." }, { property: "og:title", content: "Client — Acta" }, { property: "og:description", content: "Client details and matters." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
   component: ClientPage,
 });
 

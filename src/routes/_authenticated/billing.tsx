@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const Route = createFileRoute("/_authenticated/billing")({
-  head: () => ({ meta: [{ title: "Billing — Docket" }, { name: "description", content: "Time entries, invoices and outstanding balances." }, { property: "og:title", content: "Billing — Docket" }, { property: "og:description", content: "Time entries, invoices and outstanding balances." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
+  head: () => ({ meta: [{ title: "Billing — Acta" }, { name: "description", content: "Time entries, invoices and outstanding balances." }, { property: "og:title", content: "Billing — Acta" }, { property: "og:description", content: "Time entries, invoices and outstanding balances." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
   component: BillingPage,
 });
 
@@ -33,11 +33,11 @@ function BillingPage() {
       <PageHeader eyebrow="Money" title="Billing" />
       <div className="mb-8 grid gap-4 sm:grid-cols-3">
         <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-normal text-muted-foreground">Unbilled time</CardTitle></CardHeader>
-          <CardContent><p className="tabular font-serif text-2xl">{fmtMoney(unbilledValue)}</p><p className="text-xs text-muted-foreground">{fmtHours(unbilled.reduce((s, e) => s + e.hours, 0))} across {unbilled.length} entries</p></CardContent></Card>
+          <CardContent><p className="tabular text-2xl font-bold">{fmtMoney(unbilledValue)}</p><p className="text-xs text-muted-foreground">{fmtHours(unbilled.reduce((s, e) => s + e.hours, 0))} across {unbilled.length} entries</p></CardContent></Card>
         <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-normal text-muted-foreground">Outstanding (sent)</CardTitle></CardHeader>
-          <CardContent><p className="tabular font-serif text-2xl">{fmtMoney(outstanding)}</p><p className="text-xs text-muted-foreground">{inv.filter((i) => i.status === "sent").length} unpaid invoices</p></CardContent></Card>
+          <CardContent><p className="tabular text-2xl font-bold">{fmtMoney(outstanding)}</p><p className="text-xs text-muted-foreground">{inv.filter((i) => i.status === "sent").length} unpaid invoices</p></CardContent></Card>
         <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-normal text-muted-foreground">Paid this month</CardTitle></CardHeader>
-          <CardContent><p className="tabular font-serif text-2xl">{fmtMoney(paidThisMonth)}</p></CardContent></Card>
+          <CardContent><p className="tabular text-2xl font-bold">{fmtMoney(paidThisMonth)}</p></CardContent></Card>
       </div>
 
       <h2 className="mb-3 text-lg">Invoices</h2>

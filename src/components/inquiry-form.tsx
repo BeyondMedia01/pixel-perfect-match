@@ -54,7 +54,7 @@ export function NewInquiryDialog({ trigger }: { trigger: React.ReactNode }) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
-        <DialogHeader><DialogTitle className="font-serif text-2xl font-normal">Log a new inquiry</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle className="text-xl font-semibold">Log a new inquiry</DialogTitle></DialogHeader>
         <p className="text-sm text-muted-foreground">
           Log every call and walk-in before giving advice — the conflict check runs automatically.
         </p>
