@@ -944,6 +944,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_inquiry: {
+        Args: { _existing_client_id?: string; _inquiry_id: string; _title: string }
+        Returns: { client_id: string; matter_id: string }[]
+      }
       can_access_client: { Args: { _client_id: string }; Returns: boolean }
       can_access_matter: { Args: { _matter_id: string }; Returns: boolean }
       can_read_document_file: { Args: { _path: string }; Returns: boolean }
@@ -965,6 +969,10 @@ export type Database = {
         }[]
       }
       conflict_check_count: { Args: { q: string }; Returns: number }
+      create_invoice: {
+        Args: { _due_date: string; _entry_ids: string[]; _matter_id: string; _notes?: string | null }
+        Returns: { id: string; invoice_number: string }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -989,6 +997,10 @@ export type Database = {
         }[]
       }
       next_invoice_number: { Args: never; Returns: string }
+      set_user_role: {
+        Args: { _role: Database["public"]["Enums"]["app_role"]; _user_id: string }
+        Returns: undefined
+      }
       submit_client_intake: {
         Args: {
           _area: Database["public"]["Enums"]["practice_area"]

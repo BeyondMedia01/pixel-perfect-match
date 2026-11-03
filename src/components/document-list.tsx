@@ -6,6 +6,7 @@ import { Download, Trash2, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { isPartner, useMe, useProfiles } from "@/lib/auth";
 import { EmptyState } from "./app-shell";
+import { useConfirm } from "./confirm";
 import { Button } from "@/components/ui/button";
 
 const BUCKET = "matter-documents";
@@ -22,6 +23,7 @@ export function DocumentList({ matterId, clientId }: { matterId?: string; client
   const { data: me } = useMe();
   const { data: profiles } = useProfiles();
   const fileRef = useRef<HTMLInputElement>(null);
+  const confirm = useConfirm();
   const [busy, setBusy] = useState(false);
 
   const { data: docs } = useQuery({
@@ -71,6 +73,7 @@ export function DocumentList({ matterId, clientId }: { matterId?: string; client
   }
 
   async function remove(doc: { id: string; file_path: string; name: string }) {
+    if (!(await confirm({ title: `Delete ${doc.name}?`, body: "The file is removed for everyone at the firm. This can't be undone.", action: "Delete", destructive: true }))) return;
     const { data: deleted, error } = await supabase.from("documents").delete().eq("id", doc.id).select("id");
     if (error) { toast.error(error.message); return; }
     if (!deleted?.length) { toast.error("Only the person who uploaded this file or a partner can delete it."); return; }

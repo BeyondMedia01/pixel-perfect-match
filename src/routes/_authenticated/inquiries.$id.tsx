@@ -200,29 +200,33 @@ function NextSteps({ inquiry: i, me, profiles, onChange }: { inquiry: Inquiry; m
     setDialog(null); onChange();
   }
 
-  async function accept() {
+  // Clients you could open this matter for instead of creating a new one; name matches first.
+  const { data: directory } = useQuery({
+    queryKey: ["client-directory"],
+    enabled: dialog === "accept",
+    queryFn: async () => (await supabase.rpc("client_directory")).data ?? [],
+  });
+  const [clientChoice, setClientChoice] = useState("new");
+  const nameKey = i.name.trim().toLowerCase();
+  const sortedClients = [...(directory ?? [])].sort(
+    (a, b) => Number(b.name.toLowerCase().includes(nameKey)) - Number(a.name.toLowerCase().includes(nameKey)),
+  );
+  const likelyMatches = sortedClients.filter((c) => c.name.toLowerCase().includes(nameKey));
+
+  async function accept(e: React.FormEvent) {
+    e.preventDefault();
     if (adverse && !signedOff) { toast.error("Partner sign-off required before accepting"); return; }
     setBusy(true);
-    const { data: client, error: cErr } = await supabase.from("clients").insert({
-      name: i.name, type: "individual",
-      email: i.contact.includes("@") ? i.contact : null, phone: i.contact.includes("@") ? null : i.contact,
-      notes: `Created from inquiry received ${format(new Date(i.received_at), "d MMM yyyy")}.`,
-      created_by: me.user.id,
-    }).select("id").single();
-    if (cErr) { setBusy(false); toast.error(cErr.message); return; }
-    const { data: matter, error: mErr } = await supabase.from("matters").insert({
-      title: `${i.name}: new ${areaLabel(i.practice_area as never).toLowerCase()} matter`,
-      client_id: client.id, practice_area: i.practice_area as never, status: "intake",
-      opposing_party: i.opposing_party, responsible_lawyer_id: i.consult_with ?? me.user.id,
-      description: i.summary, created_by: me.user.id,
-    }).select("id").single();
-    if (mErr) { setBusy(false); toast.error(mErr.message); return; }
-    const { error: upErr } = await supabase.from("inquiries").update({ status: "accepted", matter_id: matter.id }).eq("id", i.id);
+    // One database transaction: client (new or existing), matter, inquiry status and activity log.
+    const { data, error } = await supabase.rpc("accept_inquiry", {
+      _inquiry_id: i.id,
+      _title: `${i.name}: new ${areaLabel(i.practice_area as never).toLowerCase()} matter`,
+      ...(clientChoice !== "new" ? { _existing_client_id: clientChoice } : {}),
+    });
     setBusy(false);
-    if (upErr) { toast.error(upErr.message); return; }
-    await logInquiryActivity(i.id, "accepted", "Client and matter created.", me.user.id);
+    if (error || !data?.[0]) { toast.error(error?.message ?? "Could not accept the inquiry"); return; }
     toast.success("Matter opened at intake");
-    navigate({ to: "/matters/$id", params: { id: matter.id } });
+    navigate({ to: "/matters/$id", params: { id: data[0].matter_id } });
   }
 
   if (i.status === "accepted") return (
@@ -250,7 +254,7 @@ function NextSteps({ inquiry: i, me, profiles, onChange }: { inquiry: Inquiry; m
         )}
         {!fd && (
           <>
-            <Button className="w-full" disabled={adverse && !signedOff} onClick={accept}>Accept &amp; open matter</Button>
+            <Button className="w-full" disabled={adverse && !signedOff} onClick={() => setDialog("accept")}>Accept &amp; open matter</Button>
             {adverse && !signedOff && (
               partner ? (
                 <Button className="w-full" variant="outline" onClick={() => setDialog("signoff")}>Record partner sign-off</Button>
@@ -306,6 +310,32 @@ function NextSteps({ inquiry: i, me, profiles, onChange }: { inquiry: Inquiry; m
             <div className="flex justify-end gap-2">
               <Button type="button" variant="ghost" onClick={() => setDialog(null)}>Cancel</Button>
               <Button type="submit" disabled={busy}>{busy ? "Saving…" : "Record sign-off"}</Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={dialog === "accept"} onOpenChange={(o) => setDialog(o ? "accept" : null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle className="text-xl font-semibold">Accept and open a matter</DialogTitle></DialogHeader>
+          <form onSubmit={accept} className="space-y-4">
+            <Field label="Client">
+              <Select value={clientChoice} onValueChange={setClientChoice}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="new">New client: {i.name}</SelectItem>
+                  {sortedClients.map((c) => <SelectItem key={c.id} value={c.id}>Existing: {c.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </Field>
+            {clientChoice === "new" && likelyMatches.length > 0 && (
+              <p className="text-xs text-signal">
+                {likelyMatches.length === 1 ? `${likelyMatches[0]!.name} is already a client.` : `${likelyMatches.length} existing clients have a similar name.`} Choose them above to avoid a duplicate record.
+              </p>
+            )}
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="ghost" onClick={() => setDialog(null)}>Cancel</Button>
+              <Button type="submit" disabled={busy}>{busy ? "Opening…" : "Open matter"}</Button>
             </div>
           </form>
         </DialogContent>

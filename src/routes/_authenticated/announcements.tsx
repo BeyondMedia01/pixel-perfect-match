@@ -7,6 +7,7 @@ import { Megaphone, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useMe, isInternalRole, isPartner } from "@/lib/auth";
 import { PageHeader, EmptyState } from "@/components/app-shell";
+import { useConfirm } from "@/components/confirm";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -97,6 +98,7 @@ function NewAnnouncementDialog() {
 function AnnouncementsPage() {
   const { data: me } = useMe();
   const qc = useQueryClient();
+  const confirm = useConfirm();
   const canCompose = isInternalRole(me?.role);
 
   const { data: items } = useQuery({
@@ -109,6 +111,7 @@ function AnnouncementsPage() {
   });
 
   async function remove(a: Announcement) {
+    if (!(await confirm({ title: "Remove this announcement?", body: `"${a.title}" will no longer be shown to anyone.`, action: "Remove", destructive: true }))) return;
     const { error } = await supabase.from("announcements").delete().eq("id", a.id);
     if (error) toast.error(error.message);
     else { toast.success("Announcement removed"); qc.invalidateQueries({ queryKey: ["announcements"] }); }

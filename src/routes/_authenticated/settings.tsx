@@ -3,9 +3,12 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useMe, isPartner } from "@/lib/auth";
+import { useMe, isPartner, isInternalRole, isFrontdesk } from "@/lib/auth";
+import { DEFAULT_NOTIFICATION_PREFS, type NotificationPrefs } from "@/lib/notifications";
+import { Switch } from "@/components/ui/switch";
 import { ROLE_LABELS, type AppRole } from "@/lib/legal";
 import { PageHeader } from "@/components/app-shell";
+import { useConfirm } from "@/components/confirm";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,6 +26,7 @@ function Settings() {
     <div className="mx-auto max-w-4xl space-y-10">
       <PageHeader title="Settings" />
       <ProfileSection />
+      {(isInternalRole(me?.role) || isFrontdesk(me?.role)) && <NotificationsSection />}
       {isPartner(me?.role) && <TeamSection currentUserId={me!.user.id} />}
       {isPartner(me?.role) && <EthicalWallsSection />}
     </div>
@@ -64,10 +68,64 @@ function ProfileSection() {
   );
 }
 
+const NOTIFICATION_OPTIONS: { key: keyof NotificationPrefs; label: string; detail: string; staffOnly?: boolean }[] = [
+  { key: "new_inquiries", label: "New inquiries", detail: "When a prospective client is logged or submits the intake form." },
+  { key: "tasks_due_today", label: "My tasks due today", detail: "Tasks assigned to you that are due today.", staffOnly: true },
+  { key: "unconfirmed_deadlines", label: "Deadlines awaiting confirmation", detail: "Court dates and filing deadlines a lawyer hasn't confirmed yet.", staffOnly: true },
+];
+
+function NotificationsSection() {
+  const { data: me } = useMe();
+  const qc = useQueryClient();
+  const staff = isInternalRole(me?.role);
+  const { data: prefs } = useQuery({
+    queryKey: ["notification-prefs", me?.user.id],
+    enabled: !!me,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("notification_preferences")
+        .select("new_inquiries, tasks_due_today, unconfirmed_deadlines")
+        .eq("user_id", me!.user.id)
+        .maybeSingle();
+      return data ?? DEFAULT_NOTIFICATION_PREFS;
+    },
+  });
+  if (!me || !prefs) return null;
+
+  async function toggle(key: keyof NotificationPrefs, value: boolean) {
+    const next = { ...prefs!, [key]: value };
+    qc.setQueryData(["notification-prefs", me!.user.id], next);
+    const { error } = await supabase
+      .from("notification_preferences")
+      .upsert({ user_id: me!.user.id, ...next, updated_at: new Date().toISOString() });
+    if (error) { toast.error(error.message); qc.invalidateQueries({ queryKey: ["notification-prefs"] }); return; }
+    qc.invalidateQueries({ queryKey: ["staff-notifications"] });
+  }
+
+  return (
+    <section className="rounded-lg border bg-card p-5">
+      <h2 className="eyebrow mb-1">Notifications</h2>
+      <p className="mb-4 text-sm text-muted-foreground">Choose what shows up in the bell at the top of the page.</p>
+      <ul className="divide-y">
+        {NOTIFICATION_OPTIONS.filter((o) => staff || !o.staffOnly).map((o) => (
+          <li key={o.key} className="flex items-center justify-between gap-4 py-3">
+            <div>
+              <label htmlFor={`notify-${o.key}`} className="text-sm font-medium">{o.label}</label>
+              <p className="text-xs text-muted-foreground">{o.detail}</p>
+            </div>
+            <Switch id={`notify-${o.key}`} checked={prefs[o.key]} onCheckedChange={(v) => toggle(o.key, v)} />
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 const ROLES: AppRole[] = ["partner", "lawyer", "paralegal", "frontdesk", "client"];
 
 function TeamSection({ currentUserId }: { currentUserId: string }) {
   const qc = useQueryClient();
+  const confirm = useConfirm();
   const { data } = useQuery({
     queryKey: ["team"],
     queryFn: async () => {
@@ -86,9 +144,17 @@ function TeamSection({ currentUserId }: { currentUserId: string }) {
   });
 
   async function setRole(userId: string, role: AppRole) {
-    const { error: delErr } = await supabase.from("user_roles").delete().eq("user_id", userId);
-    if (delErr) { toast.error(delErr.message); return; }
-    const { error } = await supabase.from("user_roles").insert({ user_id: userId, role });
+    const person = data?.find((u) => u.id === userId);
+    const name = person?.full_name || person?.email || "this person";
+    const ok = await confirm({
+      title: person?.role ? `Change ${name}'s role to ${ROLE_LABELS[role]}?` : `Approve ${name} as ${ROLE_LABELS[role]}?`,
+      body: person?.role
+        ? `They'll lose ${ROLE_LABELS[person.role]} access straight away.`
+        : "They'll be able to see firm data allowed for that role as soon as you confirm.",
+      action: person?.role ? "Change role" : "Approve",
+    });
+    if (!ok) return;
+    const { error } = await supabase.rpc("set_user_role", { _user_id: userId, _role: role });
     if (error) toast.error(error.message);
     else { toast.success("Role updated"); qc.invalidateQueries({ queryKey: ["team"] }); }
   }
@@ -153,6 +219,7 @@ function TeamSection({ currentUserId }: { currentUserId: string }) {
 
 function EthicalWallsSection() {
   const qc = useQueryClient();
+  const confirm = useConfirm();
   const [matterId, setMatterId] = useState("");
   const [userId, setUserId] = useState("");
   const [reason, setReason] = useState("");
@@ -176,6 +243,7 @@ function EthicalWallsSection() {
     else { toast.success("Ethical wall added"); setReason(""); setMatterId(""); setUserId(""); qc.invalidateQueries({ queryKey: ["ethical-walls"] }); }
   }
   async function remove(id: string) {
+    if (!(await confirm({ title: "Remove this ethical wall?", body: "The screened person will regain access to the matter if they're otherwise assigned to it.", action: "Remove wall", destructive: true }))) return;
     const { error } = await supabase.from("matter_ethical_walls").delete().eq("id", id);
     if (error) toast.error(error.message);
     else { toast.success("Ethical wall removed"); qc.invalidateQueries({ queryKey: ["ethical-walls"] }); }

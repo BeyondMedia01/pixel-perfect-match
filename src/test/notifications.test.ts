@@ -22,4 +22,14 @@ describe("staff notification rules", () => {
   it("uses the firm's Harare date at UTC day boundaries", () => {
     expect(firmToday(new Date("2026-10-25T23:00:00Z"))).toBe("2026-10-26");
   });
+  it("leaves out alert types the person has switched off", () => {
+    const all = {
+      ...base,
+      inquiries: [{ id: "new", name: "Prospect", status: "new" as const }],
+      tasks: [{ id: "today", title: "File", assignee_id: "staff-1", due_date: "2026-10-26", status: "todo" as const }],
+      events: [{ id: "pending", title: "File", type: "filing_deadline" as const, confirmed_by: null, filed_at: null, matter_id: "matter" }],
+    };
+    expect(buildStaffAlerts(all).map((a) => a.kind)).toEqual(["inquiry", "task", "deadline"]);
+    expect(buildStaffAlerts({ ...all, prefs: { new_inquiries: false, tasks_due_today: true, unconfirmed_deadlines: false } }).map((a) => a.kind)).toEqual(["task"]);
+  });
 });

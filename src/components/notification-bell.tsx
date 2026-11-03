@@ -5,7 +5,7 @@ import { Bell, Inbox, CheckSquare, CalendarClock, Check, RefreshCw } from "lucid
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useMe, isInternalRole, isFrontdesk } from "@/lib/auth";
-import { buildStaffAlerts, firmToday, type StaffAlert } from "@/lib/notifications";
+import { buildStaffAlerts, firmToday, DEFAULT_NOTIFICATION_PREFS, type StaffAlert } from "@/lib/notifications";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
@@ -21,15 +21,16 @@ export function NotificationBell() {
     queryFn: async () => {
       if (!me) return [];
       const internal = isInternalRole(me.role);
-      const [inq, tasks, events, dismissed] = await Promise.all([
+      const [inq, tasks, events, dismissed, prefs] = await Promise.all([
         supabase.from("inquiries").select("id,name,status").eq("status", "new").order("received_at", { ascending: false }),
         internal ? supabase.from("tasks").select("id,title,assignee_id,due_date,status").eq("assignee_id", me.user.id).eq("due_date", today).neq("status", "done") : Promise.resolve({ data: [], error: null }),
         internal ? supabase.from("events").select("id,title,type,confirmed_by,filed_at,matter_id").in("type", ["court_date", "filing_deadline"]).is("confirmed_by", null).is("filed_at", null).order("starts_at") : Promise.resolve({ data: [], error: null }),
         supabase.from("notification_dismissals").select("notification_key").eq("user_id", me.user.id),
+        supabase.from("notification_preferences").select("new_inquiries,tasks_due_today,unconfirmed_deadlines").eq("user_id", me.user.id).maybeSingle(),
       ]);
-      for (const result of [inq, tasks, events, dismissed]) if (result.error) throw result.error;
+      for (const result of [inq, tasks, events, dismissed, prefs]) if (result.error) throw result.error;
       const hidden = new Set(dismissed.data?.map(d => d.notification_key));
-      return buildStaffAlerts({ inquiries: inq.data ?? [], tasks: tasks.data ?? [], events: events.data ?? [], userId: me.user.id, today }).filter(a => !hidden.has(a.key));
+      return buildStaffAlerts({ inquiries: inq.data ?? [], tasks: tasks.data ?? [], events: events.data ?? [], userId: me.user.id, today, prefs: prefs.data ?? DEFAULT_NOTIFICATION_PREFS }).filter(a => !hidden.has(a.key));
     },
   });
   const dismiss = useMutation({

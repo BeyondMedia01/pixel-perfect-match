@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMe, useProfiles, isPartner } from "@/lib/auth";
 import { INVOICE_STATUS_LABELS, INVOICE_STATUS_VARIANTS, fmtMoney, fmtHours, type InvoiceStatus } from "@/lib/billing";
 import { EmptyState } from "@/components/app-shell";
+import { useConfirm } from "@/components/confirm";
 import { Field } from "@/components/matter-form";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -152,26 +153,16 @@ function NewInvoiceDialog({ matterId, clientId, entries, onDone }: { matterId: s
   async function submit() {
     if (chosen.length === 0) { toast.error("Select at least one time entry."); return; }
     setBusy(true);
-    const { data: u } = await supabase.auth.getUser();
-    const { data: num, error: nErr } = await supabase.rpc("next_invoice_number");
-    if (nErr) { setBusy(false); toast.error(nErr.message); return; }
-    const { data: inv, error } = await supabase.from("invoices").insert({
-      invoice_number: num as string,
-      matter_id: matterId,
-      client_id: clientId,
-      status: "draft",
-      due_date: due,
-      notes: notes.trim() || null,
-      created_by: u.user!.id,
-    }).select("id").single();
-    if (error || !inv) { setBusy(false); toast.error(error?.message ?? "Could not create invoice"); return; }
-    const { error: iErr } = await supabase.from("invoice_items").insert(
-      chosen.map((e) => ({ invoice_id: inv.id, description: `${e.description} (${format(new Date(e.entry_date), "d MMM yyyy")})`, quantity: e.hours, unit_price: e.hourly_rate })),
-    );
-    const { error: tErr } = await supabase.from("time_entries").update({ invoice_id: inv.id }).in("id", chosen.map((e) => e.id));
+    // One database transaction: number, invoice, line items and linking the time entries.
+    const { data, error } = await supabase.rpc("create_invoice", {
+      _matter_id: matterId,
+      _entry_ids: chosen.map((e) => e.id),
+      _due_date: due,
+      _notes: notes.trim() || null,
+    });
     setBusy(false);
-    if (iErr || tErr) { toast.error((iErr ?? tErr)!.message); return; }
-    toast.success(`Invoice ${num} created as draft`);
+    if (error || !data?.[0]) { toast.error(error?.message ?? "Could not create invoice"); return; }
+    toast.success(`Invoice ${data[0].invoice_number} created as draft`);
     setOpen(false);
     onDone();
   }
@@ -230,6 +221,7 @@ export function MatterBilling({ matterId, clientId }: { matterId: string; client
   const { data: entries } = useTimeEntries(matterId);
   const { data: invoices } = useInvoices(matterId);
   const partner = isPartner(me?.role);
+  const confirm = useConfirm();
   const refresh = () => { qc.invalidateQueries({ queryKey: ["time-entries"] }); qc.invalidateQueries({ queryKey: ["invoices"] }); };
 
   const nameOf = (uid: string) => profiles?.find((p) => p.id === uid)?.full_name ?? "—";
@@ -263,6 +255,7 @@ export function MatterBilling({ matterId, clientId }: { matterId: string; client
               <span className="tabular w-24 text-right">{e.billable ? fmtMoney(e.hours * e.hourly_rate) : "—"}</span>
               {(e.user_id === me?.user.id || partner) && !e.invoice_id && (
                 <Button variant="ghost" size="icon" aria-label="Delete entry" onClick={async () => {
+                  if (!(await confirm({ title: "Delete this time entry?", body: `${e.description} · ${fmtHours(e.hours)}`, action: "Delete", destructive: true }))) return;
                   const { error } = await supabase.from("time_entries").delete().eq("id", e.id);
                   if (error) toast.error(error.message); else refresh();
                 }}><Trash2 className="h-4 w-4 text-muted-foreground" /></Button>

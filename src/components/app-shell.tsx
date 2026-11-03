@@ -15,6 +15,7 @@ import {
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { ActaLogo } from "@/components/acta-logo";
 import { NotificationBell } from "@/components/notification-bell";
+import { ConfirmProvider } from "@/components/confirm";
 
 const NAV = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -157,6 +158,7 @@ export function AppShell() {
   if (me?.pending) return <PendingApproval email={me.user.email} onSignOut={signOut} />;
 
   return (
+    <ConfirmProvider>
     <div className="flex min-h-screen">
       <aside className="sticky top-0 hidden h-screen w-60 shrink-0 md:block"><SidebarNav /></aside>
       <Sheet open={mobile} onOpenChange={setMobile}>
@@ -180,6 +182,7 @@ export function AppShell() {
       </div>
       <GlobalSearch open={open} setOpen={setOpen} />
     </div>
+    </ConfirmProvider>
   );
 }
 

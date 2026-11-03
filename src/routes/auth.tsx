@@ -7,7 +7,6 @@ import { lovable } from "@/integrations/lovable/index";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -67,7 +66,7 @@ function AuthPage() {
 
   return (
     <div className="grid min-h-screen md:grid-cols-2">
-      <div className="hidden flex-col justify-between bg-brand p-10 text-mist md:flex">
+      <aside className="hidden flex-col justify-between bg-brand p-10 text-mist md:flex">
         <div className="flex items-center gap-2 text-brand-foreground">
           <ActaLogo />
         </div>
@@ -75,8 +74,8 @@ function AuthPage() {
           Every matter, on record.
         </blockquote>
         <p className="text-xs">Access is restricted to authorised personnel and clients.</p>
-      </div>
-      <div className="flex items-center justify-center p-6">
+      </aside>
+      <main className="flex items-center justify-center p-6">
         <div className="w-full max-w-sm">
           <h1 className="page-title">{mode === "signin" ? "Welcome back" : "Create your account"}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -88,12 +87,20 @@ function AuthPage() {
             </div>
           ) : (
             <>
-              <Tabs value={mode} onValueChange={(v) => setMode(v as typeof mode)} className="mt-6">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="signin">Sign in</TabsTrigger>
-                  <TabsTrigger value="signup">Sign up</TabsTrigger>
-                </TabsList>
-              </Tabs>
+              {/* A two-button switch rather than tabs: there is one form, so there are no tab panels to point at. */}
+              <div role="group" aria-label="Sign in or create an account" className="mt-6 grid w-full grid-cols-2 rounded-md bg-muted p-1">
+                {(["signin", "signup"] as const).map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    aria-pressed={mode === m}
+                    onClick={() => setMode(m)}
+                    className={`rounded-sm px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${mode === m ? "bg-background text-foreground shadow" : "text-muted-foreground hover:text-foreground"}`}
+                  >
+                    {m === "signin" ? "Sign in" : "Sign up"}
+                  </button>
+                ))}
+              </div>
               <form onSubmit={submit} className="mt-6 space-y-4">
                 {mode === "signup" && (
                   <div className="space-y-1.5">
@@ -122,7 +129,7 @@ function AuthPage() {
             </>
           )}
         </div>
-      </div>
+      </main>
     </div>
   );
 }

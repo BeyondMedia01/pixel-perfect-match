@@ -116,6 +116,11 @@ select tests.ok('client picker lists other clients by name but hides walled ones
   exists (select 1 from client_directory() where id = :'C4') and not exists (select 1 from client_directory() where id = :'C10'));
 reset role;
 
+select tests.login(:'L'); set role authenticated;
+insert into clients(name) values ('Lawyer Created Client') returning id as lawyer_client \gset
+select tests.ok('non-partner can create a client and read it back', exists (select 1 from clients where id = :'lawyer_client'));
+reset role;
+
 select tests.login(:'A'); set role authenticated;
 select tests.ok('assigned paralegal sees that matter''s client', exists (select 1 from clients where id = :'C4'));
 reset role;
@@ -186,6 +191,70 @@ select tests.ok('walled lawyer cannot read the walled matter''s announcements',
   not exists (select 1 from announcements where matter_id = :'M11'));
 select tests.ok('walled lawyer cannot post to the walled matter',
   tests.refused(format($$insert into announcements(matter_id, title, body, created_by) values (%L, 't', 'b', %L)$$, :'M11', :'L')));
+reset role;
+
+-- ===== One-step invoices =====
+select tests.login(:'L'); set role authenticated;
+select tests.ok('only partners can create invoices',
+  tests.refused(format($$select * from create_invoice(%L, array(select id from time_entries where description = 'Draft A'), current_date + 30)$$, :'M1')));
+reset role;
+
+select tests.login(:'P'); set role authenticated;
+select count(*) as invoices_before from invoices \gset
+select tests.ok('invoice cannot include time that is already invoiced, and nothing is half-created',
+  tests.refused(format($$select * from create_invoice(%L, array(select id from time_entries where description in ('Draft A', 'Draft B')), current_date + 30)$$, :'M1'))
+  and (select count(*) from invoices) = :invoices_before);
+select invoice_number as first_number from create_invoice(:'M1', array(select id from time_entries where description = 'Draft A'), current_date + 30) \gset
+select tests.ok('invoice links its time and copies it into line items',
+  (select count(*) from invoice_items ii join invoices v on v.id = ii.invoice_id where v.invoice_number = :'first_number') = 1
+  and (select v.invoice_number from time_entries t join invoices v on v.id = t.invoice_id where t.description = 'Draft A') = :'first_number');
+reset role;
+insert into time_entries(matter_id, user_id, description, hours) values (:'M1', :'L', 'Draft C', 1);
+select tests.login(:'P'); set role authenticated;
+select invoice_number as second_number from create_invoice(:'M1', array(select id from time_entries where description = 'Draft C'), current_date + 30) \gset
+select tests.ok('invoice numbers count up within the year and never repeat',
+  split_part(:'second_number', '-', 3)::int = split_part(:'first_number', '-', 3)::int + 1
+  and split_part(:'first_number', '-', 2) = extract(year from current_date)::text
+  and (select count(*) from invoices where invoice_number in (:'first_number', :'second_number')) = 2);
+reset role;
+
+-- ===== One-step inquiry acceptance =====
+insert into inquiries(id, name, contact, practice_area, summary) values
+  ('44444444-0000-0000-0000-000000000001', 'Mhondoro Holdings', 'legal@mhondoro.test · +263 77 000 0000', 'corporate', 'New supply dispute'),
+  ('44444444-0000-0000-0000-000000000002', 'Fresh Prospect', 'fresh@prospect.test · +263 77 111 1111', 'family', 'Custody question');
+
+select tests.login(:'F'); set role authenticated;
+select tests.ok('front desk cannot accept inquiries',
+  tests.refused($$select * from accept_inquiry('44444444-0000-0000-0000-000000000002', 'x')$$));
+reset role;
+
+select tests.login(:'L'); set role authenticated;
+select tests.ok('cannot attach an inquiry to a client you are walled from, and nothing changes',
+  tests.refused(format($$select * from accept_inquiry('44444444-0000-0000-0000-000000000001', 'x', %L)$$, :'C10'))
+  and (select status from inquiries where id = '44444444-0000-0000-0000-000000000001') = 'new');
+select matter_id as reused_matter from accept_inquiry('44444444-0000-0000-0000-000000000001', 'Mhondoro supply dispute', :'C1') \gset
+select matter_id as new_matter, client_id as new_client from accept_inquiry('44444444-0000-0000-0000-000000000002', 'Fresh Prospect: new family matter') \gset
+select tests.ok('accepting can reuse an existing client',
+  (select client_id from matters where id = :'reused_matter') = :'C1'::uuid);
+select tests.ok('accepting a new prospect creates the client with email and phone split out',
+  (select email = 'fresh@prospect.test' and phone = '+263 77 111 1111' from clients where id = :'new_client'));
+select tests.ok('the inquiry is marked accepted and linked to the matter',
+  (select status = 'accepted' and matter_id = :'new_matter'::uuid from inquiries where id = '44444444-0000-0000-0000-000000000002'));
+select tests.ok('an inquiry cannot be accepted twice',
+  tests.refused($$select * from accept_inquiry('44444444-0000-0000-0000-000000000002', 'again')$$));
+reset role;
+select tests.ok('acceptance is logged in the lawyer''s name',
+  (select count(*) from activity_log where entity_id = '44444444-0000-0000-0000-000000000002' and action = 'accepted' and user_id = :'L') = 1);
+
+-- ===== One-step role changes =====
+select tests.login(:'L'); set role authenticated;
+select tests.ok('only partners can change roles', tests.refused(format($$select set_user_role(%L, 'partner')$$, :'L')));
+reset role;
+select tests.login(:'P'); set role authenticated;
+select tests.ok('partner cannot change their own role', tests.refused(format($$select set_user_role(%L, 'lawyer')$$, :'P')));
+select set_user_role(:'X', 'paralegal');
+select tests.ok('partner approves a pending account in one step',
+  (select array_agg(role::text) from user_roles where user_id = :'X') = array['paralegal']);
 reset role;
 
 -- ===== Storage =====
