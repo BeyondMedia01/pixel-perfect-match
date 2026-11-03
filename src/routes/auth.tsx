@@ -66,7 +66,7 @@ function AuthPage() {
 
   return (
     <div className="grid min-h-screen md:grid-cols-2">
-      <aside className="hidden flex-col justify-between bg-brand p-10 text-mist md:flex">
+      <aside className="hidden flex-col justify-between bg-brand-gradient p-10 text-mist md:flex">
         <div className="flex items-center gap-2 text-brand-foreground">
           <ActaLogo />
         </div>

@@ -175,6 +175,16 @@
   letter-spacing: -0.02em;
 }
 
+/* Brand gradient from the styleguide: Night holds the left, Steel Blue rises
+   from the right, with a touch of Mist in the far corner. Fixed hexes so it
+   looks the same in light and dark mode. */
+@utility bg-brand-gradient {
+  background-color: #01141b;
+  background-image:
+    radial-gradient(120% 100% at 100% 100%, rgba(192, 201, 206, 0.55) 0%, rgba(47, 124, 170, 0.75) 22%, rgba(47, 124, 170, 0) 62%),
+    linear-gradient(100deg, #01141b 0%, #022636 42%, #1c5476 74%, #2f7caa 100%);
+}
+
 /* Ledger line: a 2px Night rule under a title */
 @utility ledger {
   border-bottom: 2px solid var(--night);
