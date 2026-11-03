@@ -20,7 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 export const Route = createFileRoute("/_authenticated/inquiries/$id")({
-  head: () => ({ meta: [{ title: "Inquiry — Docket" }, { name: "description", content: "Inquiry details, conflict check and intake decision." }, { property: "og:title", content: "Inquiry — Docket" }, { property: "og:description", content: "Inquiry details, conflict check and intake decision." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
+  head: () => ({ meta: [{ title: "Inquiry — Acta" }, { name: "description", content: "Inquiry details, conflict check and intake decision." }, { property: "og:title", content: "Inquiry — Acta" }, { property: "og:description", content: "Inquiry details, conflict check and intake decision." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
   component: InquiryPage,
 });
 
@@ -266,7 +266,7 @@ function NextSteps({ inquiry: i, me, profiles, onChange }: { inquiry: Inquiry; m
 
       <Dialog open={dialog === "consult"} onOpenChange={(o) => setDialog(o ? "consult" : null)}>
         <DialogContent>
-          <DialogHeader><DialogTitle className="font-serif text-2xl font-normal">Book a consultation</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle className="text-xl font-semibold">Book a consultation</DialogTitle></DialogHeader>
           <form onSubmit={bookConsult} className="grid gap-4 sm:grid-cols-2">
             <Field label="Consulting lawyer" className="sm:col-span-2">
               <Select value={consultWith} onValueChange={setConsultWith}>
@@ -287,7 +287,7 @@ function NextSteps({ inquiry: i, me, profiles, onChange }: { inquiry: Inquiry; m
 
       <Dialog open={dialog === "signoff"} onOpenChange={(o) => setDialog(o ? "signoff" : null)}>
         <DialogContent>
-          <DialogHeader><DialogTitle className="font-serif text-2xl font-normal">Partner sign-off</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle className="text-xl font-semibold">Partner sign-off</DialogTitle></DialogHeader>
           <p className="text-sm text-muted-foreground">Record why this inquiry may be accepted despite a possible conflict.</p>
           <form onSubmit={signoff} className="space-y-4">
             <RadioGroup value={basis} onValueChange={setBasis} className="space-y-2">
@@ -313,7 +313,7 @@ function NextSteps({ inquiry: i, me, profiles, onChange }: { inquiry: Inquiry; m
 
       <Dialog open={dialog === "decline"} onOpenChange={(o) => setDialog(o ? "decline" : null)}>
         <DialogContent>
-          <DialogHeader><DialogTitle className="font-serif text-2xl font-normal">Decline this inquiry</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle className="text-xl font-semibold">Decline this inquiry</DialogTitle></DialogHeader>
           <p className="text-sm text-muted-foreground">Declined inquiries stay on record so future conflict checks keep catching them.</p>
           <form onSubmit={decline} className="space-y-4">
             <Field label="Reason"><Textarea required value={declineReason} onChange={(e) => setDeclineReason(e.target.value)} placeholder="e.g. Conflicted out — firm acts for the other side." /></Field>

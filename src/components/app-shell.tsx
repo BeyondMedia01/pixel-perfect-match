@@ -37,7 +37,7 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
       <div className="px-5 pb-4 pt-6">
         <div className="flex items-center gap-2.5">
           <Scale className="h-[22px] w-[22px] text-sidebar-primary" />
-          <span className="font-serif text-[15px] font-semibold uppercase tracking-[0.08em] text-sidebar-accent-foreground">Docket</span>
+          <span className="font-serif text-[15px] font-semibold uppercase tracking-[0.08em] text-sidebar-accent-foreground">Acta</span>
         </div>
         <div className="ml-[31px] mt-3 h-px w-8 bg-sidebar-primary" />
         <p className="ml-[31px] mt-2 text-xs text-sidebar-quiet">Case management</p>

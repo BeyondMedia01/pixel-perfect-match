@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 
 export const Route = createFileRoute("/_authenticated/settings")({
-  head: () => ({ meta: [{ title: "Settings — Docket" }, { name: "description", content: "Your profile and firm settings." }, { property: "og:title", content: "Settings — Docket" }, { property: "og:description", content: "Your profile and firm settings." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
+  head: () => ({ meta: [{ title: "Settings — Acta" }, { name: "description", content: "Your profile and firm settings." }, { property: "og:title", content: "Settings — Acta" }, { property: "og:description", content: "Your profile and firm settings." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
   component: Settings,
 });
 

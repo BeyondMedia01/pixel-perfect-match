@@ -12,10 +12,10 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Sign in — Docket" },
-      { name: "description", content: "Sign in to your Docket workspace." },
-      { property: "og:title", content: "Sign in — Docket" },
-      { property: "og:description", content: "Sign in to your Docket workspace." },
+      { title: "Sign in — Acta" },
+      { name: "description", content: "Sign in to your Acta workspace." },
+      { property: "og:title", content: "Sign in — Acta" },
+      { property: "og:description", content: "Sign in to your Acta workspace." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -70,7 +70,7 @@ function AuthPage() {
       <div className="hidden flex-col justify-between bg-sidebar p-10 text-sidebar-foreground md:flex">
         <div className="flex items-center gap-2 text-sidebar-accent-foreground">
           <Scale className="h-5 w-5 text-sidebar-primary" />
-          <span className="font-serif text-xl">Docket</span>
+          <span className="font-serif text-xl">Acta</span>
         </div>
         <blockquote className="font-serif text-2xl leading-snug text-sidebar-accent-foreground">
           “Justice delayed is justice denied.” Keep every deadline in view.

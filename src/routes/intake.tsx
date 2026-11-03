@@ -14,9 +14,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 export const Route = createFileRoute("/intake")({
   head: () => ({ meta: [
-    { title: "Client inquiry — Docket" },
+    { title: "Client inquiry — Acta" },
     { name: "description", content: "Submit a confidential new-client inquiry for review by the legal team." },
-    { property: "og:title", content: "Client inquiry — Docket" },
+    { property: "og:title", content: "Client inquiry — Acta" },
     { property: "og:description", content: "Submit a confidential new-client inquiry for review by the legal team." },
     { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" },
   ] }), component: IntakePage,
@@ -51,7 +51,7 @@ function IntakePage() {
     return <div className="space-y-2"><Label htmlFor={name}>{label}</Label><Input id={name} name={name} {...options} aria-invalid={!!errors[name]} aria-describedby={errors[name] ? `${name}-error` : undefined} />{errors[name] && <p id={`${name}-error`} className="text-xs text-destructive">{errors[name]}</p>}</div>;
   }
   return <div className="min-h-screen bg-background">
-    <header className="border-b bg-sidebar text-sidebar-foreground"><div className="mx-auto flex max-w-3xl items-center gap-3 px-6 py-5"><Scale className="h-6 w-6 text-sidebar-primary" /><span className="font-serif text-2xl text-sidebar-accent-foreground">Docket</span><span className="ml-auto text-xs text-sidebar-quiet">Client inquiries</span></div></header>
+    <header className="border-b bg-sidebar text-sidebar-foreground"><div className="mx-auto flex max-w-3xl items-center gap-3 px-6 py-5"><Scale className="h-6 w-6 text-sidebar-primary" /><span className="font-serif text-2xl text-sidebar-accent-foreground">Acta</span><span className="ml-auto text-xs text-sidebar-quiet">Client inquiries</span></div></header>
     <main className="mx-auto max-w-3xl px-6 py-10 sm:py-14">
       {done ? <section className="py-12 text-center"><CheckCircle2 className="mx-auto h-12 w-12 text-success" /><h1 className="mt-6 text-4xl">Inquiry received</h1><p className="mx-auto mt-4 max-w-md text-muted-foreground">Your details have been sent to the legal team for review. Submitting this inquiry does not create a lawyer-client relationship.</p></section> : <>
         <p className="eyebrow">New-client intake</p><h1 className="mt-2 text-4xl">Tell us about your matter</h1><p className="mt-4 max-w-xl text-sm leading-6 text-muted-foreground">Share your contact details and a brief outline. Please do not include identity numbers, passwords, or sensitive documents at this stage.</p>

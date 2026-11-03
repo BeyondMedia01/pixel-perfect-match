@@ -7,9 +7,9 @@ import { Button } from "@/components/ui/button";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Docket — Case management for law firms" },
+      { title: "Acta — Case management for law firms" },
       { name: "description", content: "A calm, secure workspace for matters, clients, deadlines and billing." },
-      { property: "og:title", content: "Docket — Case management for law firms" },
+      { property: "og:title", content: "Acta — Case management for law firms" },
       { property: "og:description", content: "A calm, secure workspace for matters, clients, deadlines and billing." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -31,7 +31,7 @@ function Index() {
       <header className="flex items-center justify-between px-8 py-6">
         <div className="flex items-center gap-2 text-sidebar-accent-foreground">
           <Scale className="h-5 w-5 text-sidebar-primary" />
-          <span className="font-serif text-xl">Docket</span>
+          <span className="font-serif text-xl">Acta</span>
         </div>
         <Button asChild variant="secondary" size="sm">
           <Link to="/auth">Sign in</Link>

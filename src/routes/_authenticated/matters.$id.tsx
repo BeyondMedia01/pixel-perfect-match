@@ -19,7 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/_authenticated/matters/$id")({
-  head: () => ({ meta: [{ title: "Matter — Docket" }, { name: "description", content: "Matter details, timeline and team." }, { property: "og:title", content: "Matter — Docket" }, { property: "og:description", content: "Matter details, timeline and team." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
+  head: () => ({ meta: [{ title: "Matter — Acta" }, { name: "description", content: "Matter details, timeline and team." }, { property: "og:title", content: "Matter — Acta" }, { property: "og:description", content: "Matter details, timeline and team." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
   component: MatterPage,
 });
 
@@ -334,7 +334,7 @@ function AddDeadlineDialog({ matterId, me, onChange, trigger }: { matterId: stri
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent>
-        <DialogHeader><DialogTitle className="font-serif text-2xl font-normal">Add a court date or deadline</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle className="text-xl font-semibold">Add a court date or deadline</DialogTitle></DialogHeader>
         <form onSubmit={save} className="grid gap-4 sm:grid-cols-2">
           <Field label="Title" className="sm:col-span-2"><Input required value={f.title} onChange={(e) => setF((p) => ({ ...p, title: e.target.value }))} placeholder="e.g. File answering affidavit" /></Field>
           <Field label="Type">

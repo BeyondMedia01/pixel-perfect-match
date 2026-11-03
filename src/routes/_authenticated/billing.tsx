@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const Route = createFileRoute("/_authenticated/billing")({
-  head: () => ({ meta: [{ title: "Billing — Docket" }, { name: "description", content: "Time entries, invoices and outstanding balances." }, { property: "og:title", content: "Billing — Docket" }, { property: "og:description", content: "Time entries, invoices and outstanding balances." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
+  head: () => ({ meta: [{ title: "Billing — Acta" }, { name: "description", content: "Time entries, invoices and outstanding balances." }, { property: "og:title", content: "Billing — Acta" }, { property: "og:description", content: "Time entries, invoices and outstanding balances." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
   component: BillingPage,
 });
 

@@ -48,7 +48,7 @@ export function NewMatterDialog({ defaultClientId, trigger }: { defaultClientId?
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
-        <DialogHeader><DialogTitle className="font-serif text-2xl font-normal">Open a new matter</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle className="text-xl font-semibold">Open a new matter</DialogTitle></DialogHeader>
         <form onSubmit={save} className="grid gap-4 sm:grid-cols-2">
           <Field label="Title" className="sm:col-span-2"><Input required value={f.title} onChange={(e) => set("title")(e.target.value)} /></Field>
           <Field label="Client">
