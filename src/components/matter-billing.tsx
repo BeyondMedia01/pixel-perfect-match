@@ -81,9 +81,19 @@ function LogTimeDialog({ matterId, onDone }: { matterId: string; onDone: () => v
   const [description, setDescription] = useState("");
   const [date, setDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [hours, setHours] = useState("");
-  const [rate, setRate] = useState("250");
+  const [rate, setRate] = useState<string | null>(null);
   const [billable, setBillable] = useState(true);
   const [busy, setBusy] = useState(false);
+  const { data: me } = useMe();
+  const partner = isPartner(me?.role);
+  // Rates are set by partners in Settings; the database applies them to everyone else's entries.
+  const { data: myRate } = useQuery({
+    queryKey: ["my-rate", me?.user.id],
+    enabled: !!me,
+    queryFn: async () =>
+      (await supabase.from("billing_rates").select("hourly_rate").eq("user_id", me!.user.id).maybeSingle()).data?.hourly_rate ?? 250,
+  });
+  const rateValue = partner ? (rate ?? String(myRate ?? 250)) : String(myRate ?? 250);
 
   async function submit() {
     const h = parseFloat(hours);
@@ -96,7 +106,7 @@ function LogTimeDialog({ matterId, onDone }: { matterId: string; onDone: () => v
       entry_date: date,
       description: description.trim(),
       hours: h,
-      hourly_rate: parseFloat(rate) || 0,
+      hourly_rate: parseFloat(rateValue) || 0,
       billable,
     });
     setBusy(false);
@@ -117,8 +127,9 @@ function LogTimeDialog({ matterId, onDone }: { matterId: string; onDone: () => v
           <div className="grid grid-cols-3 gap-3">
             <Field label="Date"><Input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></Field>
             <Field label="Hours"><Input type="number" min="0.1" step="0.1" value={hours} onChange={(e) => setHours(e.target.value)} placeholder="1.5" /></Field>
-            <Field label="Rate / hour"><Input type="number" min="0" step="10" value={rate} onChange={(e) => setRate(e.target.value)} disabled={!billable} /></Field>
+            <Field label="Rate / hour"><Input type="number" min="0" step="10" value={rateValue} onChange={(e) => setRate(e.target.value)} disabled={!billable || !partner} /></Field>
           </div>
+          {!partner && <p className="text-xs text-muted-foreground">Your hourly rate is set by a partner.</p>}
           <label className="flex items-center gap-2 text-sm">
             <Checkbox checked={billable} onCheckedChange={(v) => setBillable(v === true)} /> Billable to the client
           </label>

@@ -19,7 +19,8 @@ export function NewMatterDialog({ defaultClientId, trigger }: { defaultClientId?
   const { data: profiles } = useProfiles();
   const { data: clients } = useQuery({
     queryKey: ["clients-min"],
-    queryFn: async () => (await supabase.from("clients").select("id, name").order("name")).data ?? [],
+    // Names of every client you aren't walled from, so a matter can be opened for any of them.
+    queryFn: async () => (await supabase.rpc("client_directory")).data ?? [],
   });
   const qc = useQueryClient();
   const navigate = useNavigate();

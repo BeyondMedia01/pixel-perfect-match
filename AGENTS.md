@@ -11,3 +11,4 @@
 
 - Public client intake uses a validated server function and a service-role-only atomic database function for durable rate limiting and linked submission/inquiry inserts; anonymous visitors must never access inquiry records.
 - Staff notifications derive from RLS-scoped live inquiries, own due-today tasks, and unconfirmed deadlines; per-user read receipts persist separately so workflow records are not changed by reading alerts.
+- Access rules (RLS) are covered by `drizzle/tests/rls.test.sql`. After changing a policy or migration, run `npm run test:rls` against a local Postgres (see the script header) and add a check for the new rule.

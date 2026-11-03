@@ -22,11 +22,13 @@ function InquiriesPage() {
   const { data: inquiries } = useQuery({
     queryKey: ["inquiries"],
     queryFn: async () => {
-      const [inq, matters] = await Promise.all([
+      const [inq, matters, directory] = await Promise.all([
         supabase.from("inquiries").select("*").order("received_at", { ascending: false }),
         supabase.from("matters").select("id, matter_number"),
+        // Front desk can't read matter records; for them the directory has the numbers (it's empty for everyone else).
+        supabase.rpc("matter_directory"),
       ]);
-      const numberByMatter = new Map((matters.data ?? []).map((m) => [m.id, m.matter_number]));
+      const numberByMatter = new Map([...(matters.data ?? []), ...(directory.data ?? [])].map((m) => [m.id, m.matter_number]));
       return (inq.data ?? []).map((i) => ({
         ...i,
         consultName: profiles?.find((p) => p.id === i.consult_with)?.full_name,

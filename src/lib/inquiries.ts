@@ -65,12 +65,13 @@ export function isAdverse(hit: ConflictHit, prospectName: string, opposingNames:
   return false;
 }
 
-export async function logInquiryActivity(inquiryId: string, action: string, summary: string, userId?: string) {
-  await supabase.from("activity_log").insert({
+/** The database stamps the entry with the signed-in user; it can't be written in anyone else's name. */
+export async function logInquiryActivity(inquiryId: string, action: string, summary: string, _userId?: string) {
+  const { error } = await supabase.from("activity_log").insert({
     entity_type: "inquiry",
     entity_id: inquiryId,
     action,
     summary,
-    user_id: userId ?? null,
   });
+  if (error) console.error("[activity_log]", error.message);
 }

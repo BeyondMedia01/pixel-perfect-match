@@ -71,14 +71,16 @@ function TeamSection({ currentUserId }: { currentUserId: string }) {
   const { data } = useQuery({
     queryKey: ["team"],
     queryFn: async () => {
-      const [p, r] = await Promise.all([
+      const [p, r, rates] = await Promise.all([
         supabase.from("profiles").select("id, full_name, email, created_at").order("full_name"),
         supabase.from("user_roles").select("user_id, role"),
+        supabase.from("billing_rates").select("user_id, hourly_rate"),
       ]);
       const rolesByUser = new Map((r.data ?? []).map((x) => [x.user_id, x.role as AppRole]));
+      const rateByUser = new Map((rates.data ?? []).map((x) => [x.user_id, x.hourly_rate]));
       // People with no role are waiting for approval; list them first.
       return (p.data ?? [])
-        .map((u) => ({ ...u, role: rolesByUser.get(u.id) ?? null }))
+        .map((u) => ({ ...u, role: rolesByUser.get(u.id) ?? null, rate: rateByUser.get(u.id) ?? null }))
         .sort((a, b) => Number(a.role !== null) - Number(b.role !== null));
     },
   });
@@ -91,12 +93,21 @@ function TeamSection({ currentUserId }: { currentUserId: string }) {
     else { toast.success("Role updated"); qc.invalidateQueries({ queryKey: ["team"] }); }
   }
 
+  async function setRate(userId: string, value: string) {
+    const hourly_rate = parseFloat(value);
+    if (!(hourly_rate >= 0)) { toast.error("Enter a rate of 0 or more"); return; }
+    const { error } = await supabase.from("billing_rates").upsert({ user_id: userId, hourly_rate, updated_at: new Date().toISOString() });
+    if (error) toast.error(error.message);
+    else { toast.success("Rate saved"); qc.invalidateQueries({ queryKey: ["team"] }); }
+  }
+
   return (
     <section className="rounded-lg border bg-card p-5">
       <h2 className="eyebrow mb-1">Team &amp; roles</h2>
       <p className="mb-4 text-sm text-muted-foreground">
         Roles control what each person can see and do. To add someone new, ask them to sign up. They appear here as
-        awaiting approval and can't see any firm data until you give them a role.
+        awaiting approval and can't see any firm data until you give them a role. Hourly rates apply to new time
+        entries; anyone without a rate is billed at 250 per hour.
       </p>
       <ul className="divide-y">
         {data?.map((u) => {
@@ -108,6 +119,20 @@ function TeamSection({ currentUserId }: { currentUserId: string }) {
                 <div className="truncate text-xs text-muted-foreground">{u.email}</div>
               </div>
               {!isSelf && !u.role && <Badge variant="hold">Awaiting approval</Badge>}
+              {u.role && u.role !== "frontdesk" && u.role !== "client" && (
+                <Input
+                  key={`${u.id}-${u.rate ?? "none"}`}
+                  type="number"
+                  min="0"
+                  step="10"
+                  defaultValue={u.rate ?? ""}
+                  placeholder="250"
+                  aria-label={`Hourly rate for ${u.full_name || u.email}`}
+                  title="Hourly rate"
+                  className="w-24"
+                  onBlur={(e) => { if (e.target.value !== String(u.rate ?? "")) setRate(u.id, e.target.value); }}
+                />
+              )}
               {isSelf ? (
                 <Badge variant="quiet">{u.role ? ROLE_LABELS[u.role] : "No role"}</Badge>
               ) : (

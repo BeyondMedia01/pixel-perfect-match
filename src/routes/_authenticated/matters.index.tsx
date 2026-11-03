@@ -4,7 +4,8 @@ import { useMemo, useState } from "react";
 import { format } from "date-fns";
 import { ArrowUpDown, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { MATTER_STATUSES, PRACTICE_AREAS, areaLabel, statusMeta } from "@/lib/legal";
+import { useMe, isFrontdesk } from "@/lib/auth";
+import { MATTER_STATUSES, PRACTICE_AREAS, areaLabel, statusMeta, type MatterStatus, type PracticeArea } from "@/lib/legal";
 import { PageHeader, EmptyState } from "@/components/app-shell";
 import { NewMatterDialog } from "@/components/matter-form";
 import { Badge } from "@/components/ui/badge";
@@ -20,17 +21,43 @@ export const Route = createFileRoute("/_authenticated/matters/")({
 
 type SortKey = "matter_number" | "title" | "date_opened";
 
+type MatterRow = {
+  id: string;
+  matter_number: string | null;
+  title: string;
+  status: MatterStatus;
+  practice_area: PracticeArea;
+  date_opened: string;
+  opposing_party: string | null;
+  clients: { id: string | null; name: string } | null;
+  lawyer: { full_name: string } | null;
+};
+
 function Matters() {
   const [q, setQ] = useState("");
   const [status, setStatus] = useState("all");
   const [area, setArea] = useState("all");
   const [sort, setSort] = useState<{ k: SortKey; asc: boolean }>({ k: "matter_number", asc: false });
+  const { data: me } = useMe();
+  const fd = isFrontdesk(me?.role);
   const { data, isLoading } = useQuery({
-    queryKey: ["matters"],
+    queryKey: ["matters", fd],
+    enabled: !!me,
     queryFn: async () => {
+      if (fd) {
+        // Front desk gets names and stages only, from the directory.
+        const { data, error } = await supabase.rpc("matter_directory");
+        if (error) throw error;
+        return data.map((m): MatterRow => ({
+          id: m.id, matter_number: m.matter_number, title: m.title, status: m.status,
+          practice_area: m.practice_area, date_opened: m.date_opened, opposing_party: null,
+          clients: { id: null, name: m.client_name },
+          lawyer: m.lawyer_name ? { full_name: m.lawyer_name } : null,
+        }));
+      }
       const { data, error } = await supabase.from("matters").select("*, clients(id, name), lawyer:profiles!matters_responsible_lawyer_id_fkey(full_name)");
       if (error) throw error;
-      return data;
+      return data as MatterRow[];
     },
   });
   const rows = useMemo(() => {
@@ -44,7 +71,7 @@ function Matters() {
 
   return (
     <div className="mx-auto max-w-7xl">
-      <PageHeader eyebrow="Practice" title="Matters" actions={<NewMatterDialog trigger={<Button><Plus className="mr-1 h-4 w-4" />New matter</Button>} />} />
+      <PageHeader eyebrow="Practice" title="Matters" actions={fd ? undefined : <NewMatterDialog trigger={<Button><Plus className="mr-1 h-4 w-4" />New matter</Button>} />} />
       <div className="mb-4 flex flex-wrap gap-2">
         <Input placeholder="Filter by title, number, client…" value={q} onChange={(e) => setQ(e.target.value)} className="max-w-xs" />
         <Select value={status} onValueChange={setStatus}>
@@ -76,8 +103,12 @@ function Matters() {
               {rows.map((m) => (
                 <TableRow key={m.id}>
                   <TableCell className="tabular py-3.5 text-xs">{m.matter_number}</TableCell>
-                  <TableCell className="max-w-sm"><Link to="/matters/$id" params={{ id: m.id }} className="font-medium hover:underline">{m.title}</Link></TableCell>
-                  <TableCell>{m.clients && <Link to="/clients/$id" params={{ id: m.clients.id }} className="hover:underline">{m.clients.name}</Link>}</TableCell>
+                  <TableCell className="max-w-sm">
+                    {fd ? <span className="font-medium">{m.title}</span> : <Link to="/matters/$id" params={{ id: m.id }} className="font-medium hover:underline">{m.title}</Link>}
+                  </TableCell>
+                  <TableCell>
+                    {m.clients?.id ? <Link to="/clients/$id" params={{ id: m.clients.id }} className="hover:underline">{m.clients.name}</Link> : m.clients?.name}
+                  </TableCell>
                   <TableCell className="text-muted-foreground">{areaLabel(m.practice_area)}</TableCell>
                   <TableCell className="text-muted-foreground">{m.lawyer?.full_name ?? "—"}</TableCell>
                   <TableCell><Badge variant={statusMeta(m.status).variant}>{statusMeta(m.status).label}</Badge></TableCell>
