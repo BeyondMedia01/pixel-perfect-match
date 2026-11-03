@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { Plus } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,6 +17,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TaskDialog, type EditableTask } from "@/components/task-dialog";
+import { AddToCalendar } from "@/components/add-to-calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/_authenticated/matters/$id")({
@@ -49,6 +52,7 @@ function MatterPage() {
   const [note, setNote] = useState("");
   const [addUser, setAddUser] = useState("");
   const refresh = () => qc.invalidateQueries({ queryKey: ["matter", id] });
+  const [taskDialog, setTaskDialog] = useState<EditableTask | "new" | null>(null);
 
   if (isLoading) return <p className="text-sm text-muted-foreground">Loading…</p>;
   if (!data?.matter) return <EmptyState title="Matter not found" body="It may have been deleted, or you may not be assigned to it." action={<Button asChild variant="outline"><Link to="/matters">Back to matters</Link></Button>} />;
@@ -162,11 +166,16 @@ function MatterPage() {
         <TabsContent value="billing"><MatterBilling matterId={id} clientId={m.client_id} /></TabsContent>
 
         <TabsContent value="tasks">
+          {internal && (
+            <div className="mb-4 flex justify-end">
+              <Button variant="outline" size="sm" onClick={() => setTaskDialog("new")}><Plus className="mr-1 h-4 w-4" />Add task</Button>
+            </div>
+          )}
           {data.tasks.length === 0 ? <EmptyState title="No tasks" body="Tasks linked to this matter will appear here." /> : (
             <ul className="divide-y rounded-lg border bg-card">
               {data.tasks.map((t) => (
                 <li key={t.id} className="flex items-center gap-4 px-4 py-3 text-sm">
-                  <span className="flex-1">{t.title}</span>
+                  <button type="button" className="flex-1 text-left hover:underline" onClick={() => setTaskDialog(t)}>{t.title}</button>
                   <span className="text-xs text-muted-foreground">{t.assignee?.full_name ?? "Unassigned"}</span>
                   <span className="tabular w-20 text-xs">{t.due_date ? format(new Date(t.due_date), "d MMM") : "—"}</span>
                   <Badge variant={t.status === "done" ? "closed" : "quiet"}>{TASK_STATUS_LABELS[t.status]}</Badge>
@@ -175,6 +184,14 @@ function MatterPage() {
             </ul>
           )}
         </TabsContent>
+
+        <TaskDialog
+          open={taskDialog !== null}
+          onOpenChange={(o) => !o && setTaskDialog(null)}
+          task={taskDialog === "new" ? null : taskDialog}
+          matterId={id}
+          onSaved={refresh}
+        />
 
         <TabsContent value="calendar">
           {internal && (
@@ -205,6 +222,7 @@ function MatterPage() {
                     ) : null
                   )}
                   <Badge variant="quiet">{EVENT_LABELS[e.type]}</Badge>
+                  <AddToCalendar item={{ uid: `event-${e.id}`, title: e.title, description: `${m.matter_number ?? ""} ${m.title}`.trim(), location: e.location, start: e.starts_at, end: e.ends_at }} />
                 </li>
               ))}
             </ul>

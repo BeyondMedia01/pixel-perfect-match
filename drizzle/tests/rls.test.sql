@@ -257,6 +257,81 @@ select tests.ok('partner approves a pending account in one step',
   (select array_agg(role::text) from user_roles where user_id = :'X') = array['paralegal']);
 reset role;
 
+-- ===== Team invitations =====
+select tests.login(:'L'); set role authenticated;
+select tests.ok('only partners can invite', tests.refused($$select invite_team_member('someone@firm.test', 'Someone', 'lawyer')$$));
+reset role;
+select tests.login(:'P'); set role authenticated;
+select tests.ok('partner invites a new person by email', invite_team_member('  Newbie@Firm.test ', 'New Bie', 'lawyer') = 'invited');
+select tests.ok('cannot invite someone already on the team', tests.refused($$select invite_team_member('lawyer@test', 'L', 'paralegal')$$));
+reset role;
+insert into auth.users(id, email) values ('aaaaaaaa-0000-0000-0000-000000000006', 'newbie@firm.test');
+select tests.ok('invited person gets their role on sign-up and the invitation is used up',
+  (select role::text from user_roles where user_id = 'aaaaaaaa-0000-0000-0000-000000000006') = 'lawyer'
+  and (select accepted_user_id from team_invitations where email = 'newbie@firm.test') = 'aaaaaaaa-0000-0000-0000-000000000006'
+  and (select full_name from profiles where id = 'aaaaaaaa-0000-0000-0000-000000000006') = 'New Bie');
+insert into auth.users(id, email) values ('aaaaaaaa-0000-0000-0000-000000000007', 'waiting@firm.test');
+select tests.login(:'P'); set role authenticated;
+select invite_team_member('waiting@firm.test', '', 'frontdesk') as invite_result \gset
+select tests.ok('inviting someone already waiting for approval gives them the role at once',
+  :'invite_result' = 'assigned'
+  and (select role::text from user_roles where user_id = 'aaaaaaaa-0000-0000-0000-000000000007') = 'frontdesk');
+select remove_team_member('aaaaaaaa-0000-0000-0000-000000000007');
+select tests.ok('partner removes someone''s access', not exists (select 1 from user_roles where user_id = 'aaaaaaaa-0000-0000-0000-000000000007'));
+select tests.ok('partner cannot remove themselves', tests.refused(format($$select remove_team_member(%L)$$, :'P')));
+reset role;
+
+-- ===== Tasks =====
+update matters set responsible_lawyer_id = :'A' where id = :'M11';
+select tests.login(:'A'); set role authenticated;
+insert into tasks(title, assignee_id) values ('Call the registrar', :'L');
+select tests.ok('staff can assign a task to a colleague and still see it', exists (select 1 from tasks where title = 'Call the registrar'));
+select tests.ok('tasks cannot be assigned to front desk',
+  tests.refused(format($$insert into tasks(title, assignee_id) values ('x', %L)$$, :'F')));
+select tests.ok('tasks cannot be assigned to someone walled from the matter',
+  tests.refused(format($$insert into tasks(title, matter_id, assignee_id) values ('x', %L, %L)$$, :'M11', :'L')));
+insert into tasks(title, matter_id, assignee_id, due_date) values ('Prepare bundle', :'M5', :'L', current_date + 3);
+reset role;
+select tests.login(:'L'); set role authenticated;
+select tests.ok('assignee sees tasks given to them, even on a matter they are not on',
+  (select count(*) from tasks where title in ('Call the registrar', 'Prepare bundle')) = 2);
+select tests.ok('assignee can move their task along', not tests.refused($$update tasks set status = 'in_progress' where title = 'Call the registrar'$$));
+select tests.ok('only the creator or a partner can delete a task', tests.refused($$delete from tasks where title = 'Call the registrar'$$));
+reset role;
+select tests.login(:'A'); set role authenticated;
+select tests.ok('creator can delete their task', not tests.refused($$delete from tasks where title = 'Call the registrar'$$));
+reset role;
+
+-- ===== Deadline confirmation =====
+select tests.login(:'A'); set role authenticated;
+select tests.ok('a paralegal cannot mark a deadline confirmed',
+  tests.refused(format($$insert into events(matter_id, title, type, starts_at, confirmed_by) values (%L, 'x', 'filing_deadline', now() + interval '3 days', %L)$$, :'M5', :'A')));
+reset role;
+select tests.login(:'L'); set role authenticated;
+insert into events(matter_id, title, type, starts_at) values (:'M1', 'File heads', 'filing_deadline', now() + interval '2 days');
+select tests.ok('a lawyer cannot confirm in someone else''s name',
+  tests.refused(format($$update events set confirmed_by = %L where title = 'File heads'$$, :'P')));
+select tests.ok('a lawyer confirms in their own name',
+  not tests.refused(format($$update events set confirmed_by = %L where title = 'File heads'$$, :'L')));
+insert into events(title, type, starts_at) values ('Lunch with counsel', 'meeting', now() + interval '1 day');
+select tests.ok('new events are stamped with who entered them',
+  (select owner_id = :'L'::uuid and entered_by = :'L'::uuid from events where title = 'Lunch with counsel'));
+insert into calendar_feeds(user_id) values (:'L') returning token as l_token \gset
+select tests.ok('signed-in users cannot read a feed directly', tests.refused(format($$select * from calendar_feed(%L)$$, :'l_token')));
+reset role;
+
+-- ===== Calendar feed (as the server) =====
+insert into events(matter_id, title, type, starts_at) values (:'M11', 'Walled hearing', 'hearing', now() + interval '4 days');
+select tests.ok('feed shows the lawyer''s matter dates, own events and tasks',
+  exists (select 1 from calendar_feed(:'l_token') where title like 'File heads%')
+  and exists (select 1 from calendar_feed(:'l_token') where title = 'Lunch with counsel')
+  and exists (select 1 from calendar_feed(:'l_token') where kind = 'task' and title like 'Task: Prepare bundle%'));
+select tests.ok('feed leaves out walled matters', not exists (select 1 from calendar_feed(:'l_token') where title like 'Walled hearing%'));
+select tests.ok('a wrong token shows nothing', not exists (select 1 from calendar_feed('not-a-token')));
+delete from user_roles where user_id = :'L';
+select tests.ok('feed goes empty when the person loses access', not exists (select 1 from calendar_feed(:'l_token')));
+insert into user_roles(user_id, role) values (:'L', 'lawyer');
+
 -- ===== Storage =====
 select tests.ok('documents bucket is private', not (select public from storage.buckets where id = 'matter-documents'));
 

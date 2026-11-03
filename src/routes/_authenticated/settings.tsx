@@ -27,7 +27,7 @@ function Settings() {
       <PageHeader title="Settings" />
       <ProfileSection />
       {(isInternalRole(me?.role) || isFrontdesk(me?.role)) && <NotificationsSection />}
-      {isPartner(me?.role) && <TeamSection currentUserId={me!.user.id} />}
+      {isInternalRole(me?.role) && <CalendarSyncSection />}
       {isPartner(me?.role) && <EthicalWallsSection />}
     </div>
   );
@@ -121,98 +121,94 @@ function NotificationsSection() {
   );
 }
 
-const ROLES: AppRole[] = ["partner", "lawyer", "paralegal", "frontdesk", "client"];
+const CALENDAR_HELP: { app: string; steps: string }[] = [
+  { app: "Google Calendar", steps: "On a computer, open Google Calendar, click + next to \u201cOther calendars\u201d, choose \u201cFrom URL\u201d, paste the link and click Add calendar. It then appears on your phone too." },
+  { app: "Outlook", steps: "In Outlook on the web, go to Calendar, Add calendar, Subscribe from web, paste the link and click Import. Outlook for Windows and Mac picks it up from your account." },
+  { app: "Apple Calendar", steps: "On a Mac: File, New Calendar Subscription, paste the link. On iPhone: Settings, Calendar, Accounts, Add Account, Other, Add Subscribed Calendar. Or tap the Apple button below." },
+];
 
-function TeamSection({ currentUserId }: { currentUserId: string }) {
+function CalendarSyncSection() {
+  const { data: me } = useMe();
   const qc = useQueryClient();
   const confirm = useConfirm();
-  const { data } = useQuery({
-    queryKey: ["team"],
-    queryFn: async () => {
-      const [p, r, rates] = await Promise.all([
-        supabase.from("profiles").select("id, full_name, email, created_at").order("full_name"),
-        supabase.from("user_roles").select("user_id, role"),
-        supabase.from("billing_rates").select("user_id, hourly_rate"),
-      ]);
-      const rolesByUser = new Map((r.data ?? []).map((x) => [x.user_id, x.role as AppRole]));
-      const rateByUser = new Map((rates.data ?? []).map((x) => [x.user_id, x.hourly_rate]));
-      // People with no role are waiting for approval; list them first.
-      return (p.data ?? [])
-        .map((u) => ({ ...u, role: rolesByUser.get(u.id) ?? null, rate: rateByUser.get(u.id) ?? null }))
-        .sort((a, b) => Number(a.role !== null) - Number(b.role !== null));
-    },
+  const [busy, setBusy] = useState(false);
+  const { data: feed, isLoading } = useQuery({
+    queryKey: ["calendar-feed", me?.user.id],
+    enabled: !!me,
+    queryFn: async () => (await supabase.from("calendar_feeds").select("token").eq("user_id", me!.user.id).maybeSingle()).data,
   });
+  const url = feed ? `${window.location.origin}/api/calendar/${feed.token}.ics` : "";
+  const webcal = url.replace(/^https?:/, "webcal:");
 
-  async function setRole(userId: string, role: AppRole) {
-    const person = data?.find((u) => u.id === userId);
-    const name = person?.full_name || person?.email || "this person";
-    const ok = await confirm({
-      title: person?.role ? `Change ${name}'s role to ${ROLE_LABELS[role]}?` : `Approve ${name} as ${ROLE_LABELS[role]}?`,
-      body: person?.role
-        ? `They'll lose ${ROLE_LABELS[person.role]} access straight away.`
-        : "They'll be able to see firm data allowed for that role as soon as you confirm.",
-      action: person?.role ? "Change role" : "Approve",
-    });
-    if (!ok) return;
-    const { error } = await supabase.rpc("set_user_role", { _user_id: userId, _role: role });
+  async function create() {
+    setBusy(true);
+    const { error } = await supabase.from("calendar_feeds").insert({ user_id: me!.user.id });
+    setBusy(false);
     if (error) toast.error(error.message);
-    else { toast.success("Role updated"); qc.invalidateQueries({ queryKey: ["team"] }); }
+    else qc.invalidateQueries({ queryKey: ["calendar-feed"] });
   }
 
-  async function setRate(userId: string, value: string) {
-    const hourly_rate = parseFloat(value);
-    if (!(hourly_rate >= 0)) { toast.error("Enter a rate of 0 or more"); return; }
-    const { error } = await supabase.from("billing_rates").upsert({ user_id: userId, hourly_rate, updated_at: new Date().toISOString() });
-    if (error) toast.error(error.message);
-    else { toast.success("Rate saved"); qc.invalidateQueries({ queryKey: ["team"] }); }
+  async function reset() {
+    const ok = await confirm({
+      title: "Make a new calendar link?",
+      body: "The old link stops working straight away. Calendars subscribed to it stop updating until you subscribe again with the new link.",
+      action: "Make new link",
+      destructive: true,
+    });
+    if (!ok) return;
+    setBusy(true);
+    const del = await supabase.from("calendar_feeds").delete().eq("user_id", me!.user.id);
+    const ins = del.error ? del : await supabase.from("calendar_feeds").insert({ user_id: me!.user.id });
+    setBusy(false);
+    if (ins.error) toast.error(ins.error.message);
+    else { toast.success("New link ready"); qc.invalidateQueries({ queryKey: ["calendar-feed"] }); }
+  }
+
+  async function copy() {
+    try { await navigator.clipboard.writeText(url); toast.success("Link copied"); }
+    catch { toast.error("Couldn't copy. Select the link and copy it."); }
   }
 
   return (
-    <section className="rounded-lg border bg-card p-5">
-      <h2 className="eyebrow mb-1">Team &amp; roles</h2>
+    <section id="calendar-sync" className="scroll-mt-20 rounded-lg border bg-card p-5">
+      <h2 className="eyebrow mb-1">Calendar sync</h2>
       <p className="mb-4 text-sm text-muted-foreground">
-        Roles control what each person can see and do. To add someone new, ask them to sign up. They appear here as
-        awaiting approval and can't see any firm data until you give them a role. Hourly rates apply to new time
-        entries; anyone without a rate is billed at 250 per hour.
+        See your Acta dates in Google Calendar, Outlook or Apple Calendar: court dates, deadlines and events on your
+        matters, consultations booked with you, your own events, and your open tasks with due dates. Ethical walls
+        apply. It's read-only: changes are made in Acta and show up in your calendar at its next refresh, usually
+        within an hour (Google can take up to a day).
       </p>
-      <ul className="divide-y">
-        {data?.map((u) => {
-          const isSelf = u.id === currentUserId;
-          return (
-            <li key={u.id} className="flex flex-wrap items-center gap-3 py-3 text-sm">
-              <div className="min-w-0 flex-1">
-                <div className="truncate font-medium">{u.full_name || u.email}{isSelf && <span className="text-muted-foreground"> (you)</span>}</div>
-                <div className="truncate text-xs text-muted-foreground">{u.email}</div>
-              </div>
-              {!isSelf && !u.role && <Badge variant="hold">Awaiting approval</Badge>}
-              {u.role && u.role !== "frontdesk" && u.role !== "client" && (
-                <Input
-                  key={`${u.id}-${u.rate ?? "none"}`}
-                  type="number"
-                  min="0"
-                  step="10"
-                  defaultValue={u.rate ?? ""}
-                  placeholder="250"
-                  aria-label={`Hourly rate for ${u.full_name || u.email}`}
-                  title="Hourly rate"
-                  className="w-24"
-                  onBlur={(e) => { if (e.target.value !== String(u.rate ?? "")) setRate(u.id, e.target.value); }}
-                />
-              )}
-              {isSelf ? (
-                <Badge variant="quiet">{u.role ? ROLE_LABELS[u.role] : "No role"}</Badge>
-              ) : (
-                <Select value={u.role ?? undefined} onValueChange={(v) => setRole(u.id, v as AppRole)}>
-                  <SelectTrigger className="w-44" aria-label={`Role for ${u.full_name || u.email}`}><SelectValue placeholder="Choose a role" /></SelectTrigger>
-                  <SelectContent>
-                    {ROLES.map((r) => <SelectItem key={r} value={r}>{ROLE_LABELS[r]}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              )}
-            </li>
-          );
-        })}
-      </ul>
+      {isLoading ? null : !feed ? (
+        <Button onClick={create} disabled={busy}>{busy ? "Creating…" : "Create my calendar link"}</Button>
+      ) : (
+        <div className="space-y-4">
+          <div className="flex flex-wrap gap-2">
+            <Input readOnly value={url} onFocus={(e) => e.target.select()} aria-label="Your private calendar link" className="min-w-0 flex-1 font-mono text-xs" />
+            <Button variant="outline" onClick={copy}>Copy link</Button>
+          </div>
+          <p className="text-xs text-muted-foreground">Keep this link private: anyone who has it can see your schedule.</p>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" size="sm" asChild>
+              <a href={`https://calendar.google.com/calendar/r?cid=${encodeURIComponent(webcal)}`} target="_blank" rel="noopener noreferrer">Add to Google Calendar</a>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <a href={`https://outlook.office.com/calendar/0/addfromweb?url=${encodeURIComponent(url)}&name=${encodeURIComponent("Acta")}`} target="_blank" rel="noopener noreferrer">Add to Outlook</a>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <a href={webcal}>Add to Apple Calendar</a>
+            </Button>
+          </div>
+          <details className="text-sm">
+            <summary className="cursor-pointer text-muted-foreground">Step-by-step instructions</summary>
+            <dl className="mt-3 space-y-3">
+              {CALENDAR_HELP.map((h) => (
+                <div key={h.app}><dt className="font-medium">{h.app}</dt><dd className="text-muted-foreground">{h.steps}</dd></div>
+              ))}
+            </dl>
+          </details>
+          <Button variant="ghost" size="sm" onClick={reset} disabled={busy}>Make a new link</Button>
+        </div>
+      )}
     </section>
   );
 }

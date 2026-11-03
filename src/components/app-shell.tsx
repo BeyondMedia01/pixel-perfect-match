@@ -3,12 +3,15 @@ import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   LayoutDashboard, Briefcase, Users, CalendarDays, CheckSquare, FileText, Receipt, BarChart3, Inbox,
-  Settings, Search, LogOut, Moon, Sun, Menu, Megaphone,
+  Settings, Search, LogOut, Moon, Sun, Menu, Megaphone, UsersRound,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useMe, isPartner } from "@/lib/auth";
 import { ROLE_LABELS } from "@/lib/legal";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import {
   CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
 } from "@/components/ui/command";
@@ -27,6 +30,7 @@ const NAV = [
   { to: "/documents", label: "Documents", icon: FileText, hideFor: ["frontdesk"] },
   { to: "/billing", label: "Billing", icon: Receipt, hideFor: ["staff", "paralegal", "frontdesk", "client"] },
   { to: "/announcements", label: "Announcements", icon: Megaphone, hideFor: ["frontdesk"] },
+  { to: "/team", label: "Team", icon: UsersRound, hideFor: ["frontdesk", "client"] },
   { to: "/reports", label: "Reports", icon: BarChart3, adminOnly: true },
   { to: "/settings", label: "Settings", icon: Settings },
 ] as const;
@@ -156,6 +160,8 @@ export function AppShell() {
   }
 
   if (me?.pending) return <PendingApproval email={me.user.email} onSignOut={signOut} />;
+  // People who joined from an emailed invitation have no password yet.
+  if (me?.user.user_metadata?.["invited"] === true) return <SetPassword onSignOut={signOut} />;
 
   return (
     <ConfirmProvider>
@@ -183,6 +189,38 @@ export function AppShell() {
       <GlobalSearch open={open} setOpen={setOpen} />
     </div>
     </ConfirmProvider>
+  );
+}
+
+function SetPassword({ onSignOut }: { onSignOut: () => void }) {
+  const qc = useQueryClient();
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    const { error } = await supabase.auth.updateUser({ password, data: { invited: false } });
+    setBusy(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Password set. Welcome to Acta.");
+    qc.invalidateQueries({ queryKey: ["me"] });
+  }
+  return (
+    <main className="flex min-h-screen items-center justify-center p-6">
+      <form onSubmit={save} className="w-full max-w-sm">
+        <ActaLogo />
+        <h1 className="page-title mt-8">Choose a password</h1>
+        <p className="mt-2 text-sm text-muted-foreground">You've joined your firm's workspace. Set a password so you can sign in next time.</p>
+        <div className="mt-6 space-y-1.5">
+          <Label htmlFor="new-password">Password</Label>
+          <Input id="new-password" type="password" required minLength={8} autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+        </div>
+        <div className="mt-6 flex gap-2">
+          <Button type="submit" disabled={busy}>{busy ? "Saving…" : "Set password"}</Button>
+          <Button type="button" variant="ghost" onClick={onSignOut}>Sign out</Button>
+        </div>
+      </form>
+    </main>
   );
 }
 

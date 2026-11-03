@@ -21,12 +21,14 @@ import { Route as AuthenticatedDocumentsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedTasksRouteImport } from './routes/_authenticated/tasks'
+import { Route as AuthenticatedTeamRouteImport } from './routes/_authenticated/team'
 import { Route as AuthenticatedClientsIndexRouteImport } from './routes/_authenticated/clients.index'
 import { Route as AuthenticatedClientsIdRouteImport } from './routes/_authenticated/clients.$id'
 import { Route as AuthenticatedInquiriesIndexRouteImport } from './routes/_authenticated/inquiries.index'
 import { Route as AuthenticatedInquiriesIdRouteImport } from './routes/_authenticated/inquiries.$id'
 import { Route as AuthenticatedMattersIndexRouteImport } from './routes/_authenticated/matters.index'
 import { Route as AuthenticatedMattersIdRouteImport } from './routes/_authenticated/matters.$id'
+import { Route as ApiCalendarTokenRouteImport } from './routes/api/calendar.$token'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -88,6 +90,11 @@ const AuthenticatedTasksRoute = AuthenticatedTasksRouteImport.update({
   path: '/tasks',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedTeamRoute = AuthenticatedTeamRouteImport.update({
+  id: '/team',
+  path: '/team',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedClientsIndexRoute =
   AuthenticatedClientsIndexRouteImport.update({
     id: '/clients/',
@@ -122,6 +129,11 @@ const AuthenticatedMattersIdRoute = AuthenticatedMattersIdRouteImport.update({
   path: '/matters/$id',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiCalendarTokenRoute = ApiCalendarTokenRouteImport.update({
+  id: '/api/calendar/$token',
+  path: '/api/calendar/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -135,9 +147,11 @@ export interface FileRoutesByFullPath {
   '/reports': typeof AuthenticatedReportsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/tasks': typeof AuthenticatedTasksRoute
+  '/team': typeof AuthenticatedTeamRoute
   '/clients/$id': typeof AuthenticatedClientsIdRoute
   '/inquiries/$id': typeof AuthenticatedInquiriesIdRoute
   '/matters/$id': typeof AuthenticatedMattersIdRoute
+  '/api/calendar/$token': typeof ApiCalendarTokenRoute
   '/clients/': typeof AuthenticatedClientsIndexRoute
   '/inquiries/': typeof AuthenticatedInquiriesIndexRoute
   '/matters/': typeof AuthenticatedMattersIndexRoute
@@ -154,9 +168,11 @@ export interface FileRoutesByTo {
   '/reports': typeof AuthenticatedReportsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/tasks': typeof AuthenticatedTasksRoute
+  '/team': typeof AuthenticatedTeamRoute
   '/clients/$id': typeof AuthenticatedClientsIdRoute
   '/inquiries/$id': typeof AuthenticatedInquiriesIdRoute
   '/matters/$id': typeof AuthenticatedMattersIdRoute
+  '/api/calendar/$token': typeof ApiCalendarTokenRoute
   '/clients': typeof AuthenticatedClientsIndexRoute
   '/inquiries': typeof AuthenticatedInquiriesIndexRoute
   '/matters': typeof AuthenticatedMattersIndexRoute
@@ -175,9 +191,11 @@ export interface FileRoutesById {
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/tasks': typeof AuthenticatedTasksRoute
+  '/_authenticated/team': typeof AuthenticatedTeamRoute
   '/_authenticated/clients/$id': typeof AuthenticatedClientsIdRoute
   '/_authenticated/inquiries/$id': typeof AuthenticatedInquiriesIdRoute
   '/_authenticated/matters/$id': typeof AuthenticatedMattersIdRoute
+  '/api/calendar/$token': typeof ApiCalendarTokenRoute
   '/_authenticated/clients/': typeof AuthenticatedClientsIndexRoute
   '/_authenticated/inquiries/': typeof AuthenticatedInquiriesIndexRoute
   '/_authenticated/matters/': typeof AuthenticatedMattersIndexRoute
@@ -196,9 +214,11 @@ export interface FileRouteTypes {
     | '/reports'
     | '/settings'
     | '/tasks'
+    | '/team'
     | '/clients/$id'
     | '/inquiries/$id'
     | '/matters/$id'
+    | '/api/calendar/$token'
     | '/clients/'
     | '/inquiries/'
     | '/matters/'
@@ -215,9 +235,11 @@ export interface FileRouteTypes {
     | '/reports'
     | '/settings'
     | '/tasks'
+    | '/team'
     | '/clients/$id'
     | '/inquiries/$id'
     | '/matters/$id'
+    | '/api/calendar/$token'
     | '/clients'
     | '/inquiries'
     | '/matters'
@@ -235,9 +257,11 @@ export interface FileRouteTypes {
     | '/_authenticated/reports'
     | '/_authenticated/settings'
     | '/_authenticated/tasks'
+    | '/_authenticated/team'
     | '/_authenticated/clients/$id'
     | '/_authenticated/inquiries/$id'
     | '/_authenticated/matters/$id'
+    | '/api/calendar/$token'
     | '/_authenticated/clients/'
     | '/_authenticated/inquiries/'
     | '/_authenticated/matters/'
@@ -248,6 +272,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   IntakeRoute: typeof IntakeRoute
+  ApiCalendarTokenRoute: typeof ApiCalendarTokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -336,6 +361,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTasksRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/team': {
+      id: '/_authenticated/team'
+      path: '/team'
+      fullPath: '/team'
+      preLoaderRoute: typeof AuthenticatedTeamRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/clients/': {
       id: '/_authenticated/clients/'
       path: '/clients'
@@ -378,6 +410,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMattersIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/calendar/$token': {
+      id: '/api/calendar/$token'
+      path: '/api/calendar/$token'
+      fullPath: '/api/calendar/$token'
+      preLoaderRoute: typeof ApiCalendarTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -390,6 +429,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedTasksRoute: typeof AuthenticatedTasksRoute
+  AuthenticatedTeamRoute: typeof AuthenticatedTeamRoute
   AuthenticatedClientsIdRoute: typeof AuthenticatedClientsIdRoute
   AuthenticatedInquiriesIdRoute: typeof AuthenticatedInquiriesIdRoute
   AuthenticatedMattersIdRoute: typeof AuthenticatedMattersIdRoute
@@ -407,6 +447,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedTasksRoute: AuthenticatedTasksRoute,
+  AuthenticatedTeamRoute: AuthenticatedTeamRoute,
   AuthenticatedClientsIdRoute: AuthenticatedClientsIdRoute,
   AuthenticatedInquiriesIdRoute: AuthenticatedInquiriesIdRoute,
   AuthenticatedMattersIdRoute: AuthenticatedMattersIdRoute,
@@ -423,6 +464,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   IntakeRoute: IntakeRoute,
+  ApiCalendarTokenRoute: ApiCalendarTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

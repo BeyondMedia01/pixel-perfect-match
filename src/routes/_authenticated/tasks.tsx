@@ -8,6 +8,9 @@ import { useMe } from "@/lib/auth";
 import { TASK_STATUS_LABELS, type TaskStatus } from "@/lib/legal";
 import { PageHeader, EmptyState } from "@/components/app-shell";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { TaskDialog, PRIORITY_LABELS, type EditableTask } from "@/components/task-dialog";
+import { Plus } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
@@ -16,9 +19,7 @@ export const Route = createFileRoute("/_authenticated/tasks")({
   component: TasksPage,
 });
 
-type TaskRow = {
-  id: string; title: string; description: string | null; due_date: string | null;
-  status: TaskStatus; priority: string; matter_id: string | null; assignee_id: string | null;
+type TaskRow = EditableTask & {
   matter?: { title: string; matter_number: string | null } | null;
   assignee?: { full_name: string } | null;
 };
@@ -27,6 +28,8 @@ function TasksPage() {
   const { data: me } = useMe();
   const qc = useQueryClient();
   const [mine, setMine] = useState(true);
+  const [editing, setEditing] = useState<TaskRow | null>(null);
+  const [creating, setCreating] = useState(false);
   const { data: tasks } = useQuery({
     queryKey: ["tasks"],
     queryFn: async () =>
@@ -53,14 +56,21 @@ function TasksPage() {
       <PageHeader
         title="Tasks"
         actions={
-          <ToggleGroup type="single" value={mine ? "mine" : "all"} onValueChange={(v) => v && setMine(v === "mine")}>
-            <ToggleGroupItem value="mine">Mine</ToggleGroupItem>
-            <ToggleGroupItem value="all">Everyone's</ToggleGroupItem>
-          </ToggleGroup>
+          <div className="flex flex-wrap items-center gap-2">
+            <ToggleGroup type="single" value={mine ? "mine" : "all"} onValueChange={(v) => v && setMine(v === "mine")}>
+              <ToggleGroupItem value="mine">Mine</ToggleGroupItem>
+              <ToggleGroupItem value="all">Everyone's</ToggleGroupItem>
+            </ToggleGroup>
+            <Button onClick={() => setCreating(true)}><Plus className="mr-1 h-4 w-4" />New task</Button>
+          </div>
         }
       />
       {!visible.length ? (
-        <EmptyState title="No tasks" body={mine ? "Nothing is assigned to you." : "No tasks across the firm yet."} />
+        <EmptyState
+          title="No tasks"
+          body={mine ? "Nothing is assigned to you." : "No tasks across the firm yet."}
+          action={<Button variant="outline" onClick={() => setCreating(true)}><Plus className="mr-1 h-4 w-4" />Add a task</Button>}
+        />
       ) : (
         <div className="space-y-8">
           {groups.map((g) => {
@@ -73,13 +83,16 @@ function TasksPage() {
                   {rows.map((t) => (
                     <li key={t.id} className="flex flex-wrap items-center gap-4 px-4 py-3 text-sm">
                       <span className={"min-w-0 flex-1 " + (t.status === "done" ? "text-muted-foreground line-through" : "")}>
-                        {t.title}
+                        <button type="button" onClick={() => setEditing(t)} className="text-left font-medium hover:underline">{t.title}</button>
                         {t.matter && (
                           <Link to="/matters/$id" params={{ id: t.matter_id! }} className="ml-2 text-xs text-muted-foreground hover:underline">
                             <span className="tabular">{t.matter.matter_number}</span> {t.matter.title}
                           </Link>
                         )}
                       </span>
+                      {(t.priority === "high" || t.priority === "urgent") && t.status !== "done" && (
+                        <Badge variant={t.priority === "urgent" ? "urgent" : "hold"}>{PRIORITY_LABELS[t.priority]}</Badge>
+                      )}
                       <span className="hidden text-xs text-muted-foreground md:block">{t.assignee?.full_name ?? "Unassigned"}</span>
                       <span className={"tabular w-24 text-xs " + (g.label === "Overdue" ? "font-medium text-destructive" : "text-muted-foreground")}>
                         {t.due_date ? format(parseISO(t.due_date), "EEE d MMM") : "No date"}
@@ -98,6 +111,8 @@ function TasksPage() {
           })}
         </div>
       )}
+      <TaskDialog open={creating} onOpenChange={setCreating} />
+      <TaskDialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)} task={editing} />
     </div>
   );
 }
