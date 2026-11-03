@@ -5,9 +5,9 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-serif: "Cormorant Garamond", ui-serif, Georgia, serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Manrope", ui-sans-serif, system-ui, sans-serif;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -51,84 +51,96 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-quiet: var(--sidebar-quiet);
+  --color-night: var(--night);
+  --color-mist: var(--mist);
 }
 
 :root {
-  --radius: 0.375rem;
-  --background: #f7f5f0;
-  --foreground: #202938;
+  --radius: 0.625rem;
+  /* Acta core: Deep Navy #022636, Night #01141B, Steel Blue #2F7CAA, Mist #C0C9CE */
+  --background: #f4f4f4; /* Fog */
+  --foreground: #01141b; /* Night */
   --card: #ffffff;
-  --card-foreground: #202938;
+  --card-foreground: #01141b;
   --popover: #ffffff;
-  --popover-foreground: #202938;
-  --primary: #14243a;
+  --popover-foreground: #01141b;
+  --primary: #022636; /* Deep Navy */
   --primary-foreground: #ffffff;
-  --secondary: #f2f4f7;
-  --secondary-foreground: #202938;
-  --muted: #f2f4f7;
-  --muted-foreground: #667085;
-  --accent: #f2f4f7;
-  --accent-foreground: #14243a;
+  --secondary: #e3edf3; /* Navy 100 */
+  --secondary-foreground: #022636;
+  --muted: #f4f4f4;
+  --muted-foreground: #5e707b; /* Slate */
+  --accent: #e3edf3;
+  --accent-foreground: #022636;
   --destructive: #b42318;
   --destructive-foreground: #ffffff;
-  --signal: #b69a68;
-  --signal-foreground: #7a6236;
+  --signal: #2f7caa; /* Steel Blue */
+  --signal-foreground: #2f7caa;
   --success: #067647;
-  --warning: #93370d;
-  --info: #1f3a63;
-  --border: #e4e7ec;
-  --input: #e4e7ec;
-  --ring: #3b6bc4;
-  --chart-1: #14243a;
-  --chart-2: #b69a68;
-  --chart-3: #067647;
-  --chart-4: #667085;
-  --chart-5: #b42318;
-  --sidebar: #14243a;
-  --sidebar-foreground: #d9dfe8;
-  --sidebar-quiet: #93a0b4;
-  --sidebar-primary: #b69a68;
-  --sidebar-primary-foreground: #14243a;
-  --sidebar-accent: #22334c;
-  --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: #24344a;
-  --sidebar-ring: #b69a68;
+  --warning: #b7791f; /* Amber: only what is due now */
+  --info: #2f7caa;
+  --border: #dce1e4; /* Line */
+  --input: #dce1e4;
+  --ring: #2f7caa;
+  --chart-1: #022636;
+  --chart-2: #2f7caa;
+  --chart-3: #8fb4cc;
+  --chart-4: #c0c9ce;
+  --chart-5: #b7791f;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #01141b;
+  --sidebar-quiet: #5e707b;
+  --sidebar-primary: #022636;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e3edf3;
+  --sidebar-accent-foreground: #022636;
+  --sidebar-border: #dce1e4;
+  --sidebar-ring: #2f7caa;
+  --night: #01141b;
+  --mist: #c0c9ce;
 }
 
 .dark {
-  --background: #0e1520;
-  --foreground: #e7eaf0;
-  --card: #151f2d;
-  --card-foreground: #e7eaf0;
-  --popover: #151f2d;
-  --popover-foreground: #e7eaf0;
-  --primary: #d9e2ef;
-  --primary-foreground: #14243a;
-  --secondary: #1b2738;
-  --secondary-foreground: #e7eaf0;
-  --muted: #1b2738;
-  --muted-foreground: #9aa5b5;
-  --accent: #1b2738;
-  --accent-foreground: #eef1f5;
+  --background: #01141b;
+  --foreground: #f4f4f4;
+  --card: #02161f;
+  --card-foreground: #f4f4f4;
+  --popover: #02161f;
+  --popover-foreground: #f4f4f4;
+  --primary: #c0c9ce;
+  --primary-foreground: #01141b;
+  --secondary: #03283a;
+  --secondary-foreground: #f4f4f4;
+  --muted: #03283a;
+  --muted-foreground: #9aabb5;
+  --accent: #03283a;
+  --accent-foreground: #f4f4f4;
   --destructive: #f97066;
-  --destructive-foreground: #14243a;
-  --signal: #c4a979;
-  --signal-foreground: #d4bc8e;
+  --destructive-foreground: #01141b;
+  --signal: #8fb4cc;
+  --signal-foreground: #8fb4cc;
   --success: #47cd89;
-  --warning: #fdb022;
-  --info: #a9c1e6;
-  --border: #283547;
-  --input: #283547;
-  --ring: #7da2e8;
-  --sidebar: #0a111b;
-  --sidebar-foreground: #d9dfe8;
-  --sidebar-quiet: #7e8ba0;
-  --sidebar-primary: #c4a979;
-  --sidebar-primary-foreground: #14243a;
-  --sidebar-accent: #1a2635;
+  --warning: #f2b54a;
+  --info: #8fb4cc;
+  --border: #0d3445;
+  --input: #0d3445;
+  --ring: #3e83ad;
+  --chart-1: #c0c9ce;
+  --chart-2: #3e83ad;
+  --chart-3: #8fb4cc;
+  --chart-4: #5e707b;
+  --chart-5: #f2b54a;
+  --sidebar: #02161f;
+  --sidebar-foreground: #c0c9ce;
+  --sidebar-quiet: #8a9ba5;
+  --sidebar-primary: #c0c9ce;
+  --sidebar-primary-foreground: #01141b;
+  --sidebar-accent: #03283a;
   --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: #1c2938;
-  --sidebar-ring: #c4a979;
+  --sidebar-border: #0d3445;
+  --sidebar-ring: #3e83ad;
+  --night: #f4f4f4;
+  --mist: #c0c9ce;
 }
 
 @layer base {
@@ -136,33 +148,42 @@
     border-color: var(--color-border);
   }
   body {
+    font-size: 15px;
+    line-height: 1.6;
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
   }
   h1, h2, h3 {
-    font-family: var(--font-serif);
-    letter-spacing: -0.01em;
+    font-family: var(--font-sans);
+    font-weight: 600;
+    letter-spacing: -0.02em;
   }
 }
 
 @utility page-title {
-  font-family: var(--font-serif);
-  font-size: 1.875rem;
-  line-height: 2.25rem;
-  font-weight: 500;
+  font-size: 2rem;
+  line-height: 2.5rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+/* Ledger line: a 2px Night rule under a title */
+@utility ledger {
+  border-bottom: 2px solid var(--night);
+  padding-bottom: 1rem;
 }
 
 @utility eyebrow {
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   font-weight: 600;
   color: var(--color-muted-foreground);
 }
 
 @utility tabular {
   font-variant-numeric: tabular-nums;
-  font-family: var(--font-mono);
 }

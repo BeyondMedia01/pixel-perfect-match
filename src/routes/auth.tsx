@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Scale } from "lucide-react";
+import { ActaLogo } from "@/components/acta-logo";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
@@ -69,11 +69,10 @@ function AuthPage() {
     <div className="grid min-h-screen md:grid-cols-2">
       <div className="hidden flex-col justify-between bg-sidebar p-10 text-sidebar-foreground md:flex">
         <div className="flex items-center gap-2 text-sidebar-accent-foreground">
-          <Scale className="h-5 w-5 text-sidebar-primary" />
-          <span className="font-serif text-xl">Acta</span>
+          <ActaLogo />
         </div>
-        <blockquote className="font-serif text-2xl leading-snug text-sidebar-accent-foreground">
-          “Justice delayed is justice denied.” Keep every deadline in view.
+        <blockquote className="font-semibold tracking-tight text-2xl leading-snug text-sidebar-accent-foreground">
+          Every matter, on record.
         </blockquote>
         <p className="text-xs">Access is restricted to authorised personnel and clients.</p>
       </div>

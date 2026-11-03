@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { Scale } from "lucide-react";
+import { ActaLogo } from "@/components/acta-logo";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 
@@ -30,8 +30,7 @@ function Index() {
     <div className="flex min-h-screen flex-col bg-sidebar text-sidebar-foreground">
       <header className="flex items-center justify-between px-8 py-6">
         <div className="flex items-center gap-2 text-sidebar-accent-foreground">
-          <Scale className="h-5 w-5 text-sidebar-primary" />
-          <span className="font-serif text-xl">Acta</span>
+          <ActaLogo />
         </div>
         <Button asChild variant="secondary" size="sm">
           <Link to="/auth">Sign in</Link>

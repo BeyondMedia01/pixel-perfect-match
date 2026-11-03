@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   LayoutDashboard, Briefcase, Users, CalendarDays, CheckSquare, FileText, Receipt, BarChart3, Inbox,
-  Settings, Scale, Search, LogOut, Moon, Sun, Menu, Megaphone,
+  Settings, Search, LogOut, Moon, Sun, Menu, Megaphone,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useMe, isPartner } from "@/lib/auth";
@@ -13,6 +13,7 @@ import {
   CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
 } from "@/components/ui/command";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { ActaLogo } from "@/components/acta-logo";
 import { NotificationBell } from "@/components/notification-bell";
 
 const NAV = [
@@ -33,14 +34,10 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const { data: me } = useMe();
   const role = me?.role;
   return (
-    <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
+    <div className="flex h-full flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
       <div className="px-5 pb-4 pt-6">
-        <div className="flex items-center gap-2.5">
-          <Scale className="h-[22px] w-[22px] text-sidebar-primary" />
-          <span className="font-serif text-[15px] font-semibold uppercase tracking-[0.08em] text-sidebar-accent-foreground">Acta</span>
-        </div>
-        <div className="ml-[31px] mt-3 h-px w-8 bg-sidebar-primary" />
-        <p className="ml-[31px] mt-2 text-xs text-sidebar-quiet">Case management</p>
+        <ActaLogo className="text-night" />
+        <p className="mt-1.5 pl-7 text-xs text-sidebar-quiet">by Revixions</p>
       </div>
       <nav className="flex-1 space-y-0.5 px-3">
         {NAV.filter((n) => {
@@ -53,7 +50,7 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
             to={n.to}
             onClick={onNavigate}
             className="relative flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground [&_svg]:text-sidebar-quiet"
-            activeProps={{ className: "bg-sidebar-accent text-sidebar-accent-foreground before:absolute before:bottom-2 before:left-0 before:top-2 before:w-0.5 before:rounded before:bg-sidebar-primary [&_svg]:text-sidebar-primary" }}
+            activeProps={{ className: "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary hover:text-sidebar-primary-foreground [&_svg]:text-sidebar-primary-foreground" }}
           >
             <n.icon className="h-[18px] w-[18px]" />
             {n.label}
@@ -61,7 +58,7 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
         ))}
       </nav>
       <div className="flex items-center gap-3 border-t border-sidebar-border p-4">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sidebar-primary/20 text-xs font-semibold text-sidebar-primary">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
           {(me?.profile?.full_name ?? "…").split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase()}
         </span>
         <div className="min-w-0 leading-tight">
