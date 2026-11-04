@@ -30,3 +30,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Environment files. `.env` itself is written by Lovable Cloud and holds only
+# public values (the Supabase URL and publishable key, which ship in the
+# browser bundle anyway). Anything else, especially secrets, must never be
+# committed; src/test/env-safety.test.ts fails the build if `.env` gains one.
+.env.*
+!.env.example
