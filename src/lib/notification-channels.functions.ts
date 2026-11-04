@@ -6,8 +6,8 @@ export const getNotificationChannels = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const [internal, frontdesk] = await Promise.all([
-      context.supabase.rpc("is_internal"),
-      context.supabase.rpc("is_frontdesk"),
+      context.supabase.rpc("is_internal", { _user_id: context.userId }),
+      context.supabase.rpc("is_frontdesk", { _user_id: context.userId }),
     ]);
     if (internal.error || frontdesk.error) throw new Error("Could not check notification access.");
     if (!internal.data && !frontdesk.data) throw new Error("Staff access required.");

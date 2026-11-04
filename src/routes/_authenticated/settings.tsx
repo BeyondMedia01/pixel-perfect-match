@@ -4,8 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useMe, isPartner, isInternalRole, isFrontdesk } from "@/lib/auth";
-import { DEFAULT_NOTIFICATION_PREFS, type NotificationPrefs } from "@/lib/notifications";
-import { Switch } from "@/components/ui/switch";
+import { NotificationPreferences } from "@/components/notification-preferences";
 import { ROLE_LABELS, type AppRole } from "@/lib/legal";
 import { PageHeader } from "@/components/app-shell";
 import { useConfirm } from "@/components/confirm";
@@ -26,7 +25,7 @@ function Settings() {
     <div className="mx-auto max-w-4xl space-y-10">
       <PageHeader title="Settings" />
       <ProfileSection />
-      {(isInternalRole(me?.role) || isFrontdesk(me?.role)) && <NotificationsSection />}
+      {(isInternalRole(me?.role) || isFrontdesk(me?.role)) && <NotificationPreferences />}
       {isInternalRole(me?.role) && <CalendarSyncSection />}
       {isPartner(me?.role) && <EthicalWallsSection />}
     </div>
@@ -64,59 +63,6 @@ function ProfileSection() {
         </div>
         <Button type="submit" disabled={busy}>{busy ? "Saving…" : "Save"}</Button>
       </form>
-    </section>
-  );
-}
-
-const NOTIFICATION_OPTIONS: { key: keyof NotificationPrefs; label: string; detail: string; staffOnly?: boolean }[] = [
-  { key: "new_inquiries", label: "New inquiries", detail: "When a prospective client is logged or submits the intake form." },
-  { key: "tasks_due_today", label: "My tasks due today", detail: "Tasks assigned to you that are due today.", staffOnly: true },
-  { key: "unconfirmed_deadlines", label: "Deadlines awaiting confirmation", detail: "Court dates and filing deadlines a lawyer hasn't confirmed yet.", staffOnly: true },
-];
-
-function NotificationsSection() {
-  const { data: me } = useMe();
-  const qc = useQueryClient();
-  const staff = isInternalRole(me?.role);
-  const { data: prefs } = useQuery({
-    queryKey: ["notification-prefs", me?.user.id],
-    enabled: !!me,
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("notification_preferences")
-        .select("new_inquiries, tasks_due_today, unconfirmed_deadlines")
-        .eq("user_id", me!.user.id)
-        .maybeSingle();
-      return data ?? DEFAULT_NOTIFICATION_PREFS;
-    },
-  });
-  if (!me || !prefs) return null;
-
-  async function toggle(key: keyof NotificationPrefs, value: boolean) {
-    const next = { ...prefs!, [key]: value };
-    qc.setQueryData(["notification-prefs", me!.user.id], next);
-    const { error } = await supabase
-      .from("notification_preferences")
-      .upsert({ user_id: me!.user.id, ...next, updated_at: new Date().toISOString() });
-    if (error) { toast.error(error.message); qc.invalidateQueries({ queryKey: ["notification-prefs"] }); return; }
-    qc.invalidateQueries({ queryKey: ["staff-notifications"] });
-  }
-
-  return (
-    <section className="rounded-lg border bg-card p-5">
-      <h2 className="eyebrow mb-1">Notifications</h2>
-      <p className="mb-4 text-sm text-muted-foreground">Choose what shows up in the bell at the top of the page.</p>
-      <ul className="divide-y">
-        {NOTIFICATION_OPTIONS.filter((o) => staff || !o.staffOnly).map((o) => (
-          <li key={o.key} className="flex items-center justify-between gap-4 py-3">
-            <div>
-              <label htmlFor={`notify-${o.key}`} className="text-sm font-medium">{o.label}</label>
-              <p className="text-xs text-muted-foreground">{o.detail}</p>
-            </div>
-            <Switch id={`notify-${o.key}`} checked={prefs[o.key]} onCheckedChange={(v) => toggle(o.key, v)} />
-          </li>
-        ))}
-      </ul>
     </section>
   );
 }

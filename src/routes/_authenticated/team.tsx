@@ -19,7 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/_authenticated/team")({
-  head: () => ({ meta: [{ title: "Team — Acta" }, { name: "description", content: "Everyone at the firm, their roles and invitations." }] }),
+  head: () => ({ meta: [{ title: "Team — Acta" }, { name: "description", content: "Everyone at the firm, their roles and invitations." }, { property: "og:title", content: "Team — Acta" }, { property: "og:description", content: "Everyone at the firm, their roles and invitations." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
   component: TeamPage,
 });
 
