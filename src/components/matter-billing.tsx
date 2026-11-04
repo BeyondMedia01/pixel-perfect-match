@@ -158,7 +158,7 @@ function NewInvoiceDialog({ matterId, clientId, entries, onDone }: { matterId: s
       _matter_id: matterId,
       _entry_ids: chosen.map((e) => e.id),
       _due_date: due,
-      _notes: notes.trim() || null,
+      ...(notes.trim() ? { _notes: notes.trim() } : {}),
     });
     setBusy(false);
     if (error || !data?.[0]) { toast.error(error?.message ?? "Could not create invoice"); return; }

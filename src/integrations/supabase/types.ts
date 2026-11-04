@@ -50,35 +50,6 @@ export type Database = {
         }
         Relationships: []
       }
-      billing_rates: {
-        Row: {
-          hourly_rate: number
-          updated_at: string
-          updated_by: string | null
-          user_id: string
-        }
-        Insert: {
-          hourly_rate: number
-          updated_at?: string
-          updated_by?: string | null
-          user_id: string
-        }
-        Update: {
-          hourly_rate?: number
-          updated_at?: string
-          updated_by?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "billing_rates_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: true
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       announcements: {
         Row: {
           body: string
@@ -121,6 +92,35 @@ export type Database = {
           },
         ]
       }
+      billing_rates: {
+        Row: {
+          hourly_rate: number
+          updated_at: string
+          updated_by: string | null
+          user_id: string
+        }
+        Insert: {
+          hourly_rate: number
+          updated_at?: string
+          updated_by?: string | null
+          user_id: string
+        }
+        Update: {
+          hourly_rate?: number
+          updated_at?: string
+          updated_by?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_rates_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       calendar_feeds: {
         Row: {
           created_at: string
@@ -137,7 +137,15 @@ export type Database = {
           token?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "calendar_feeds_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       client_intake_submissions: {
         Row: {
@@ -421,6 +429,21 @@ export type Database = {
           key?: string
           requests?: number
           window_start?: string
+        }
+        Relationships: []
+      }
+      invoice_counters: {
+        Row: {
+          last_number: number
+          year: number
+        }
+        Insert: {
+          last_number: number
+          year: number
+        }
+        Update: {
+          last_number?: number
+          year?: number
         }
         Relationships: []
       }
@@ -729,25 +752,43 @@ export type Database = {
       }
       notification_preferences: {
         Row: {
+          email_new_inquiries: boolean
+          email_tasks_due_today: boolean
+          email_unconfirmed_deadlines: boolean
           new_inquiries: boolean
           tasks_due_today: boolean
           unconfirmed_deadlines: boolean
           updated_at: string
           user_id: string
+          whatsapp_new_inquiries: boolean
+          whatsapp_tasks_due_today: boolean
+          whatsapp_unconfirmed_deadlines: boolean
         }
         Insert: {
+          email_new_inquiries?: boolean
+          email_tasks_due_today?: boolean
+          email_unconfirmed_deadlines?: boolean
           new_inquiries?: boolean
           tasks_due_today?: boolean
           unconfirmed_deadlines?: boolean
           updated_at?: string
           user_id: string
+          whatsapp_new_inquiries?: boolean
+          whatsapp_tasks_due_today?: boolean
+          whatsapp_unconfirmed_deadlines?: boolean
         }
         Update: {
+          email_new_inquiries?: boolean
+          email_tasks_due_today?: boolean
+          email_unconfirmed_deadlines?: boolean
           new_inquiries?: boolean
           tasks_due_today?: boolean
           unconfirmed_deadlines?: boolean
           updated_at?: string
           user_id?: string
+          whatsapp_new_inquiries?: boolean
+          whatsapp_tasks_due_today?: boolean
+          whatsapp_unconfirmed_deadlines?: boolean
         }
         Relationships: [
           {
@@ -824,42 +865,6 @@ export type Database = {
           },
         ]
       }
-      team_invitations: {
-        Row: {
-          accepted_at: string | null
-          accepted_user_id: string | null
-          created_at: string
-          email: string
-          full_name: string | null
-          id: string
-          invited_by: string | null
-          revoked_at: string | null
-          role: Database["public"]["Enums"]["app_role"]
-        }
-        Insert: {
-          accepted_at?: string | null
-          accepted_user_id?: string | null
-          created_at?: string
-          email: string
-          full_name?: string | null
-          id?: string
-          invited_by?: string | null
-          revoked_at?: string | null
-          role: Database["public"]["Enums"]["app_role"]
-        }
-        Update: {
-          accepted_at?: string | null
-          accepted_user_id?: string | null
-          created_at?: string
-          email?: string
-          full_name?: string | null
-          id?: string
-          invited_by?: string | null
-          revoked_at?: string | null
-          role?: Database["public"]["Enums"]["app_role"]
-        }
-        Relationships: []
-      }
       tasks: {
         Row: {
           assignee_id: string | null
@@ -910,6 +915,57 @@ export type Database = {
             columns: ["matter_id"]
             isOneToOne: false
             referencedRelation: "matters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_invitations: {
+        Row: {
+          accepted_at: string | null
+          accepted_user_id: string | null
+          created_at: string
+          email: string
+          full_name: string | null
+          id: string
+          invited_by: string | null
+          revoked_at: string | null
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Insert: {
+          accepted_at?: string | null
+          accepted_user_id?: string | null
+          created_at?: string
+          email: string
+          full_name?: string | null
+          id?: string
+          invited_by?: string | null
+          revoked_at?: string | null
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Update: {
+          accepted_at?: string | null
+          accepted_user_id?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string | null
+          id?: string
+          invited_by?: string | null
+          revoked_at?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_invitations_accepted_user_id_fkey"
+            columns: ["accepted_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_invitations_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -999,18 +1055,25 @@ export type Database = {
     }
     Functions: {
       accept_inquiry: {
-        Args: { _existing_client_id?: string; _inquiry_id: string; _title: string }
-        Returns: { client_id: string; matter_id: string }[]
+        Args: {
+          _existing_client_id?: string
+          _inquiry_id: string
+          _title: string
+        }
+        Returns: {
+          client_id: string
+          matter_id: string
+        }[]
       }
       calendar_feed: {
         Args: { _token: string }
         Returns: {
-          all_day_date: string | null
-          description: string | null
-          ends_at: string | null
+          all_day_date: string
+          description: string
+          ends_at: string
           kind: string
-          location: string | null
-          starts_at: string | null
+          location: string
+          starts_at: string
           title: string
           uid: string
           updated_at: string
@@ -1038,8 +1101,16 @@ export type Database = {
       }
       conflict_check_count: { Args: { q: string }; Returns: number }
       create_invoice: {
-        Args: { _due_date: string; _entry_ids: string[]; _matter_id: string; _notes?: string | null }
-        Returns: { id: string; invoice_number: string }[]
+        Args: {
+          _due_date: string
+          _entry_ids: string[]
+          _matter_id: string
+          _notes?: string
+        }
+        Returns: {
+          id: string
+          invoice_number: string
+        }[]
       }
       has_role: {
         Args: {
@@ -1049,7 +1120,11 @@ export type Database = {
         Returns: boolean
       }
       invite_team_member: {
-        Args: { _email: string; _full_name: string; _role: Database["public"]["Enums"]["app_role"] }
+        Args: {
+          _email: string
+          _full_name: string
+          _role: Database["public"]["Enums"]["app_role"]
+        }
         Returns: string
       }
       is_frontdesk: { Args: { _user_id: string }; Returns: boolean }
@@ -1061,7 +1136,7 @@ export type Database = {
           client_name: string
           date_opened: string
           id: string
-          lawyer_name: string | null
+          lawyer_name: string
           matter_number: string
           practice_area: Database["public"]["Enums"]["practice_area"]
           status: Database["public"]["Enums"]["matter_status"]
@@ -1071,7 +1146,10 @@ export type Database = {
       next_invoice_number: { Args: never; Returns: string }
       remove_team_member: { Args: { _user_id: string }; Returns: undefined }
       set_user_role: {
-        Args: { _role: Database["public"]["Enums"]["app_role"]; _user_id: string }
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
         Returns: undefined
       }
       submit_client_intake: {
@@ -1087,6 +1165,15 @@ export type Database = {
         }
         Returns: string
       }
+      user_can_access_matter: {
+        Args: { _matter_id: string; _user_id: string }
+        Returns: boolean
+      }
+      user_walled_from_matter: {
+        Args: { _matter_id: string; _user_id: string }
+        Returns: boolean
+      }
+      walled_from_client: { Args: { _client_id: string }; Returns: boolean }
     }
     Enums: {
       app_role:
