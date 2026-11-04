@@ -1,18 +1,42 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bell, Inbox, CheckSquare, CalendarClock, Check, RefreshCw } from "lucide-react";
+import {
+  Bell,
+  Inbox,
+  CheckSquare,
+  CalendarClock,
+  Check,
+  RefreshCw,
+  Gavel,
+  Megaphone,
+  UserPlus,
+} from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useMe, isInternalRole, isFrontdesk } from "@/lib/auth";
 import {
   buildStaffAlerts,
   firmToday,
-  DEFAULT_NOTIFICATION_PREFS,
+  ALERT_CATEGORIES,
+  ANNOUNCEMENT_WINDOW_DAYS,
+  ASSIGNED_WINDOW_DAYS,
+  HEARING_WINDOW_HOURS,
+  type AlertKind,
+  type NotificationPrefs,
   type StaffAlert,
 } from "@/lib/notifications";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+
+const icons: Record<AlertKind, typeof Bell> = {
+  inquiry: Inbox,
+  assigned: UserPlus,
+  task: CheckSquare,
+  hearing: Gavel,
+  deadline: CalendarClock,
+  announcement: Megaphone,
+};
 
 export function NotificationBell() {
   const { data: me } = useMe();
@@ -28,49 +52,81 @@ export function NotificationBell() {
     queryFn: async () => {
       if (!me) return [];
       const internal = isInternalRole(me.role);
-      const [inq, tasks, events, dismissed, prefs] = await Promise.all([
-        supabase
-          .from("inquiries")
-          .select("id,name,status")
-          .eq("status", "new")
-          .order("received_at", { ascending: false }),
-        internal
-          ? supabase
-              .from("tasks")
-              .select("id,title,assignee_id,due_date,status")
-              .eq("assignee_id", me.user.id)
-              .eq("due_date", today)
-              .neq("status", "done")
-          : Promise.resolve({ data: [], error: null }),
-        internal
-          ? supabase
-              .from("events")
-              .select("id,title,type,confirmed_by,filed_at,matter_id")
-              .in("type", ["court_date", "filing_deadline"])
-              .is("confirmed_by", null)
-              .is("filed_at", null)
-              .order("starts_at")
-          : Promise.resolve({ data: [], error: null }),
-        supabase
-          .from("notification_dismissals")
-          .select("notification_key")
-          .eq("user_id", me.user.id),
-        supabase
-          .from("notification_preferences")
-          .select("new_inquiries,tasks_due_today,unconfirmed_deadlines")
-          .eq("user_id", me.user.id)
-          .maybeSingle(),
-      ]);
-      for (const result of [inq, tasks, events, dismissed, prefs])
+      const now = new Date();
+      const daysAgo = (d: number) => new Date(now.getTime() - d * 86_400_000).toISOString();
+      const hearingsUntil = new Date(now.getTime() + HEARING_WINDOW_HOURS * 3_600_000);
+      const [inq, tasks, assigned, events, hearings, notices, dismissed, prefs] = await Promise.all(
+        [
+          supabase
+            .from("inquiries")
+            .select("id,name,status")
+            .eq("status", "new")
+            .order("received_at", { ascending: false }),
+          internal
+            ? supabase
+                .from("tasks")
+                .select("id,title,assignee_id,due_date,status")
+                .eq("assignee_id", me.user.id)
+                .eq("due_date", today)
+                .neq("status", "done")
+            : Promise.resolve({ data: [], error: null }),
+          internal
+            ? supabase
+                .from("tasks")
+                .select("id,title,assignee_id,due_date,status,created_by,created_at")
+                .eq("assignee_id", me.user.id)
+                .neq("status", "done")
+                .neq("created_by", me.user.id)
+                .gte("created_at", daysAgo(ASSIGNED_WINDOW_DAYS))
+                .limit(50)
+            : Promise.resolve({ data: [], error: null }),
+          internal
+            ? supabase
+                .from("events")
+                .select("id,title,type,confirmed_by,filed_at,matter_id")
+                .in("type", ["court_date", "filing_deadline"])
+                .is("confirmed_by", null)
+                .is("filed_at", null)
+                .order("starts_at")
+            : Promise.resolve({ data: [], error: null }),
+          internal
+            ? supabase
+                .from("events")
+                .select("id,title,type,confirmed_by,filed_at,matter_id,starts_at")
+                .in("type", ["court_date", "hearing"])
+                .gte("starts_at", now.toISOString())
+                .lte("starts_at", hearingsUntil.toISOString())
+                .order("starts_at")
+            : Promise.resolve({ data: [], error: null }),
+          supabase
+            .from("announcements")
+            .select("id,title,created_by,created_at,matter_id")
+            .gte("created_at", daysAgo(ANNOUNCEMENT_WINDOW_DAYS))
+            .order("created_at", { ascending: false })
+            .limit(20),
+          supabase
+            .from("notification_dismissals")
+            .select("notification_key")
+            .eq("user_id", me.user.id),
+          supabase
+            .from("notification_preferences")
+            .select(ALERT_CATEGORIES.map((c) => c.key).join(","))
+            .eq("user_id", me.user.id)
+            .maybeSingle(),
+        ],
+      );
+      for (const result of [inq, tasks, assigned, events, hearings, notices, dismissed, prefs])
         if (result.error) throw result.error;
       const hidden = new Set(dismissed.data?.map((d) => d.notification_key));
       return buildStaffAlerts({
         inquiries: inq.data ?? [],
-        tasks: tasks.data ?? [],
-        events: events.data ?? [],
+        tasks: [...(assigned.data ?? []), ...(tasks.data ?? [])],
+        events: [...(hearings.data ?? []), ...(events.data ?? [])],
+        announcements: notices.data ?? [],
         userId: me.user.id,
         today,
-        prefs: prefs.data ?? DEFAULT_NOTIFICATION_PREFS,
+        now,
+        prefs: (prefs.data ?? {}) as Partial<NotificationPrefs>,
       }).filter((a) => !hidden.has(a.key));
     },
   });
@@ -145,14 +201,20 @@ export function NotificationBell() {
             </div>
           ) : (
             alerts.map((a) => {
-              const Icon =
-                a.kind === "inquiry" ? Inbox : a.kind === "task" ? CheckSquare : CalendarClock;
+              const Icon = icons[a.kind];
               const destination =
                 a.kind === "inquiry"
                   ? { to: "/inquiries/$id" as const, params: { id: a.id } }
-                  : a.kind === "deadline" && a.matterId
+                  : (a.kind === "deadline" || a.kind === "hearing") && a.matterId
                     ? { to: "/matters/$id" as const, params: { id: a.matterId } }
-                    : { to: a.kind === "task" ? ("/tasks" as const) : ("/calendar" as const) };
+                    : {
+                        to:
+                          a.kind === "task" || a.kind === "assigned"
+                            ? ("/tasks" as const)
+                            : a.kind === "announcement"
+                              ? ("/announcements" as const)
+                              : ("/calendar" as const),
+                      };
               return (
                 <div key={a.key} className="flex items-center gap-1 border-b last:border-b-0">
                   <Link

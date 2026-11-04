@@ -938,43 +938,73 @@ export type Database = {
       }
       notification_preferences: {
         Row: {
+          announcements: boolean
+          email_announcements: boolean
           email_new_inquiries: boolean
+          email_tasks_assigned: boolean
           email_tasks_due_today: boolean
           email_unconfirmed_deadlines: boolean
+          email_upcoming_hearings: boolean
           new_inquiries: boolean
+          tasks_assigned: boolean
           tasks_due_today: boolean
           unconfirmed_deadlines: boolean
+          upcoming_hearings: boolean
           updated_at: string
           user_id: string
+          whatsapp_announcements: boolean
           whatsapp_new_inquiries: boolean
+          whatsapp_number: string | null
+          whatsapp_tasks_assigned: boolean
           whatsapp_tasks_due_today: boolean
           whatsapp_unconfirmed_deadlines: boolean
+          whatsapp_upcoming_hearings: boolean
         }
         Insert: {
+          announcements?: boolean
+          email_announcements?: boolean
           email_new_inquiries?: boolean
+          email_tasks_assigned?: boolean
           email_tasks_due_today?: boolean
           email_unconfirmed_deadlines?: boolean
+          email_upcoming_hearings?: boolean
           new_inquiries?: boolean
+          tasks_assigned?: boolean
           tasks_due_today?: boolean
           unconfirmed_deadlines?: boolean
+          upcoming_hearings?: boolean
           updated_at?: string
           user_id: string
+          whatsapp_announcements?: boolean
           whatsapp_new_inquiries?: boolean
+          whatsapp_number?: string | null
+          whatsapp_tasks_assigned?: boolean
           whatsapp_tasks_due_today?: boolean
           whatsapp_unconfirmed_deadlines?: boolean
+          whatsapp_upcoming_hearings?: boolean
         }
         Update: {
+          announcements?: boolean
+          email_announcements?: boolean
           email_new_inquiries?: boolean
+          email_tasks_assigned?: boolean
           email_tasks_due_today?: boolean
           email_unconfirmed_deadlines?: boolean
+          email_upcoming_hearings?: boolean
           new_inquiries?: boolean
+          tasks_assigned?: boolean
           tasks_due_today?: boolean
           unconfirmed_deadlines?: boolean
+          upcoming_hearings?: boolean
           updated_at?: string
           user_id?: string
+          whatsapp_announcements?: boolean
           whatsapp_new_inquiries?: boolean
+          whatsapp_number?: string | null
+          whatsapp_tasks_assigned?: boolean
           whatsapp_tasks_due_today?: boolean
           whatsapp_unconfirmed_deadlines?: boolean
+          whatsapp_upcoming_hearings?: boolean
         }
         Relationships: [
           {

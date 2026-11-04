@@ -127,6 +127,13 @@
       "when": 1793766308347,
       "tag": "0017_two_way_calendar_sync",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1793767425499,
+      "tag": "0018_more_notification_alerts",
+      "breakpoints": true
     }
   ]
 }
