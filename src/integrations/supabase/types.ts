@@ -50,35 +50,6 @@ export type Database = {
         }
         Relationships: []
       }
-      billing_rates: {
-        Row: {
-          hourly_rate: number
-          updated_at: string
-          updated_by: string | null
-          user_id: string
-        }
-        Insert: {
-          hourly_rate: number
-          updated_at?: string
-          updated_by?: string | null
-          user_id: string
-        }
-        Update: {
-          hourly_rate?: number
-          updated_at?: string
-          updated_by?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "billing_rates_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: true
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       announcements: {
         Row: {
           body: string
@@ -120,24 +91,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      calendar_feeds: {
-        Row: {
-          created_at: string
-          token: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          token?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          token?: string
-          user_id?: string
-        }
-        Relationships: []
       }
       client_intake_submissions: {
         Row: {
@@ -824,42 +777,6 @@ export type Database = {
           },
         ]
       }
-      team_invitations: {
-        Row: {
-          accepted_at: string | null
-          accepted_user_id: string | null
-          created_at: string
-          email: string
-          full_name: string | null
-          id: string
-          invited_by: string | null
-          revoked_at: string | null
-          role: Database["public"]["Enums"]["app_role"]
-        }
-        Insert: {
-          accepted_at?: string | null
-          accepted_user_id?: string | null
-          created_at?: string
-          email: string
-          full_name?: string | null
-          id?: string
-          invited_by?: string | null
-          revoked_at?: string | null
-          role: Database["public"]["Enums"]["app_role"]
-        }
-        Update: {
-          accepted_at?: string | null
-          accepted_user_id?: string | null
-          created_at?: string
-          email?: string
-          full_name?: string | null
-          id?: string
-          invited_by?: string | null
-          revoked_at?: string | null
-          role?: Database["public"]["Enums"]["app_role"]
-        }
-        Relationships: []
-      }
       tasks: {
         Row: {
           assignee_id: string | null
@@ -998,35 +915,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      accept_inquiry: {
-        Args: { _existing_client_id?: string; _inquiry_id: string; _title: string }
-        Returns: { client_id: string; matter_id: string }[]
-      }
-      calendar_feed: {
-        Args: { _token: string }
-        Returns: {
-          all_day_date: string | null
-          description: string | null
-          ends_at: string | null
-          kind: string
-          location: string | null
-          starts_at: string | null
-          title: string
-          uid: string
-          updated_at: string
-        }[]
-      }
-      can_access_client: { Args: { _client_id: string }; Returns: boolean }
       can_access_matter: { Args: { _matter_id: string }; Returns: boolean }
-      can_read_document_file: { Args: { _path: string }; Returns: boolean }
-      client_directory: {
-        Args: never
-        Returns: {
-          id: string
-          name: string
-          type: Database["public"]["Enums"]["client_type"]
-        }[]
-      }
       conflict_check: {
         Args: { q: string }
         Returns: {
@@ -1037,10 +926,6 @@ export type Database = {
         }[]
       }
       conflict_check_count: { Args: { q: string }; Returns: number }
-      create_invoice: {
-        Args: { _due_date: string; _entry_ids: string[]; _matter_id: string; _notes?: string | null }
-        Returns: { id: string; invoice_number: string }[]
-      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1048,32 +933,10 @@ export type Database = {
         }
         Returns: boolean
       }
-      invite_team_member: {
-        Args: { _email: string; _full_name: string; _role: Database["public"]["Enums"]["app_role"] }
-        Returns: string
-      }
       is_frontdesk: { Args: { _user_id: string }; Returns: boolean }
       is_internal: { Args: { _user_id: string }; Returns: boolean }
       is_lawyerish: { Args: { _user_id: string }; Returns: boolean }
-      matter_directory: {
-        Args: never
-        Returns: {
-          client_name: string
-          date_opened: string
-          id: string
-          lawyer_name: string | null
-          matter_number: string
-          practice_area: Database["public"]["Enums"]["practice_area"]
-          status: Database["public"]["Enums"]["matter_status"]
-          title: string
-        }[]
-      }
       next_invoice_number: { Args: never; Returns: string }
-      remove_team_member: { Args: { _user_id: string }; Returns: undefined }
-      set_user_role: {
-        Args: { _role: Database["public"]["Enums"]["app_role"]; _user_id: string }
-        Returns: undefined
-      }
       submit_client_intake: {
         Args: {
           _area: Database["public"]["Enums"]["practice_area"]
