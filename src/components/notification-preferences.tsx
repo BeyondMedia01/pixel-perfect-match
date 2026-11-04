@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Bell, Mail, MessageCircle, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import { useMe, isInternalRole } from "@/lib/auth";
 import { DEFAULT_CHANNEL_PREFS, channelPreferenceKey, type ChannelNotificationPrefs, type NotificationChannel, type NotificationPrefs } from "@/lib/notifications";
 import { getNotificationChannels } from "@/lib/notification-channels.functions";
@@ -36,8 +37,10 @@ export function NotificationPreferences() {
   const save = useMutation({
     mutationFn: async ({ field, checked }: { field: keyof ChannelNotificationPrefs; checked: boolean }) => {
       if (!me) throw new Error("Please sign in again.");
+      const update: Database["public"]["Tables"]["notification_preferences"]["Insert"] = { user_id: me.user.id, updated_at: new Date().toISOString() };
+      update[field] = checked;
       const { data, error } = await supabase.from("notification_preferences")
-        .upsert({ user_id: me.user.id, [field]: checked, updated_at: new Date().toISOString() }).select("*").single();
+        .upsert(update).select("*").single();
       if (error) throw error;
       return { ...DEFAULT_CHANNEL_PREFS, ...data };
     },
