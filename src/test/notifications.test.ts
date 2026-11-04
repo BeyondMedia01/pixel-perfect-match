@@ -1,8 +1,20 @@
 import { describe, expect, it } from "vitest";
-import { buildStaffAlerts, firmToday } from "@/lib/notifications";
+import { buildStaffAlerts, firmToday, DEFAULT_CHANNEL_PREFS, preferencesForChannel } from "@/lib/notifications";
 
 const base = { inquiries: [], tasks: [], events: [], userId: "staff-1", today: "2026-10-26" };
 describe("staff notification rules", () => {
+  it("keeps in-app alerts on by default and external channels opt-in", () => {
+    expect(preferencesForChannel(DEFAULT_CHANNEL_PREFS, "in_app")).toEqual({ new_inquiries: true, tasks_due_today: true, unconfirmed_deadlines: true });
+    for (const channel of ["email", "whatsapp"] as const) {
+      expect(preferencesForChannel(DEFAULT_CHANNEL_PREFS, channel)).toEqual({ new_inquiries: false, tasks_due_today: false, unconfirmed_deadlines: false });
+    }
+  });
+  it("stores alert choices independently across all three channels", () => {
+    const prefs = { ...DEFAULT_CHANNEL_PREFS, new_inquiries: false, email_new_inquiries: true, whatsapp_tasks_due_today: true };
+    expect(preferencesForChannel(prefs, "in_app").new_inquiries).toBe(false);
+    expect(preferencesForChannel(prefs, "email")).toEqual({ new_inquiries: true, tasks_due_today: false, unconfirmed_deadlines: false });
+    expect(preferencesForChannel(prefs, "whatsapp")).toEqual({ new_inquiries: false, tasks_due_today: true, unconfirmed_deadlines: false });
+  });
   it("alerts for new inquiries only", () => {
     expect(buildStaffAlerts({ ...base, inquiries: [{ id: "new", name: "Prospect", status: "new" }, { id: "booked", name: "Booked", status: "consult" }] }).map(a => a.id)).toEqual(["new"]);
   });

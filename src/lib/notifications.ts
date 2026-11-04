@@ -9,6 +9,27 @@ export function firmToday(now = new Date()) {
 export type NotificationPrefs = { new_inquiries: boolean; tasks_due_today: boolean; unconfirmed_deadlines: boolean };
 export const DEFAULT_NOTIFICATION_PREFS: NotificationPrefs = { new_inquiries: true, tasks_due_today: true, unconfirmed_deadlines: true };
 
+export type NotificationChannel = "in_app" | "email" | "whatsapp";
+export type ChannelNotificationPrefs = NotificationPrefs & {
+  email_new_inquiries: boolean; email_tasks_due_today: boolean; email_unconfirmed_deadlines: boolean;
+  whatsapp_new_inquiries: boolean; whatsapp_tasks_due_today: boolean; whatsapp_unconfirmed_deadlines: boolean;
+};
+export const DEFAULT_CHANNEL_PREFS: ChannelNotificationPrefs = {
+  ...DEFAULT_NOTIFICATION_PREFS,
+  email_new_inquiries: false, email_tasks_due_today: false, email_unconfirmed_deadlines: false,
+  whatsapp_new_inquiries: false, whatsapp_tasks_due_today: false, whatsapp_unconfirmed_deadlines: false,
+};
+export function channelPreferenceKey(channel: NotificationChannel, category: keyof NotificationPrefs): keyof ChannelNotificationPrefs {
+  return channel === "in_app" ? category : `${channel}_${category}`;
+}
+export function preferencesForChannel(prefs: ChannelNotificationPrefs, channel: NotificationChannel): NotificationPrefs {
+  return {
+    new_inquiries: prefs[channelPreferenceKey(channel, "new_inquiries")],
+    tasks_due_today: prefs[channelPreferenceKey(channel, "tasks_due_today")],
+    unconfirmed_deadlines: prefs[channelPreferenceKey(channel, "unconfirmed_deadlines")],
+  };
+}
+
 export function buildStaffAlerts({ inquiries, tasks, events, userId, today, prefs = DEFAULT_NOTIFICATION_PREFS }: {
   inquiries: Pick<Tables["inquiries"]["Row"], "id" | "name" | "status">[];
   tasks: Pick<Tables["tasks"]["Row"], "id" | "title" | "assignee_id" | "due_date" | "status">[];
