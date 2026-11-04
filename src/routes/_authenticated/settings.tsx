@@ -13,6 +13,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { DEMO_ACCOUNTS, disableDemo, enableDemo, getDemoStatus, resetDemo } from "@/lib/demo.functions";
+import { formatDistanceToNow } from "date-fns";
+
+const isDemoAccount = (email?: string | null) => DEMO_ACCOUNTS.some((a) => a.email === email);
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({ meta: [{ title: "Settings — Acta" }, { name: "description", content: "Your profile and firm settings." }, { property: "og:title", content: "Settings — Acta" }, { property: "og:description", content: "Your profile and firm settings." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
@@ -25,10 +29,105 @@ function Settings() {
     <div className="mx-auto max-w-4xl space-y-10">
       <PageHeader title="Settings" />
       <ProfileSection />
+      {!isDemoAccount(me?.user.email) && <PasswordSection />}
       {(isInternalRole(me?.role) || isFrontdesk(me?.role)) && <NotificationPreferences />}
       {isInternalRole(me?.role) && <CalendarSyncSection />}
       {isPartner(me?.role) && <EthicalWallsSection />}
+      {isPartner(me?.role) && <DemoSection />}
     </div>
+  );
+}
+
+function PasswordSection() {
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    const { error } = await supabase.auth.updateUser({ password });
+    setBusy(false);
+    if (error) toast.error(error.message);
+    else { toast.success("Password changed"); setPassword(""); }
+  }
+  return (
+    <section className="rounded-lg border bg-card p-5">
+      <h2 className="eyebrow mb-4">Password</h2>
+      <form onSubmit={save} className="flex flex-wrap items-end gap-3">
+        <div className="w-full max-w-xs space-y-1.5">
+          <Label htmlFor="new_password">New password</Label>
+          <Input id="new_password" type="password" required minLength={8} autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+        </div>
+        <Button type="submit" variant="outline" disabled={busy}>{busy ? "Saving…" : "Change password"}</Button>
+      </form>
+      <p className="mt-2 text-xs text-muted-foreground">At least 8 characters. Signed in with Google? You can still set one to sign in with email.</p>
+    </section>
+  );
+}
+
+function DemoSection() {
+  const qc = useQueryClient();
+  const confirm = useConfirm();
+  const [busy, setBusy] = useState<string | null>(null);
+  const { data: status } = useQuery({ queryKey: ["demo-status"], queryFn: () => getDemoStatus() });
+
+  async function run(kind: "enable" | "reset" | "disable") {
+    if (kind === "enable") {
+      const ok = await confirm({
+        title: "Turn on the demo workspace?",
+        body: "This creates four demo sign-ins (partner, lawyer, paralegal, front desk) and adds a sign-in button for each on the sign-in page. Anyone who can reach this site can then look around as those people, including the partner, so only do this in a demo workspace with no real client data.",
+        action: "Turn on demo",
+        destructive: true,
+      });
+      if (!ok) return;
+    }
+    if (kind === "reset" && !(await confirm({ title: "Reset the demo data?", body: "Demo tasks, dates, inquiries, time and invoices go back to how they started, with dates around today. Anything else people added stays.", action: "Reset" }))) return;
+    if (kind === "disable" && !(await confirm({ title: "Turn off the demo workspace?", body: "The sign-in buttons disappear and the demo accounts lose their access. The demo data stays in place.", action: "Turn off", destructive: true }))) return;
+    setBusy(kind);
+    try {
+      if (kind === "enable") await enableDemo();
+      else if (kind === "reset") await resetDemo();
+      else await disableDemo();
+      toast.success(kind === "enable" ? "Demo workspace is on" : kind === "reset" ? "Demo data reset" : "Demo workspace is off");
+      qc.invalidateQueries();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  return (
+    <section className="rounded-lg border bg-card p-5">
+      <div className="mb-1 flex items-center gap-2">
+        <h2 className="eyebrow">Demo workspace</h2>
+        {status?.enabled && <Badge variant="active">On</Badge>}
+      </div>
+      <p className="mb-4 text-sm text-muted-foreground">
+        For showing Acta to prospective firms. One sign-in per role, each with matters, tasks, deadlines, inquiries
+        and billing to look at, and a reset that brings everything back to this week.
+      </p>
+      {status?.enabled ? (
+        <div className="space-y-4">
+          <ul className="grid gap-2 sm:grid-cols-2">
+            {DEMO_ACCOUNTS.map((a) => (
+              <li key={a.role} className="rounded-md border p-3 text-sm">
+                <div className="font-medium">{a.label} · {a.name}</div>
+                <div className="text-xs text-muted-foreground">{a.blurb}</div>
+              </li>
+            ))}
+          </ul>
+          <p className="text-xs text-muted-foreground">
+            The sign-in page shows a button for each.{status.refreshedAt ? ` Data last reset ${formatDistanceToNow(new Date(status.refreshedAt), { addSuffix: true })}.` : ""}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" disabled={!!busy} onClick={() => run("reset")}>{busy === "reset" ? "Resetting…" : "Reset demo data"}</Button>
+            <Button variant="ghost" className="text-destructive" disabled={!!busy} onClick={() => run("disable")}>{busy === "disable" ? "Turning off…" : "Turn off demo"}</Button>
+          </div>
+        </div>
+      ) : (
+        <Button variant="outline" disabled={!!busy} onClick={() => run("enable")}>{busy === "enable" ? "Setting up…" : "Turn on demo workspace"}</Button>
+      )}
+    </section>
   );
 }
 

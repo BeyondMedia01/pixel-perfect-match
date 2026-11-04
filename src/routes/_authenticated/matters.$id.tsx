@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMe, useProfiles, isInternalRole, isLawyerish, isPartner } from "@/lib/auth";
 import { EVENT_LABELS, MATTER_STATUSES, TASK_STATUS_LABELS, areaLabel, isDeadlineType, isUrgent, statusMeta, type MatterStatus, type EventType } from "@/lib/legal";
 import { EmptyState } from "@/components/app-shell";
-import { Field } from "@/components/matter-form";
+import { Field, EditMatterDialog } from "@/components/matter-form";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { DocumentList } from "@/components/document-list";
 import { MatterBilling } from "@/components/matter-billing";
@@ -88,10 +88,13 @@ function MatterPage() {
         <div className="mt-1 flex flex-wrap items-start justify-between gap-4">
           <h1 className="page-title max-w-3xl">{m.title}</h1>
           {internal ? (
+            <div className="flex items-center gap-2">
+            <EditMatterDialog matter={m} onSaved={refresh} trigger={<Button variant="outline">Edit details</Button>} />
             <Select value={m.status} onValueChange={(v) => changeStatus(v as MatterStatus)}>
               <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
               <SelectContent>{MATTER_STATUSES.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent>
             </Select>
+            </div>
           ) : <Badge variant={statusMeta(m.status).variant}>{statusMeta(m.status).label}</Badge>}
         </div>
         {m.clients && <Link to="/clients/$id" params={{ id: m.clients.id }} className="mt-1 inline-block text-sm text-muted-foreground hover:underline">{m.clients.name}</Link>}

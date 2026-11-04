@@ -92,6 +92,82 @@ export function NewMatterDialog({ defaultClientId, trigger }: { defaultClientId?
   );
 }
 
+type EditableMatter = {
+  id: string; title: string; practice_area: PracticeArea; responsible_lawyer_id: string | null;
+  opposing_party: string | null; opposing_counsel: string | null; court: string | null; case_number: string | null;
+  description: string | null; date_opened: string;
+};
+
+/** Edit a matter's details. Status has its own control on the matter page; the client stays fixed. */
+export function EditMatterDialog({ matter, trigger, onSaved }: { matter: EditableMatter; trigger: React.ReactNode; onSaved?: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const { data: profiles } = useProfiles();
+  const qc = useQueryClient();
+  const initial = () => ({
+    title: matter.title, practice_area: matter.practice_area, responsible_lawyer_id: matter.responsible_lawyer_id ?? "",
+    opposing_party: matter.opposing_party ?? "", opposing_counsel: matter.opposing_counsel ?? "", court: matter.court ?? "",
+    case_number: matter.case_number ?? "", description: matter.description ?? "", date_opened: matter.date_opened,
+  });
+  const [f, setF] = useState(initial);
+  const set = (k: keyof ReturnType<typeof initial>) => (v: string) => setF((p) => ({ ...p, [k]: v }));
+
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    const blank = (v: string) => v.trim() || null;
+    const { data, error } = await supabase.from("matters").update({
+      title: f.title.trim(), practice_area: f.practice_area as PracticeArea,
+      responsible_lawyer_id: f.responsible_lawyer_id || null,
+      opposing_party: blank(f.opposing_party), opposing_counsel: blank(f.opposing_counsel),
+      court: blank(f.court), case_number: blank(f.case_number), description: blank(f.description),
+      date_opened: f.date_opened,
+    }).eq("id", matter.id).select("id");
+    setBusy(false);
+    if (error || !data?.length) { toast.error(error?.message ?? "You can't edit this matter."); return; }
+    toast.success("Matter updated");
+    qc.invalidateQueries({ queryKey: ["matter", matter.id] });
+    qc.invalidateQueries({ queryKey: ["matters"] });
+    onSaved?.();
+    setOpen(false);
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (o) setF(initial()); }}>
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
+        <DialogHeader><DialogTitle className="text-xl font-semibold">Edit matter details</DialogTitle></DialogHeader>
+        <form onSubmit={save} className="grid gap-4 sm:grid-cols-2">
+          <Field label="Title" className="sm:col-span-2"><Input required value={f.title} onChange={(e) => set("title")(e.target.value)} /></Field>
+          <Field label="Responsible lawyer">
+            <Select value={f.responsible_lawyer_id} onValueChange={set("responsible_lawyer_id")}>
+              <SelectTrigger><SelectValue placeholder="Choose a lawyer" /></SelectTrigger>
+              <SelectContent>{profiles?.map((p) => <SelectItem key={p.id} value={p.id}>{p.full_name || p.email}</SelectItem>)}</SelectContent>
+            </Select>
+          </Field>
+          <Field label="Practice area">
+            <Select value={f.practice_area} onValueChange={set("practice_area")}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>{PRACTICE_AREAS.map((a) => <SelectItem key={a.value} value={a.value}>{a.label}</SelectItem>)}</SelectContent>
+            </Select>
+          </Field>
+          <Field label="Opposing party"><Input value={f.opposing_party} onChange={(e) => set("opposing_party")(e.target.value)} /></Field>
+          <Field label="Opposing counsel"><Input value={f.opposing_counsel} onChange={(e) => set("opposing_counsel")(e.target.value)} /></Field>
+          <div className="sm:col-span-2"><ConflictCheck names={[f.opposing_party, f.opposing_counsel]} /></div>
+          <Field label="Court / jurisdiction"><Input value={f.court} onChange={(e) => set("court")(e.target.value)} /></Field>
+          <Field label="Case number"><Input value={f.case_number} onChange={(e) => set("case_number")(e.target.value)} /></Field>
+          <Field label="Date opened"><Input type="date" required value={f.date_opened} onChange={(e) => set("date_opened")(e.target.value)} /></Field>
+          <Field label="Description" className="sm:col-span-2"><Textarea value={f.description} onChange={(e) => set("description")(e.target.value)} /></Field>
+          <div className="flex justify-end gap-2 sm:col-span-2">
+            <Button type="button" variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
+            <Button type="submit" disabled={busy}>{busy ? "Saving…" : "Save changes"}</Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export function Field({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {
   return <div className={"space-y-1.5 " + (className ?? "")}><Label>{label}</Label>{children}</div>;
 }

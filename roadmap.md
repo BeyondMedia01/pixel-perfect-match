@@ -38,3 +38,8 @@
 - [x] Calendar sync: private subscription link per person for Google, Outlook and Apple Calendar; "Add to calendar" for single events (Google, Outlook, .ics).
 - [ ] Two-way calendar sync (would need Google and Microsoft app registrations).
 
+## Demo readiness
+- [x] Demo workspace (Settings → Demo workspace): partner, lawyer, paralegal and front-desk sign-ins with their own matters, tasks, deadlines, inquiries, time and invoices; one-click reset to this week; sign-in buttons on the sign-in page while it's on.
+- [x] Forgot password (reset email + /reset-password) and change password in Settings.
+- [x] Edit matter details and client records.
+

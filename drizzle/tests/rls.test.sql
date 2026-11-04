@@ -332,6 +332,45 @@ delete from user_roles where user_id = :'L';
 select tests.ok('feed goes empty when the person loses access', not exists (select 1 from calendar_feed(:'l_token')));
 insert into user_roles(user_id, role) values (:'L', 'lawyer');
 
+-- ===== Demo workspace =====
+insert into auth.users(id, email, raw_user_meta_data) values
+  ('dddddddd-9999-0000-0000-000000000001', 'demo.partner@example.com', '{"full_name":"Rumbidzai Makoni"}'),
+  ('dddddddd-9999-0000-0000-000000000002', 'demo.lawyer@example.com', '{"full_name":"Tafadzwa Chirwa"}'),
+  ('dddddddd-9999-0000-0000-000000000003', 'demo.paralegal@example.com', '{"full_name":"Nyasha Gumbo"}'),
+  ('dddddddd-9999-0000-0000-000000000004', 'demo.frontdesk@example.com', '{"full_name":"Precious Ndlovu"}');
+insert into demo_settings(id, enabled, password, partner_id, lawyer_id, paralegal_id, frontdesk_id) values
+  (1, true, 'x', 'dddddddd-9999-0000-0000-000000000001', 'dddddddd-9999-0000-0000-000000000002', 'dddddddd-9999-0000-0000-000000000003', 'dddddddd-9999-0000-0000-000000000004');
+-- the server calls this with the service role, so nobody is signed in
+select tests.login(null);
+select refresh_demo_data();
+select refresh_demo_data();
+select tests.ok('demo reset can run again without duplicating anything',
+  (select count(*) from tasks where id::text like 'dddddddd-0001-%') = 9
+  and (select count(*) from inquiries where id::text like 'dddddddd-0003-%') = 3
+  and (select count(*) from invoices where id = 'dddddddd-0005-0000-0000-000000000001') = 1);
+
+select tests.login('dddddddd-9999-0000-0000-000000000002'); set role authenticated;
+select tests.ok('demo lawyer sees their matters, tasks due today and this week''s dates',
+  (select count(*) from matters) >= 6
+  and exists (select 1 from tasks where due_date = current_date and assignee_id = auth.uid())
+  and (select count(*) from events where starts_at between now() and now() + interval '7 days') >= 3);
+select tests.ok('demo lawyer sees billed and unbilled time', (select count(*) from time_entries where invoice_id is null) >= 3
+  and (select count(*) from invoices) >= 1);
+reset role;
+select tests.login('dddddddd-9999-0000-0000-000000000003'); set role authenticated;
+select tests.ok('demo paralegal sees assigned matters but not the walled one',
+  (select count(*) from matters) = 4 and not exists (select 1 from matters where id = :'M11'));
+reset role;
+select tests.login('dddddddd-9999-0000-0000-000000000004'); set role authenticated;
+select tests.ok('demo front desk sees the inquiries and the matter directory, not records',
+  (select count(*) from inquiries where id::text like 'dddddddd-0003-%') = 3
+  and (select count(*) from matters) = 0 and (select count(*) from matter_directory()) > 0);
+select tests.ok('demo front desk is warned about the conflicted inquiry', conflict_check_count('Mhondoro Holdings') > 0);
+reset role;
+select tests.ok('signed-in users cannot run the demo reset or read its settings',
+  (select not has_function_privilege('authenticated', 'refresh_demo_data()', 'execute'))
+  and not has_table_privilege('authenticated', 'demo_settings', 'select'));
+
 -- ===== Storage =====
 select tests.ok('documents bucket is private', not (select public from storage.buckets where id = 'matter-documents'));
 

@@ -5,6 +5,9 @@ import { statusMeta } from "@/lib/legal";
 import { PageHeader } from "@/components/app-shell";
 import { DocumentList } from "@/components/document-list";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { NewClientDialog } from "@/components/client-form";
+import { useMe, isInternalRole } from "@/lib/auth";
 
 export const Route = createFileRoute("/_authenticated/clients/$id")({
   head: () => ({ meta: [{ title: "Client — Acta" }, { name: "description", content: "Client details and matters." }, { property: "og:title", content: "Client — Acta" }, { property: "og:description", content: "Client details and matters." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
@@ -13,6 +16,7 @@ export const Route = createFileRoute("/_authenticated/clients/$id")({
 
 function ClientPage() {
   const { id } = Route.useParams();
+  const { data: me } = useMe();
   const { data } = useQuery({
     queryKey: ["client", id],
     queryFn: async () => {
@@ -27,7 +31,7 @@ function ClientPage() {
   if (!c) return <p className="text-sm text-muted-foreground">Loading…</p>;
   return (
     <div className="mx-auto max-w-5xl">
-      <PageHeader eyebrow={c.type} title={c.name} />
+      <PageHeader eyebrow={c.type} title={c.name} actions={isInternalRole(me?.role) ? <NewClientDialog client={c} trigger={<Button variant="outline">Edit details</Button>} /> : undefined} />
       <div className="grid gap-6 lg:grid-cols-3">
         <dl className="space-y-3 rounded-lg border bg-card p-5 text-sm">
           {[["ID / Reg.", c.id_number], ["Email", c.email], ["Phone", c.phone], ["Address", c.address], ["Notes", c.notes]].map(([k, v]) => (

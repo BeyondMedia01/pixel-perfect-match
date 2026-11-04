@@ -224,6 +224,42 @@ export type Database = {
         }
         Relationships: []
       }
+      demo_settings: {
+        Row: {
+          enabled: boolean
+          frontdesk_id: string | null
+          id: number
+          lawyer_id: string | null
+          paralegal_id: string | null
+          partner_id: string | null
+          password: string | null
+          refreshed_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          enabled?: boolean
+          frontdesk_id?: string | null
+          id?: number
+          lawyer_id?: string | null
+          paralegal_id?: string | null
+          partner_id?: string | null
+          password?: string | null
+          refreshed_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          enabled?: boolean
+          frontdesk_id?: string | null
+          id?: number
+          lawyer_id?: string | null
+          paralegal_id?: string | null
+          partner_id?: string | null
+          password?: string | null
+          refreshed_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       documents: {
         Row: {
           client_id: string | null
@@ -1144,6 +1180,7 @@ export type Database = {
         }[]
       }
       next_invoice_number: { Args: never; Returns: string }
+      refresh_demo_data: { Args: never; Returns: undefined }
       remove_team_member: { Args: { _user_id: string }; Returns: undefined }
       set_user_role: {
         Args: {

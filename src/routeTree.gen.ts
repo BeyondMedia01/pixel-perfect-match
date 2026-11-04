@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IntakeRouteImport } from './routes/intake'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthenticatedAnnouncementsRouteImport } from './routes/_authenticated/announcements'
 import { Route as AuthenticatedBillingRouteImport } from './routes/_authenticated/billing'
 import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticated/calendar'
@@ -47,6 +48,11 @@ const AuthRoute = AuthRouteImport.update({
 const IntakeRoute = IntakeRouteImport.update({
   id: '/intake',
   path: '/intake',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAnnouncementsRoute =
@@ -139,6 +145,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/intake': typeof IntakeRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/announcements': typeof AuthenticatedAnnouncementsRoute
   '/billing': typeof AuthenticatedBillingRoute
   '/calendar': typeof AuthenticatedCalendarRoute
@@ -160,6 +167,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/intake': typeof IntakeRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/announcements': typeof AuthenticatedAnnouncementsRoute
   '/billing': typeof AuthenticatedBillingRoute
   '/calendar': typeof AuthenticatedCalendarRoute
@@ -183,6 +191,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/intake': typeof IntakeRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/announcements': typeof AuthenticatedAnnouncementsRoute
   '/_authenticated/billing': typeof AuthenticatedBillingRoute
   '/_authenticated/calendar': typeof AuthenticatedCalendarRoute
@@ -206,6 +215,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/intake'
+    | '/reset-password'
     | '/announcements'
     | '/billing'
     | '/calendar'
@@ -227,6 +237,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/intake'
+    | '/reset-password'
     | '/announcements'
     | '/billing'
     | '/calendar'
@@ -249,6 +260,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/intake'
+    | '/reset-password'
     | '/_authenticated/announcements'
     | '/_authenticated/billing'
     | '/_authenticated/calendar'
@@ -272,6 +284,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   IntakeRoute: typeof IntakeRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   ApiCalendarTokenRoute: typeof ApiCalendarTokenRoute
 }
 
@@ -303,6 +316,13 @@ declare module '@tanstack/react-router' {
       path: '/intake'
       fullPath: '/intake'
       preLoaderRoute: typeof IntakeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/announcements': {
@@ -464,6 +484,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   IntakeRoute: IntakeRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   ApiCalendarTokenRoute: ApiCalendarTokenRoute,
 }
 export const routeTree = rootRouteImport
