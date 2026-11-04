@@ -22,6 +22,7 @@
 - [ ] Reports
 
 ## Notifications and public intake
+- [ ] Per-person, per-alert in-app/email/WhatsApp preferences with explicit disconnected channel states; verify saved choices and bell filtering.
 - [x] Staff bell: new inquiries, own tasks due today, deadlines awaiting confirmation; dismiss and refresh.
 - [x] Public client intake: validated, rate-limited submissions saved into Inquiries; shareable link.
 - [x] Verify public submission and signed-in staff alerts end-to-end.
