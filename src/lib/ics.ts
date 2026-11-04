@@ -20,7 +20,10 @@ const DEFAULT_LENGTH_MS = 60 * 60 * 1000;
 
 /** 20261103T143000Z */
 export function icsDateTime(d: string | Date): string {
-  return new Date(d).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
+  return new Date(d)
+    .toISOString()
+    .replace(/[-:]/g, "")
+    .replace(/\.\d{3}Z$/, "Z");
 }
 
 /** 2026-11-03 -> 20261103 */
@@ -36,7 +39,11 @@ function nextDay(day: string): string {
 
 /** Escape text values: backslash, semicolon, comma and newlines. */
 export function icsEscape(text: string): string {
-  return text.replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n");
+  return text
+    .replace(/\\/g, "\\\\")
+    .replace(/;/g, "\\;")
+    .replace(/,/g, "\\,")
+    .replace(/\r?\n/g, "\\n");
 }
 
 /** Fold lines longer than 75 octets, as the format requires. */
@@ -65,7 +72,10 @@ function timing(item: CalendarItem): string[] {
   if (item.start) {
     const start = new Date(item.start);
     const end = item.end ? new Date(item.end) : new Date(start.getTime() + DEFAULT_LENGTH_MS);
-    return [`DTSTART:${icsDateTime(start)}`, `DTEND:${icsDateTime(end > start ? end : new Date(start.getTime() + DEFAULT_LENGTH_MS))}`];
+    return [
+      `DTSTART:${icsDateTime(start)}`,
+      `DTEND:${icsDateTime(end > start ? end : new Date(start.getTime() + DEFAULT_LENGTH_MS))}`,
+    ];
   }
   const day = item.allDayDate!;
   return [`DTSTART;VALUE=DATE:${icsDate(day)}`, `DTEND;VALUE=DATE:${icsDate(nextDay(day))}`];
@@ -96,7 +106,11 @@ export function buildIcs(items: CalendarItem[], opts: { name?: string; now?: Dat
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
     ...(opts.name
-      ? [`X-WR-CALNAME:${icsEscape(opts.name)}`, "REFRESH-INTERVAL;VALUE=DURATION:PT1H", "X-PUBLISHED-TTL:PT1H"]
+      ? [
+          `X-WR-CALNAME:${icsEscape(opts.name)}`,
+          "REFRESH-INTERVAL;VALUE=DURATION:PT1H",
+          "X-PUBLISHED-TTL:PT1H",
+        ]
       : []),
     ...items.filter((i) => i.start || i.allDayDate).flatMap((i) => eventLines(i, stamp)),
     "END:VCALENDAR",
@@ -125,7 +139,9 @@ export function googleCalendarUrl(item: CalendarItem): string {
 export function outlookCalendarUrl(item: CalendarItem, work = true): string {
   const start = item.start ? new Date(item.start).toISOString() : `${item.allDayDate}T00:00:00`;
   const end = item.start
-    ? new Date(item.end ?? new Date(new Date(item.start).getTime() + DEFAULT_LENGTH_MS)).toISOString()
+    ? new Date(
+        item.end ?? new Date(new Date(item.start).getTime() + DEFAULT_LENGTH_MS),
+      ).toISOString()
     : `${nextDay(item.allDayDate!)}T00:00:00`;
   const q = new URLSearchParams({
     path: "/calendar/action/compose",
@@ -142,5 +158,11 @@ export function outlookCalendarUrl(item: CalendarItem, work = true): string {
 
 /** Safe file name for a download. */
 export function icsFileName(title: string): string {
-  return (title.replace(/[^\w\s-]/g, "").trim().replace(/\s+/g, "-").slice(0, 60) || "event") + ".ics";
+  return (
+    (title
+      .replace(/[^\w\s-]/g, "")
+      .trim()
+      .replace(/\s+/g, "-")
+      .slice(0, 60) || "event") + ".ics"
+  );
 }

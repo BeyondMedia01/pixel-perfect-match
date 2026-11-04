@@ -44,7 +44,12 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
   return (
     <ConfirmContext.Provider value={confirm}>
       {children}
-      <AlertDialog open={!!options} onOpenChange={(open) => { if (!open) close(false); }}>
+      <AlertDialog
+        open={!!options}
+        onOpenChange={(open) => {
+          if (!open) close(false);
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{options?.title}</AlertDialogTitle>
@@ -53,7 +58,9 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => close(false)}>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              className={options?.destructive ? buttonVariants({ variant: "destructive" }) : undefined}
+              className={
+                options?.destructive ? buttonVariants({ variant: "destructive" }) : undefined
+              }
               onClick={() => close(true)}
             >
               {options?.action ?? "Confirm"}

@@ -45,7 +45,9 @@ export function useConflictCount(terms: string[], enabled = true) {
     enabled: enabled && clean.length > 0,
     queryFn: async () => {
       const counts = await Promise.all(
-        clean.map(async (term) => (await supabase.rpc("conflict_check_count", { q: term })).data ?? 0),
+        clean.map(
+          async (term) => (await supabase.rpc("conflict_check_count", { q: term })).data ?? 0,
+        ),
       );
       return counts.reduce((a, b) => a + b, 0);
     },
@@ -57,16 +59,26 @@ export function useConflictCount(terms: string[], enabled = true) {
  * client of the firm, or the prospect appears as the opposing party on an
  * existing matter. Adverse matches need partner sign-off before acceptance.
  */
-export function isAdverse(hit: ConflictHit, prospectName: string, opposingNames: string[]): boolean {
+export function isAdverse(
+  hit: ConflictHit,
+  prospectName: string,
+  opposingNames: string[],
+): boolean {
   const asOpposing = opposingNames.some((o) => o.trim().toLowerCase() === hit.term.toLowerCase());
   const asProspect = prospectName.trim().toLowerCase() === hit.term.toLowerCase();
   if (asOpposing && hit.source === "client") return true;
-  if (asProspect && (hit.source === "opposing_party" || hit.source === "related_party")) return true;
+  if (asProspect && (hit.source === "opposing_party" || hit.source === "related_party"))
+    return true;
   return false;
 }
 
 /** The database stamps the entry with the signed-in user; it can't be written in anyone else's name. */
-export async function logInquiryActivity(inquiryId: string, action: string, summary: string, _userId?: string) {
+export async function logInquiryActivity(
+  inquiryId: string,
+  action: string,
+  summary: string,
+  _userId?: string,
+) {
   const { error } = await supabase.from("activity_log").insert({
     entity_type: "inquiry",
     entity_id: inquiryId,

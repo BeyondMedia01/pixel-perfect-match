@@ -35,7 +35,11 @@ function AuthPage() {
   const [forgot, setForgot] = useState(false);
   const [resetSent, setResetSent] = useState(false);
   const [demoBusy, setDemoBusy] = useState<string | null>(null);
-  const { data: demo } = useQuery({ queryKey: ["demo-status"], queryFn: () => getDemoStatus(), staleTime: 60_000 });
+  const { data: demo } = useQuery({
+    queryKey: ["demo-status"],
+    queryFn: () => getDemoStatus(),
+    staleTime: 60_000,
+  });
 
   // Invitation links open straight on sign-up with the email filled in.
   useEffect(() => {
@@ -76,7 +80,9 @@ function AuthPage() {
   async function sendReset(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/reset-password` });
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
     setBusy(false);
     if (error) toast.error(error.message);
     else setResetSent(true);
@@ -86,8 +92,14 @@ function AuthPage() {
     setDemoBusy(role);
     try {
       const r = await demoSignIn({ data: { role } });
-      if (!r.ok) { toast.error(r.message); return; }
-      const { error } = await supabase.auth.setSession({ access_token: r.access_token, refresh_token: r.refresh_token });
+      if (!r.ok) {
+        toast.error(r.message);
+        return;
+      }
+      const { error } = await supabase.auth.setSession({
+        access_token: r.access_token,
+        refresh_token: r.refresh_token,
+      });
       if (error) toast.error(error.message);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Couldn't open the demo");
@@ -97,7 +109,9 @@ function AuthPage() {
   }
 
   async function google() {
-    const r = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
+    const r = await lovable.auth.signInWithOAuth("google", {
+      redirect_uri: window.location.origin,
+    });
     if (r.error) toast.error(r.error.message ?? "Google sign-in failed");
   }
 
@@ -114,36 +128,76 @@ function AuthPage() {
       </aside>
       <main className="flex items-center justify-center p-6">
         <div className="w-full max-w-sm">
-          <h1 className="page-title">{forgot ? "Reset your password" : mode === "signin" ? "Welcome back" : "Create your account"}</h1>
+          <h1 className="page-title">
+            {forgot
+              ? "Reset your password"
+              : mode === "signin"
+                ? "Welcome back"
+                : "Create your account"}
+          </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {forgot
               ? "We'll email you a link to choose a new password."
-              : mode === "signin" ? "Sign in to your firm workspace." : "A partner at your firm approves new accounts before they can see any firm data."}
+              : mode === "signin"
+                ? "Sign in to your firm workspace."
+                : "A partner at your firm approves new accounts before they can see any firm data."}
           </p>
           {forgot ? (
             resetSent ? (
               <div className="mt-8 space-y-4 text-sm">
-                <div className="rounded-md border bg-card p-4">If <strong>{email}</strong> has an account, a reset link is on its way. It works once and expires after an hour.</div>
-                <Button variant="ghost" onClick={() => { setForgot(false); setResetSent(false); }}>Back to sign in</Button>
+                <div className="rounded-md border bg-card p-4">
+                  If <strong>{email}</strong> has an account, a reset link is on its way. It works
+                  once and expires after an hour.
+                </div>
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    setForgot(false);
+                    setResetSent(false);
+                  }}
+                >
+                  Back to sign in
+                </Button>
               </div>
             ) : (
               <form onSubmit={sendReset} className="mt-6 space-y-4">
                 <div className="space-y-1.5">
                   <Label htmlFor="reset-email">Email</Label>
-                  <Input id="reset-email" type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+                  <Input
+                    id="reset-email"
+                    type="email"
+                    required
+                    autoComplete="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
                 </div>
-                <Button type="submit" className="w-full" disabled={busy}>{busy ? "Sending…" : "Send reset link"}</Button>
-                <Button type="button" variant="ghost" className="w-full" onClick={() => setForgot(false)}>Back to sign in</Button>
+                <Button type="submit" className="w-full" disabled={busy}>
+                  {busy ? "Sending…" : "Send reset link"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="w-full"
+                  onClick={() => setForgot(false)}
+                >
+                  Back to sign in
+                </Button>
               </form>
             )
           ) : sent ? (
             <div className="mt-8 rounded-md border bg-card p-4 text-sm">
-              Check <strong>{email}</strong> for a confirmation link, then come back to sign in. You'll have access once a partner approves your account.
+              Check <strong>{email}</strong> for a confirmation link, then come back to sign in.
+              You'll have access once a partner approves your account.
             </div>
           ) : (
             <>
               {/* A two-button switch rather than tabs: there is one form, so there are no tab panels to point at. */}
-              <div role="group" aria-label="Sign in or create an account" className="mt-6 grid w-full grid-cols-2 rounded-md bg-muted p-1">
+              <div
+                role="group"
+                aria-label="Sign in or create an account"
+                className="mt-6 grid w-full grid-cols-2 rounded-md bg-muted p-1"
+              >
                 {(["signin", "signup"] as const).map((m) => (
                   <button
                     key={m}
@@ -160,38 +214,69 @@ function AuthPage() {
                 {mode === "signup" && (
                   <div className="space-y-1.5">
                     <Label htmlFor="name">Full name</Label>
-                    <Input id="name" required value={name} onChange={(e) => setName(e.target.value)} />
+                    <Input
+                      id="name"
+                      required
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                    />
                   </div>
                 )}
                 <div className="space-y-1.5">
                   <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+                  <Input
+                    id="email"
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
                     <Label htmlFor="password">Password</Label>
                     {mode === "signin" && (
-                      <button type="button" onClick={() => setForgot(true)} className="text-xs text-muted-foreground hover:text-foreground hover:underline">
+                      <button
+                        type="button"
+                        onClick={() => setForgot(true)}
+                        className="text-xs text-muted-foreground hover:text-foreground hover:underline"
+                      >
                         Forgot password?
                       </button>
                     )}
                   </div>
-                  <Input id="password" type="password" required minLength={8} autoComplete={mode === "signin" ? "current-password" : "new-password"} value={password} onChange={(e) => setPassword(e.target.value)} />
+                  <Input
+                    id="password"
+                    type="password"
+                    required
+                    minLength={8}
+                    autoComplete={mode === "signin" ? "current-password" : "new-password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
                 </div>
                 <Button type="submit" className="w-full" disabled={busy}>
                   {mode === "signin" ? "Sign in" : "Create account"}
                 </Button>
               </form>
               <div className="my-6 flex items-center gap-3 text-xs text-muted-foreground">
-                <div className="h-px flex-1 bg-border" /> or <div className="h-px flex-1 bg-border" />
+                <div className="h-px flex-1 bg-border" /> or{" "}
+                <div className="h-px flex-1 bg-border" />
               </div>
               <Button variant="outline" className="w-full" onClick={google}>
                 Continue with Google
               </Button>
               {demo?.enabled && mode === "signin" && (
-                <section aria-labelledby="demo-heading" className="mt-8 rounded-lg border bg-card p-4">
-                  <h2 id="demo-heading" className="text-sm font-semibold">Explore the demo</h2>
-                  <p className="mt-0.5 text-xs text-muted-foreground">Sign in as someone at Makoni &amp; Partners. Sample data only.</p>
+                <section
+                  aria-labelledby="demo-heading"
+                  className="mt-8 rounded-lg border bg-card p-4"
+                >
+                  <h2 id="demo-heading" className="text-sm font-semibold">
+                    Explore the demo
+                  </h2>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    Sign in as someone at Makoni &amp; Partners. Sample data only.
+                  </p>
                   <div className="mt-3 grid grid-cols-2 gap-2">
                     {demo.accounts.map((a) => (
                       <Button
@@ -202,8 +287,12 @@ function AuthPage() {
                         title={a.blurb}
                         onClick={() => tryDemo(a.role)}
                       >
-                        <span className="text-sm font-medium">{demoBusy === a.role ? "Opening…" : a.label}</span>
-                        <span className="text-[11px] font-normal text-muted-foreground">{a.name}</span>
+                        <span className="text-sm font-medium">
+                          {demoBusy === a.role ? "Opening…" : a.label}
+                        </span>
+                        <span className="text-[11px] font-normal text-muted-foreground">
+                          {a.name}
+                        </span>
                       </Button>
                     ))}
                   </div>

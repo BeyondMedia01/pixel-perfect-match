@@ -24,6 +24,7 @@ export function useFirmBrand() {
 export function useFirmProfile() {
   return useQuery({
     queryKey: ["firm-profile"],
-    queryFn: async () => (await supabase.from("firm_settings").select("*").eq("id", 1).maybeSingle()).data,
+    queryFn: async () =>
+      (await supabase.from("firm_settings").select("*").eq("id", 1).maybeSingle()).data,
   });
 }

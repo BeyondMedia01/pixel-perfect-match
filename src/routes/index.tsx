@@ -8,9 +8,15 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Acta — Case management for law firms" },
-      { name: "description", content: "A calm, secure workspace for matters, clients, deadlines and billing." },
+      {
+        name: "description",
+        content: "A calm, secure workspace for matters, clients, deadlines and billing.",
+      },
       { property: "og:title", content: "Acta — Case management for law firms" },
-      { property: "og:description", content: "A calm, secure workspace for matters, clients, deadlines and billing." },
+      {
+        property: "og:description",
+        content: "A calm, secure workspace for matters, clients, deadlines and billing.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -42,7 +48,8 @@ function Index() {
           Every matter, deadline and hour — in order.
         </h1>
         <p className="mt-6 max-w-xl text-lg">
-          A quiet, secure workspace for partners, lawyers and front desk: conflict checks, matters, deadlines, documents and billing in one place.
+          A quiet, secure workspace for partners, lawyers and front desk: conflict checks, matters,
+          deadlines, documents and billing in one place.
         </p>
         <div className="mt-10">
           <Button asChild size="lg" className="bg-mist text-brand hover:bg-mist/90">

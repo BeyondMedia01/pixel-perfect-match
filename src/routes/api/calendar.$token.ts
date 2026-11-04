@@ -15,7 +15,11 @@ export const Route = createFileRoute("/api/calendar/$token")({
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const [{ data: rows, error }, { data: feed }] = await Promise.all([
           supabaseAdmin.rpc("calendar_feed", { _token: token }),
-          supabaseAdmin.from("calendar_feeds").select("user_id, profile:profiles(full_name)").eq("token", token).maybeSingle(),
+          supabaseAdmin
+            .from("calendar_feeds")
+            .select("user_id, profile:profiles(full_name)")
+            .eq("token", token)
+            .maybeSingle(),
         ]);
         if (error) return new Response("Calendar unavailable", { status: 500 });
         if (!feed) return new Response("Not found", { status: 404 });

@@ -7,7 +7,11 @@ export type TaskStatus = Database["public"]["Enums"]["task_status"];
 export type TaskPriority = Database["public"]["Enums"]["task_priority"];
 export type EventType = Database["public"]["Enums"]["event_type"];
 
-export const MATTER_STATUSES: { value: MatterStatus; label: string; variant: "intake" | "active" | "hold" | "closed" }[] = [
+export const MATTER_STATUSES: {
+  value: MatterStatus;
+  label: string;
+  variant: "intake" | "active" | "hold" | "closed";
+}[] = [
   { value: "intake", label: "Intake", variant: "intake" },
   { value: "active", label: "Active", variant: "active" },
   { value: "on_hold", label: "On hold", variant: "hold" },

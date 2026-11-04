@@ -8,7 +8,8 @@ export const isPartner = (r?: AppRole | null) => r === "partner" || r === "admin
 export const isLawyerish = (r?: AppRole | null) => isPartner(r) || r === "lawyer";
 export const isFrontdesk = (r?: AppRole | null) => r === "frontdesk";
 /** Everyone except front desk and clients. */
-export const isInternalRole = (r?: AppRole | null) => isLawyerish(r) || r === "paralegal" || r === "staff";
+export const isInternalRole = (r?: AppRole | null) =>
+  isLawyerish(r) || r === "paralegal" || r === "staff";
 
 export function useMe() {
   return useQuery({
@@ -21,15 +22,16 @@ export function useMe() {
         supabase.from("user_roles").select("role").eq("user_id", u.user.id),
       ]);
       const roleList = (roles ?? []).map((r) => r.role as AppRole);
-      const role: AppRole = roleList.includes("partner") || roleList.includes("admin")
-        ? "partner"
-        : roleList.includes("lawyer")
-          ? "lawyer"
-          : roleList.includes("paralegal") || roleList.includes("staff")
-            ? "paralegal"
-            : roleList.includes("frontdesk")
-              ? "frontdesk"
-              : "client";
+      const role: AppRole =
+        roleList.includes("partner") || roleList.includes("admin")
+          ? "partner"
+          : roleList.includes("lawyer")
+            ? "lawyer"
+            : roleList.includes("paralegal") || roleList.includes("staff")
+              ? "paralegal"
+              : roleList.includes("frontdesk")
+                ? "frontdesk"
+                : "client";
       // No role yet = signed up but not approved by a partner.
       return { user: u.user, profile, role, pending: roleList.length === 0 };
     },
@@ -40,7 +42,10 @@ export function useProfiles() {
   return useQuery({
     queryKey: ["profiles"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("profiles").select("id, full_name, email").order("full_name");
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, full_name, email")
+        .order("full_name");
       if (error) throw error;
       return data;
     },

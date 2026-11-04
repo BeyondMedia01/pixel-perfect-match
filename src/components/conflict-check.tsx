@@ -16,7 +16,9 @@ export function ConflictCheck({ names }: { names: string[] }) {
   if (isFetching) return <p className="text-xs text-muted-foreground">Running conflict check…</p>;
   if (!data?.length)
     return (
-      <p className="flex items-center gap-1.5 text-xs text-success"><CheckCircle2 className="h-3.5 w-3.5" /> No conflicts found.</p>
+      <p className="flex items-center gap-1.5 text-xs text-success">
+        <CheckCircle2 className="h-3.5 w-3.5" /> No conflicts found.
+      </p>
     );
   return (
     <div className="rounded-md border border-signal/40 bg-signal/10 p-3 text-xs">
@@ -27,7 +29,12 @@ export function ConflictCheck({ names }: { names: string[] }) {
         {data.slice(0, 8).map((r, i) => (
           <li key={i}>
             <strong>{r.name}</strong> — {r.source.replace("_", " ")}
-            {r.matter_number && <> on <span className="tabular">{r.matter_number}</span> ({r.detail})</>}
+            {r.matter_number && (
+              <>
+                {" "}
+                on <span className="tabular">{r.matter_number}</span> ({r.detail})
+              </>
+            )}
           </li>
         ))}
       </ul>

@@ -6,16 +6,34 @@ import { toast } from "sonner";
 import { Plus, FilePlus2, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useMe, useProfiles, isPartner } from "@/lib/auth";
-import { INVOICE_STATUS_LABELS, INVOICE_STATUS_VARIANTS, fmtMoney, fmtHours, type InvoiceStatus } from "@/lib/billing";
+import {
+  INVOICE_STATUS_LABELS,
+  INVOICE_STATUS_VARIANTS,
+  fmtMoney,
+  fmtHours,
+  type InvoiceStatus,
+} from "@/lib/billing";
 import { EmptyState } from "@/components/app-shell";
 import { useConfirm } from "@/components/confirm";
 import { Field } from "@/components/matter-form";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 
 export type TimeEntry = {
@@ -61,7 +79,9 @@ export function useInvoices(matterId?: string) {
     queryFn: async () => {
       let q = supabase
         .from("invoices")
-        .select("*, invoice_items(quantity, unit_price), matters(matter_number, title), clients(name)")
+        .select(
+          "*, invoice_items(quantity, unit_price), matters(matter_number, title), clients(name)",
+        )
         .order("issue_date", { ascending: false });
       if (matterId) q = q.eq("matter_id", matterId);
       const { data, error } = await q;
@@ -75,12 +95,17 @@ export function useInvoices(matterId?: string) {
   });
 }
 
-export function invoiceSubtotal(inv: { invoice_items: { quantity: number; unit_price: number }[] }) {
+export function invoiceSubtotal(inv: {
+  invoice_items: { quantity: number; unit_price: number }[];
+}) {
   return inv.invoice_items.reduce((s, it) => s + it.quantity * it.unit_price, 0);
 }
 
 /** Total including VAT at the rate the invoice was issued with, rounded to cents. */
-export function invoiceTotal(inv: { invoice_items: { quantity: number; unit_price: number }[]; tax_rate?: number | null }) {
+export function invoiceTotal(inv: {
+  invoice_items: { quantity: number; unit_price: number }[];
+  tax_rate?: number | null;
+}) {
   const sub = invoiceSubtotal(inv);
   return Math.round(sub * (1 + (inv.tax_rate ?? 0) / 100) * 100) / 100;
 }
@@ -100,13 +125,22 @@ function LogTimeDialog({ matterId, onDone }: { matterId: string; onDone: () => v
     queryKey: ["my-rate", me?.user.id],
     enabled: !!me,
     queryFn: async () =>
-      (await supabase.from("billing_rates").select("hourly_rate").eq("user_id", me!.user.id).maybeSingle()).data?.hourly_rate ?? 250,
+      (
+        await supabase
+          .from("billing_rates")
+          .select("hourly_rate")
+          .eq("user_id", me!.user.id)
+          .maybeSingle()
+      ).data?.hourly_rate ?? 250,
   });
   const rateValue = partner ? (rate ?? String(myRate ?? 250)) : String(myRate ?? 250);
 
   async function submit() {
     const h = parseFloat(hours);
-    if (!description.trim() || !(h > 0)) { toast.error("Enter a description and hours."); return; }
+    if (!description.trim() || !(h > 0)) {
+      toast.error("Enter a description and hours.");
+      return;
+    }
     setBusy(true);
     const { data: u } = await supabase.auth.getUser();
     const { error } = await supabase.from("time_entries").insert({
@@ -119,37 +153,89 @@ function LogTimeDialog({ matterId, onDone }: { matterId: string; onDone: () => v
       billable,
     });
     setBusy(false);
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     toast.success("Time logged");
     setOpen(false);
-    setDescription(""); setHours("");
+    setDescription("");
+    setHours("");
     onDone();
   }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild><Button size="sm"><Plus className="mr-1.5 h-4 w-4" />Log time</Button></DialogTrigger>
+      <DialogTrigger asChild>
+        <Button size="sm">
+          <Plus className="mr-1.5 h-4 w-4" />
+          Log time
+        </Button>
+      </DialogTrigger>
       <DialogContent>
-        <DialogHeader><DialogTitle>Log time</DialogTitle></DialogHeader>
+        <DialogHeader>
+          <DialogTitle>Log time</DialogTitle>
+        </DialogHeader>
         <div className="space-y-4">
-          <Field label="Description"><Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="What work was done?" /></Field>
+          <Field label="Description">
+            <Textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="What work was done?"
+            />
+          </Field>
           <div className="grid grid-cols-3 gap-3">
-            <Field label="Date"><Input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></Field>
-            <Field label="Hours"><Input type="number" min="0.1" step="0.1" value={hours} onChange={(e) => setHours(e.target.value)} placeholder="1.5" /></Field>
-            <Field label="Rate / hour"><Input type="number" min="0" step="10" value={rateValue} onChange={(e) => setRate(e.target.value)} disabled={!billable || !partner} /></Field>
+            <Field label="Date">
+              <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+            </Field>
+            <Field label="Hours">
+              <Input
+                type="number"
+                min="0.1"
+                step="0.1"
+                value={hours}
+                onChange={(e) => setHours(e.target.value)}
+                placeholder="1.5"
+              />
+            </Field>
+            <Field label="Rate / hour">
+              <Input
+                type="number"
+                min="0"
+                step="10"
+                value={rateValue}
+                onChange={(e) => setRate(e.target.value)}
+                disabled={!billable || !partner}
+              />
+            </Field>
           </div>
-          {!partner && <p className="text-xs text-muted-foreground">Your hourly rate is set by a partner.</p>}
+          {!partner && (
+            <p className="text-xs text-muted-foreground">Your hourly rate is set by a partner.</p>
+          )}
           <label className="flex items-center gap-2 text-sm">
-            <Checkbox checked={billable} onCheckedChange={(v) => setBillable(v === true)} /> Billable to the client
+            <Checkbox checked={billable} onCheckedChange={(v) => setBillable(v === true)} />{" "}
+            Billable to the client
           </label>
-          <Button onClick={submit} disabled={busy} className="w-full">{busy ? "Saving…" : "Save entry"}</Button>
+          <Button onClick={submit} disabled={busy} className="w-full">
+            {busy ? "Saving…" : "Save entry"}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
   );
 }
 
-function NewInvoiceDialog({ matterId, clientId, entries, onDone }: { matterId: string; clientId: string; entries: TimeEntry[]; onDone: () => void }) {
+function NewInvoiceDialog({
+  matterId,
+  clientId,
+  entries,
+  onDone,
+}: {
+  matterId: string;
+  clientId: string;
+  entries: TimeEntry[];
+  onDone: () => void;
+}) {
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set(entries.map((e) => e.id)));
   const [due, setDue] = useState(format(new Date(Date.now() + 30 * 864e5), "yyyy-MM-dd"));
@@ -159,7 +245,10 @@ function NewInvoiceDialog({ matterId, clientId, entries, onDone }: { matterId: s
   const total = chosen.reduce((s, e) => s + e.hours * e.hourly_rate, 0);
 
   async function submit() {
-    if (chosen.length === 0) { toast.error("Select at least one time entry."); return; }
+    if (chosen.length === 0) {
+      toast.error("Select at least one time entry.");
+      return;
+    }
     setBusy(true);
     // One database transaction: number, invoice, line items and linking the time entries.
     const { data, error } = await supabase.rpc("create_invoice", {
@@ -169,7 +258,10 @@ function NewInvoiceDialog({ matterId, clientId, entries, onDone }: { matterId: s
       ...(notes.trim() ? { _notes: notes.trim() } : {}),
     });
     setBusy(false);
-    if (error || !data?.[0]) { toast.error(error?.message ?? "Could not create invoice"); return; }
+    if (error || !data?.[0]) {
+      toast.error(error?.message ?? "Could not create invoice");
+      return;
+    }
     toast.success(`Invoice ${data[0].invoice_number} created as draft`);
     setOpen(false);
     onDone();
@@ -177,30 +269,56 @@ function NewInvoiceDialog({ matterId, clientId, entries, onDone }: { matterId: s
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild><Button size="sm" variant="outline"><FilePlus2 className="mr-1.5 h-4 w-4" />New invoice</Button></DialogTrigger>
+      <DialogTrigger asChild>
+        <Button size="sm" variant="outline">
+          <FilePlus2 className="mr-1.5 h-4 w-4" />
+          New invoice
+        </Button>
+      </DialogTrigger>
       <DialogContent className="max-w-lg">
-        <DialogHeader><DialogTitle>Invoice unbilled time</DialogTitle></DialogHeader>
+        <DialogHeader>
+          <DialogTitle>Invoice unbilled time</DialogTitle>
+        </DialogHeader>
         <div className="max-h-64 space-y-2 overflow-y-auto">
           {entries.map((e) => (
             <label key={e.id} className="flex items-start gap-3 rounded-md border p-3 text-sm">
               <Checkbox
                 checked={selected.has(e.id)}
-                onCheckedChange={(v) => setSelected((s) => { const n = new Set(s); v === true ? n.add(e.id) : n.delete(e.id); return n; })}
+                onCheckedChange={(v) =>
+                  setSelected((s) => {
+                    const n = new Set(s);
+                    v === true ? n.add(e.id) : n.delete(e.id);
+                    return n;
+                  })
+                }
               />
-              <span className="flex-1">{e.description}<span className="block text-xs text-muted-foreground">{format(new Date(e.entry_date), "d MMM yyyy")}</span></span>
-              <span className="tabular text-xs">{fmtHours(e.hours)} · {fmtMoney(e.hours * e.hourly_rate)}</span>
+              <span className="flex-1">
+                {e.description}
+                <span className="block text-xs text-muted-foreground">
+                  {format(new Date(e.entry_date), "d MMM yyyy")}
+                </span>
+              </span>
+              <span className="tabular text-xs">
+                {fmtHours(e.hours)} · {fmtMoney(e.hours * e.hourly_rate)}
+              </span>
             </label>
           ))}
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Due date"><Input type="date" value={due} onChange={(e) => setDue(e.target.value)} /></Field>
-          <Field label="Notes (optional)"><Input value={notes} onChange={(e) => setNotes(e.target.value)} /></Field>
+          <Field label="Due date">
+            <Input type="date" value={due} onChange={(e) => setDue(e.target.value)} />
+          </Field>
+          <Field label="Notes (optional)">
+            <Input value={notes} onChange={(e) => setNotes(e.target.value)} />
+          </Field>
         </div>
         <div className="flex items-center justify-between border-t pt-3 text-sm">
           <span className="text-muted-foreground">{chosen.length} entries</span>
           <span className="tabular font-semibold">{fmtMoney(total)}</span>
         </div>
-        <Button onClick={submit} disabled={busy} className="w-full">{busy ? "Creating…" : "Create draft invoice"}</Button>
+        <Button onClick={submit} disabled={busy} className="w-full">
+          {busy ? "Creating…" : "Create draft invoice"}
+        </Button>
       </DialogContent>
     </Dialog>
   );
@@ -208,15 +326,36 @@ function NewInvoiceDialog({ matterId, clientId, entries, onDone }: { matterId: s
 
 export function InvoiceStatusSelect({ invoice, onDone }: { invoice: Invoice; onDone: () => void }) {
   const { data: me } = useMe();
-  if (!isPartner(me?.role)) return <Badge variant={INVOICE_STATUS_VARIANTS[invoice.status]}>{INVOICE_STATUS_LABELS[invoice.status]}</Badge>;
+  if (!isPartner(me?.role))
+    return (
+      <Badge variant={INVOICE_STATUS_VARIANTS[invoice.status]}>
+        {INVOICE_STATUS_LABELS[invoice.status]}
+      </Badge>
+    );
   return (
-    <Select value={invoice.status} onValueChange={async (v) => {
-      const { error } = await supabase.from("invoices").update({ status: v as InvoiceStatus }).eq("id", invoice.id);
-      if (error) toast.error(error.message); else { toast.success(`Marked ${INVOICE_STATUS_LABELS[v as InvoiceStatus].toLowerCase()}`); onDone(); }
-    }}>
-      <SelectTrigger className="h-7 w-28 text-xs"><SelectValue /></SelectTrigger>
+    <Select
+      value={invoice.status}
+      onValueChange={async (v) => {
+        const { error } = await supabase
+          .from("invoices")
+          .update({ status: v as InvoiceStatus })
+          .eq("id", invoice.id);
+        if (error) toast.error(error.message);
+        else {
+          toast.success(`Marked ${INVOICE_STATUS_LABELS[v as InvoiceStatus].toLowerCase()}`);
+          onDone();
+        }
+      }}
+    >
+      <SelectTrigger className="h-7 w-28 text-xs">
+        <SelectValue />
+      </SelectTrigger>
       <SelectContent>
-        {(Object.keys(INVOICE_STATUS_LABELS) as InvoiceStatus[]).map((s) => <SelectItem key={s} value={s}>{INVOICE_STATUS_LABELS[s]}</SelectItem>)}
+        {(Object.keys(INVOICE_STATUS_LABELS) as InvoiceStatus[]).map((s) => (
+          <SelectItem key={s} value={s}>
+            {INVOICE_STATUS_LABELS[s]}
+          </SelectItem>
+        ))}
       </SelectContent>
     </Select>
   );
@@ -230,7 +369,10 @@ export function MatterBilling({ matterId, clientId }: { matterId: string; client
   const { data: invoices } = useInvoices(matterId);
   const partner = isPartner(me?.role);
   const confirm = useConfirm();
-  const refresh = () => { qc.invalidateQueries({ queryKey: ["time-entries"] }); qc.invalidateQueries({ queryKey: ["invoices"] }); };
+  const refresh = () => {
+    qc.invalidateQueries({ queryKey: ["time-entries"] });
+    qc.invalidateQueries({ queryKey: ["invoices"] });
+  };
 
   const nameOf = (uid: string) => profiles?.find((p) => p.id === uid)?.full_name ?? "—";
   const unbilled = (entries ?? []).filter((e) => e.billable && !e.invoice_id);
@@ -240,33 +382,68 @@ export function MatterBilling({ matterId, clientId }: { matterId: string; client
     <div className="space-y-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted-foreground">
-          Unbilled: <span className="tabular font-semibold text-foreground">{fmtHours(unbilled.reduce((s, e) => s + e.hours, 0))}</span> · <span className="tabular font-semibold text-foreground">{fmtMoney(unbilledTotal)}</span>
+          Unbilled:{" "}
+          <span className="tabular font-semibold text-foreground">
+            {fmtHours(unbilled.reduce((s, e) => s + e.hours, 0))}
+          </span>{" "}
+          · <span className="tabular font-semibold text-foreground">{fmtMoney(unbilledTotal)}</span>
         </p>
         <div className="flex gap-2">
           <LogTimeDialog matterId={matterId} onDone={refresh} />
-          {partner && unbilled.length > 0 && <NewInvoiceDialog matterId={matterId} clientId={clientId} entries={unbilled} onDone={refresh} />}
+          {partner && unbilled.length > 0 && (
+            <NewInvoiceDialog
+              matterId={matterId}
+              clientId={clientId}
+              entries={unbilled}
+              onDone={refresh}
+            />
+          )}
         </div>
       </div>
 
       {(entries ?? []).length === 0 ? (
-        <EmptyState title="No time logged yet" body="Use Log time to record work on this matter; billable entries can be invoiced." />
+        <EmptyState
+          title="No time logged yet"
+          body="Use Log time to record work on this matter; billable entries can be invoiced."
+        />
       ) : (
         <ul className="divide-y rounded-lg border bg-card">
           {(entries ?? []).map((e) => (
             <li key={e.id} className="flex items-center gap-4 px-4 py-3 text-sm">
-              <span className="flex-1">{e.description}
-                <span className="block text-xs text-muted-foreground">{nameOf(e.user_id)} · {format(new Date(e.entry_date), "d MMM yyyy")}</span>
+              <span className="flex-1">
+                {e.description}
+                <span className="block text-xs text-muted-foreground">
+                  {nameOf(e.user_id)} · {format(new Date(e.entry_date), "d MMM yyyy")}
+                </span>
               </span>
               {!e.billable && <Badge variant="quiet">Non-billable</Badge>}
               {e.invoice_id && <Badge variant="closed">Invoiced</Badge>}
               <span className="tabular w-16 text-right text-xs">{fmtHours(e.hours)}</span>
-              <span className="tabular w-24 text-right">{e.billable ? fmtMoney(e.hours * e.hourly_rate) : "—"}</span>
+              <span className="tabular w-24 text-right">
+                {e.billable ? fmtMoney(e.hours * e.hourly_rate) : "—"}
+              </span>
               {(e.user_id === me?.user.id || partner) && !e.invoice_id && (
-                <Button variant="ghost" size="icon" aria-label="Delete entry" onClick={async () => {
-                  if (!(await confirm({ title: "Delete this time entry?", body: `${e.description} · ${fmtHours(e.hours)}`, action: "Delete", destructive: true }))) return;
-                  const { error } = await supabase.from("time_entries").delete().eq("id", e.id);
-                  if (error) toast.error(error.message); else refresh();
-                }}><Trash2 className="h-4 w-4 text-muted-foreground" /></Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Delete entry"
+                  onClick={async () => {
+                    if (
+                      !(await confirm({
+                        title: "Delete this time entry?",
+                        body: `${e.description} · ${fmtHours(e.hours)}`,
+                        action: "Delete",
+                        destructive: true,
+                      }))
+                    )
+                      return;
+                    const { error } = await supabase.from("time_entries").delete().eq("id", e.id);
+                    if (error) toast.error(error.message);
+                    else refresh();
+                  }}
+                >
+                  <Trash2 className="h-4 w-4 text-muted-foreground" />
+                </Button>
               )}
             </li>
           ))}
@@ -281,8 +458,17 @@ export function MatterBilling({ matterId, clientId }: { matterId: string; client
           <ul className="divide-y rounded-lg border bg-card">
             {(invoices ?? []).map((inv) => (
               <li key={inv.id} className="flex items-center gap-4 px-4 py-3 text-sm">
-                <Link to="/invoices/$id" params={{ id: inv.id }} className="tabular font-medium hover:underline">{inv.invoice_number}</Link>
-                <span className="flex-1 text-xs text-muted-foreground">Issued {format(new Date(inv.issue_date), "d MMM yyyy")} · due {format(new Date(inv.due_date), "d MMM yyyy")}</span>
+                <Link
+                  to="/invoices/$id"
+                  params={{ id: inv.id }}
+                  className="tabular font-medium hover:underline"
+                >
+                  {inv.invoice_number}
+                </Link>
+                <span className="flex-1 text-xs text-muted-foreground">
+                  Issued {format(new Date(inv.issue_date), "d MMM yyyy")} · due{" "}
+                  {format(new Date(inv.due_date), "d MMM yyyy")}
+                </span>
                 <span className="tabular font-semibold">{fmtMoney(invoiceTotal(inv))}</span>
                 <InvoiceStatusSelect invoice={inv} onDone={refresh} />
               </li>

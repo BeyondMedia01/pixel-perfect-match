@@ -12,7 +12,11 @@ export const getNotificationChannels = createServerFn({ method: "GET" })
     if (internal.error || frontdesk.error) throw new Error("Could not check notification access.");
     if (!internal.data && !frontdesk.data) throw new Error("Staff access required.");
     return {
-      email: process.env["BREVO_API_KEY"] ? "setup_required" as const : "not_connected" as const,
-      whatsapp: process.env["WHATSAPP_API_KEY"] ? "setup_required" as const : "not_connected" as const,
+      email: process.env["BREVO_API_KEY"]
+        ? ("setup_required" as const)
+        : ("not_connected" as const),
+      whatsapp: process.env["WHATSAPP_API_KEY"]
+        ? ("setup_required" as const)
+        : ("not_connected" as const),
     };
   });

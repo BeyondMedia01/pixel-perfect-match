@@ -9,7 +9,10 @@ export const INVOICE_STATUS_LABELS: Record<InvoiceStatus, string> = {
   void: "Void",
 };
 
-export const INVOICE_STATUS_VARIANTS: Record<InvoiceStatus, "intake" | "active" | "closed" | "quiet"> = {
+export const INVOICE_STATUS_VARIANTS: Record<
+  InvoiceStatus,
+  "intake" | "active" | "closed" | "quiet"
+> = {
   draft: "quiet",
   sent: "intake",
   paid: "closed",

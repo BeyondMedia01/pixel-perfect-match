@@ -6,7 +6,15 @@ const now = new Date("2026-11-03T08:00:00Z");
 describe("calendar files", () => {
   it("writes a timed event with escaped text", () => {
     const ics = buildIcs(
-      [{ uid: "event-1", title: "Hearing; room 4, floor 2", location: "High Court\nHarare", start: "2026-11-10T07:00:00Z", end: "2026-11-10T08:30:00Z" }],
+      [
+        {
+          uid: "event-1",
+          title: "Hearing; room 4, floor 2",
+          location: "High Court\nHarare",
+          start: "2026-11-10T07:00:00Z",
+          end: "2026-11-10T08:30:00Z",
+        },
+      ],
       { now },
     );
     expect(ics).toContain("BEGIN:VCALENDAR\r\nVERSION:2.0");
@@ -23,7 +31,9 @@ describe("calendar files", () => {
   });
 
   it("writes tasks as all-day items ending the next day", () => {
-    const ics = buildIcs([{ uid: "task-1", title: "Task: File plea", allDayDate: "2026-12-31" }], { now });
+    const ics = buildIcs([{ uid: "task-1", title: "Task: File plea", allDayDate: "2026-12-31" }], {
+      now,
+    });
     expect(ics).toContain("DTSTART;VALUE=DATE:20261231\r\nDTEND;VALUE=DATE:20270101");
   });
 
@@ -35,7 +45,8 @@ describe("calendar files", () => {
 
   it("folds long lines at 75 bytes", () => {
     const folded = icsFold("DESCRIPTION:" + "x".repeat(200));
-    for (const line of folded.split("\r\n")) expect(new TextEncoder().encode(line).length).toBeLessThanOrEqual(75);
+    for (const line of folded.split("\r\n"))
+      expect(new TextEncoder().encode(line).length).toBeLessThanOrEqual(75);
     expect(folded.replace(/\r\n /g, "")).toBe("DESCRIPTION:" + "x".repeat(200));
   });
 
@@ -45,7 +56,12 @@ describe("calendar files", () => {
 });
 
 describe("add-to-calendar links", () => {
-  const item = { uid: "e", title: "Pre-trial conference", location: "High Court", start: "2026-11-10T07:00:00Z" };
+  const item = {
+    uid: "e",
+    title: "Pre-trial conference",
+    location: "High Court",
+    start: "2026-11-10T07:00:00Z",
+  };
   it("fills in Google Calendar", () => {
     const url = new URL(googleCalendarUrl(item));
     expect(url.hostname).toBe("calendar.google.com");

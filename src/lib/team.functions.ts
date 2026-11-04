@@ -29,7 +29,11 @@ export const inviteTeamMember = createServerFn({ method: "POST" })
     });
     if (error) return { ok: false, message: error.message };
     if (outcome === "assigned") {
-      return { ok: true, outcome: "assigned", message: `${data.email} already had an account, so they have access now.` };
+      return {
+        ok: true,
+        outcome: "assigned",
+        message: `${data.email} already had an account, so they have access now.`,
+      };
     }
 
     // Send Supabase's invitation email. It creates the account straight away,
