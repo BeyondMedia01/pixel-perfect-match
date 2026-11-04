@@ -32,7 +32,8 @@
 - [ ] Email and automated WhatsApp delivery for individual case updates and group announcements — email service connection declined; awaiting the user's sending-service choice and WhatsApp Business connection.
 
 ## Team, tasks and calendar
-- [x] Team page: invite by email with a role (Supabase invitation email, or a sign-up link), approve sign-ups, change roles, remove access, hourly rates.
+- [x] Team page: invite by email with a role (Supabase invitation email, or a one-time invitation link to send yourself), change roles, remove access, hourly rates.
+- [x] Invite-only access and onboarding: no public sign-up; the platform invites a firm's managing partner (/platform/invite, ACTA_PLATFORM_KEY); invited people choose a password, enter their details and, as a partner, the firm details used on invoices (/welcome).
 - [x] Tasks: create, assign to any staff member, edit, delete; on the Tasks page and each matter's Tasks tab. Walls respected.
 - [x] Calendar: month and list views, create/edit/delete events, deadline confirmation enforced in the database.
 - [x] Calendar sync: private subscription link per person for Google, Outlook and Apple Calendar; "Add to calendar" for single events (Google, Outlook, .ics).

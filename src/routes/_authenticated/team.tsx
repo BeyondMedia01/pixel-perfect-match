@@ -7,7 +7,7 @@ import { Copy, MoreHorizontal, UserPlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useMe, isPartner } from "@/lib/auth";
 import { ROLE_LABELS, type AppRole } from "@/lib/legal";
-import { inviteTeamMember } from "@/lib/team.functions";
+import { inviteTeamMember, invitationLink } from "@/lib/team.functions";
 import { PageHeader, EmptyState } from "@/components/app-shell";
 import { useConfirm } from "@/components/confirm";
 import { Field } from "@/components/matter-form";
@@ -58,8 +58,25 @@ const ROLE_HELP: Record<string, string> = {
   frontdesk: "Inquiries, consultations and matter names only.",
 };
 
-function signUpLink(email: string) {
-  return `${window.location.origin}/auth?mode=signup&email=${encodeURIComponent(email)}`;
+/** Makes a fresh one-time invitation link and copies it. */
+async function copyInvitationLink(email: string) {
+  try {
+    const r = await invitationLink({ data: { email } });
+    if (!r.ok) {
+      toast.error(r.message);
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(r.link);
+      toast.success("Invitation link copied", {
+        description: "It signs them in, so send it only to them. It works once.",
+      });
+    } catch {
+      toast("Copy this invitation link", { description: r.link, duration: 60_000 });
+    }
+  } catch {
+    toast.error("Couldn't make an invitation link. Try again.");
+  }
 }
 
 function TeamPage() {
@@ -73,7 +90,10 @@ function TeamPage() {
     enabled: !!me,
     queryFn: async () => {
       const [p, r, rates] = await Promise.all([
-        supabase.from("profiles").select("id, full_name, email, created_at").order("full_name"),
+        supabase
+          .from("profiles")
+          .select("id, full_name, email, created_at, onboarded_at")
+          .order("full_name"),
         supabase.from("user_roles").select("user_id, role"),
         supabase.from("billing_rates").select("user_id, hourly_rate"),
       ]);
@@ -166,7 +186,7 @@ function TeamPage() {
     if (
       !(await confirm({
         title: `Cancel the invitation for ${email}?`,
-        body: "If they sign up later, they'll wait for approval like anyone else.",
+        body: "Their invitation stops working. You can invite them again later.",
         action: "Cancel invitation",
         destructive: true,
       }))
@@ -180,15 +200,6 @@ function TeamPage() {
     else {
       toast.success("Invitation cancelled");
       refresh();
-    }
-  }
-
-  async function copyLink(email: string) {
-    try {
-      await navigator.clipboard.writeText(signUpLink(email));
-      toast.success("Sign-up link copied");
-    } catch {
-      toast.error("Couldn't copy. The link is: " + signUpLink(email));
     }
   }
 
@@ -243,9 +254,9 @@ function TeamPage() {
                   </div>
                 </div>
                 <Badge variant="quiet">{ROLE_LABELS[i.role]}</Badge>
-                <Button variant="outline" size="sm" onClick={() => copyLink(i.email)}>
+                <Button variant="outline" size="sm" onClick={() => copyInvitationLink(i.email)}>
                   <Copy className="mr-1.5 h-3.5 w-3.5" />
-                  Copy sign-up link
+                  Copy invitation link
                 </Button>
                 <Button variant="ghost" size="sm" onClick={() => revoke(i.id, i.email)}>
                   Cancel
@@ -271,8 +282,21 @@ function TeamPage() {
                       {nameOf(u)}
                       {isSelf && <span className="text-muted-foreground"> (you)</span>}
                     </div>
-                    <div className="truncate text-xs text-muted-foreground">{u.email}</div>
+                    <div className="truncate text-xs text-muted-foreground">
+                      {u.email}
+                      {!u.onboarded_at && " · hasn't opened their invitation yet"}
+                    </div>
                   </div>
+                  {partner && !u.onboarded_at && u.email && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => copyInvitationLink(u.email!)}
+                    >
+                      <Copy className="mr-1.5 h-3.5 w-3.5" />
+                      Copy invitation link
+                    </Button>
+                  )}
                   {partner && u.role !== "frontdesk" && (
                     <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
                       Rate
@@ -408,28 +432,17 @@ function InviteDialog({ onDone }: { onDone: () => void }) {
         {result ? (
           <div className="space-y-4 text-sm">
             <p>{result.message}</p>
-            <div className="space-y-1.5">
+            <div className="space-y-2 rounded-md border bg-muted/40 p-3">
               <p className="text-xs text-muted-foreground">
-                {result.emailed ? "You can also send them this link yourself:" : "Sign-up link:"}
+                {result.emailed
+                  ? "If the email doesn't arrive, send them an invitation link yourself, by WhatsApp for example."
+                  : "Send them an invitation link yourself, by WhatsApp for example."}{" "}
+                When they open it they choose a password and enter their details.
               </p>
-              <div className="flex gap-2">
-                <Input
-                  readOnly
-                  value={signUpLink(result.email)}
-                  onFocus={(e) => e.target.select()}
-                  aria-label="Sign-up link"
-                />
-                <Button
-                  variant="outline"
-                  onClick={() =>
-                    navigator.clipboard
-                      .writeText(signUpLink(result.email))
-                      .then(() => toast.success("Copied"))
-                  }
-                >
-                  Copy
-                </Button>
-              </div>
+              <Button variant="outline" size="sm" onClick={() => copyInvitationLink(result.email)}>
+                <Copy className="mr-1.5 h-3.5 w-3.5" />
+                Copy invitation link
+              </Button>
             </div>
             <div className="flex justify-end">
               <Button onClick={() => reset(false)}>Done</Button>

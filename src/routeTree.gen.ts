@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IntakeRouteImport } from './routes/intake'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as WelcomeRouteImport } from './routes/welcome'
 import { Route as AuthenticatedAnnouncementsRouteImport } from './routes/_authenticated/announcements'
 import { Route as AuthenticatedBillingRouteImport } from './routes/_authenticated/billing'
 import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticated/calendar'
@@ -23,6 +24,7 @@ import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedTasksRouteImport } from './routes/_authenticated/tasks'
 import { Route as AuthenticatedTeamRouteImport } from './routes/_authenticated/team'
+import { Route as PlatformInviteRouteImport } from './routes/platform.invite'
 import { Route as AuthenticatedClientsIndexRouteImport } from './routes/_authenticated/clients.index'
 import { Route as AuthenticatedClientsIdRouteImport } from './routes/_authenticated/clients.$id'
 import { Route as AuthenticatedInquiriesIndexRouteImport } from './routes/_authenticated/inquiries.index'
@@ -56,6 +58,11 @@ const IntakeRoute = IntakeRouteImport.update({
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WelcomeRoute = WelcomeRouteImport.update({
+  id: '/welcome',
+  path: '/welcome',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAnnouncementsRoute =
@@ -103,6 +110,11 @@ const AuthenticatedTeamRoute = AuthenticatedTeamRouteImport.update({
   id: '/team',
   path: '/team',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const PlatformInviteRoute = PlatformInviteRouteImport.update({
+  id: '/platform/invite',
+  path: '/platform/invite',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedClientsIndexRoute =
   AuthenticatedClientsIndexRouteImport.update({
@@ -165,6 +177,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/intake': typeof IntakeRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/welcome': typeof WelcomeRoute
   '/announcements': typeof AuthenticatedAnnouncementsRoute
   '/billing': typeof AuthenticatedBillingRoute
   '/calendar': typeof AuthenticatedCalendarRoute
@@ -174,6 +187,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthenticatedSettingsRoute
   '/tasks': typeof AuthenticatedTasksRoute
   '/team': typeof AuthenticatedTeamRoute
+  '/platform/invite': typeof PlatformInviteRoute
   '/clients/$id': typeof AuthenticatedClientsIdRoute
   '/inquiries/$id': typeof AuthenticatedInquiriesIdRoute
   '/invoices/$id': typeof AuthenticatedInvoicesIdRoute
@@ -190,6 +204,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/intake': typeof IntakeRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/welcome': typeof WelcomeRoute
   '/announcements': typeof AuthenticatedAnnouncementsRoute
   '/billing': typeof AuthenticatedBillingRoute
   '/calendar': typeof AuthenticatedCalendarRoute
@@ -199,6 +214,7 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsRoute
   '/tasks': typeof AuthenticatedTasksRoute
   '/team': typeof AuthenticatedTeamRoute
+  '/platform/invite': typeof PlatformInviteRoute
   '/clients/$id': typeof AuthenticatedClientsIdRoute
   '/inquiries/$id': typeof AuthenticatedInquiriesIdRoute
   '/invoices/$id': typeof AuthenticatedInvoicesIdRoute
@@ -217,6 +233,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/intake': typeof IntakeRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/welcome': typeof WelcomeRoute
   '/_authenticated/announcements': typeof AuthenticatedAnnouncementsRoute
   '/_authenticated/billing': typeof AuthenticatedBillingRoute
   '/_authenticated/calendar': typeof AuthenticatedCalendarRoute
@@ -226,6 +243,7 @@ export interface FileRoutesById {
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/tasks': typeof AuthenticatedTasksRoute
   '/_authenticated/team': typeof AuthenticatedTeamRoute
+  '/platform/invite': typeof PlatformInviteRoute
   '/_authenticated/clients/$id': typeof AuthenticatedClientsIdRoute
   '/_authenticated/inquiries/$id': typeof AuthenticatedInquiriesIdRoute
   '/_authenticated/invoices/$id': typeof AuthenticatedInvoicesIdRoute
@@ -244,6 +262,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/intake'
     | '/reset-password'
+    | '/welcome'
     | '/announcements'
     | '/billing'
     | '/calendar'
@@ -253,6 +272,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/tasks'
     | '/team'
+    | '/platform/invite'
     | '/clients/$id'
     | '/inquiries/$id'
     | '/invoices/$id'
@@ -269,6 +289,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/intake'
     | '/reset-password'
+    | '/welcome'
     | '/announcements'
     | '/billing'
     | '/calendar'
@@ -278,6 +299,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/tasks'
     | '/team'
+    | '/platform/invite'
     | '/clients/$id'
     | '/inquiries/$id'
     | '/invoices/$id'
@@ -295,6 +317,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/intake'
     | '/reset-password'
+    | '/welcome'
     | '/_authenticated/announcements'
     | '/_authenticated/billing'
     | '/_authenticated/calendar'
@@ -304,6 +327,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings'
     | '/_authenticated/tasks'
     | '/_authenticated/team'
+    | '/platform/invite'
     | '/_authenticated/clients/$id'
     | '/_authenticated/inquiries/$id'
     | '/_authenticated/invoices/$id'
@@ -322,6 +346,8 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   IntakeRoute: typeof IntakeRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  WelcomeRoute: typeof WelcomeRoute
+  PlatformInviteRoute: typeof PlatformInviteRoute
   ApiCalendarTokenRoute: typeof ApiCalendarTokenRoute
   ApiCalendarSyncAllRoute: typeof ApiCalendarSyncAllRoute
   ApiCalendarOauthProviderCallbackRoute: typeof ApiCalendarOauthProviderCallbackRoute
@@ -362,6 +388,13 @@ declare module '@tanstack/react-router' {
       path: '/reset-password'
       fullPath: '/reset-password'
       preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/welcome': {
+      id: '/welcome'
+      path: '/welcome'
+      fullPath: '/welcome'
+      preLoaderRoute: typeof WelcomeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/announcements': {
@@ -426,6 +459,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/team'
       preLoaderRoute: typeof AuthenticatedTeamRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/platform/invite': {
+      id: '/platform/invite'
+      path: '/platform/invite'
+      fullPath: '/platform/invite'
+      preLoaderRoute: typeof PlatformInviteRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/clients/': {
       id: '/_authenticated/clients/'
@@ -547,6 +587,8 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   IntakeRoute: IntakeRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  WelcomeRoute: WelcomeRoute,
+  PlatformInviteRoute: PlatformInviteRoute,
   ApiCalendarTokenRoute: ApiCalendarTokenRoute,
   ApiCalendarSyncAllRoute: ApiCalendarSyncAllRoute,
   ApiCalendarOauthProviderCallbackRoute: ApiCalendarOauthProviderCallbackRoute,

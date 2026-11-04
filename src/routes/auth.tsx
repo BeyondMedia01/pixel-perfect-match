@@ -26,12 +26,9 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
-  const [sent, setSent] = useState(false);
   const [forgot, setForgot] = useState(false);
   const [resetSent, setResetSent] = useState(false);
   const [demoBusy, setDemoBusy] = useState<string | null>(null);
@@ -41,10 +38,9 @@ function AuthPage() {
     staleTime: 60_000,
   });
 
-  // Invitation links open straight on sign-up with the email filled in.
+  // Links from Acta can fill in the email.
   useEffect(() => {
     const q = new URLSearchParams(window.location.search);
-    if (q.get("mode") === "signup") setMode("signup");
     const invited = q.get("email");
     if (invited) setEmail(invited);
   }, []);
@@ -62,18 +58,8 @@ function AuthPage() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
-    if (mode === "signin") {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) toast.error(error.message);
-    } else {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { emailRedirectTo: window.location.origin, data: { full_name: name } },
-      });
-      if (error) toast.error(error.message);
-      else setSent(true);
-    }
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) toast.error(error.message);
     setBusy(false);
   }
 
@@ -128,19 +114,11 @@ function AuthPage() {
       </aside>
       <main className="flex items-center justify-center p-6">
         <div className="w-full max-w-sm">
-          <h1 className="page-title">
-            {forgot
-              ? "Reset your password"
-              : mode === "signin"
-                ? "Welcome back"
-                : "Create your account"}
-          </h1>
+          <h1 className="page-title">{forgot ? "Reset your password" : "Welcome back"}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {forgot
               ? "We'll email you a link to choose a new password."
-              : mode === "signin"
-                ? "Sign in to your firm workspace."
-                : "A partner at your firm approves new accounts before they can see any firm data."}
+              : "Sign in to your firm workspace."}
           </p>
           {forgot ? (
             resetSent ? (
@@ -185,49 +163,16 @@ function AuthPage() {
                 </Button>
               </form>
             )
-          ) : sent ? (
-            <div className="mt-8 rounded-md border bg-card p-4 text-sm">
-              Check <strong>{email}</strong> for a confirmation link, then come back to sign in.
-              You'll have access once a partner approves your account.
-            </div>
           ) : (
             <>
-              {/* A two-button switch rather than tabs: there is one form, so there are no tab panels to point at. */}
-              <div
-                role="group"
-                aria-label="Sign in or create an account"
-                className="mt-6 grid w-full grid-cols-2 rounded-md bg-muted p-1"
-              >
-                {(["signin", "signup"] as const).map((m) => (
-                  <button
-                    key={m}
-                    type="button"
-                    aria-pressed={mode === m}
-                    onClick={() => setMode(m)}
-                    className={`rounded-sm px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${mode === m ? "bg-background text-foreground shadow" : "text-muted-foreground hover:text-foreground"}`}
-                  >
-                    {m === "signin" ? "Sign in" : "Sign up"}
-                  </button>
-                ))}
-              </div>
-              <form onSubmit={submit} className="mt-6 space-y-4">
-                {mode === "signup" && (
-                  <div className="space-y-1.5">
-                    <Label htmlFor="name">Full name</Label>
-                    <Input
-                      id="name"
-                      required
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                    />
-                  </div>
-                )}
+              <form onSubmit={submit} className="mt-8 space-y-4">
                 <div className="space-y-1.5">
                   <Label htmlFor="email">Email</Label>
                   <Input
                     id="email"
                     type="email"
                     required
+                    autoComplete="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                   />
@@ -235,28 +180,26 @@ function AuthPage() {
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
                     <Label htmlFor="password">Password</Label>
-                    {mode === "signin" && (
-                      <button
-                        type="button"
-                        onClick={() => setForgot(true)}
-                        className="text-xs text-muted-foreground hover:text-foreground hover:underline"
-                      >
-                        Forgot password?
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      onClick={() => setForgot(true)}
+                      className="text-xs text-muted-foreground hover:text-foreground hover:underline"
+                    >
+                      Forgot password?
+                    </button>
                   </div>
                   <Input
                     id="password"
                     type="password"
                     required
                     minLength={8}
-                    autoComplete={mode === "signin" ? "current-password" : "new-password"}
+                    autoComplete="current-password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={busy}>
-                  {mode === "signin" ? "Sign in" : "Create account"}
+                  Sign in
                 </Button>
               </form>
               <div className="my-6 flex items-center gap-3 text-xs text-muted-foreground">
@@ -266,7 +209,10 @@ function AuthPage() {
               <Button variant="outline" className="w-full" onClick={google}>
                 Continue with Google
               </Button>
-              {demo?.enabled && mode === "signin" && (
+              <p className="mt-4 text-center text-xs text-muted-foreground">
+                Acta is by invitation only. New here? Ask a partner at your firm to invite you.
+              </p>
+              {demo?.enabled && (
                 <section
                   aria-labelledby="demo-heading"
                   className="mt-8 rounded-lg border bg-card p-4"

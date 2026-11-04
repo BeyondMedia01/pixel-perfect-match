@@ -134,6 +134,13 @@
       "when": 1793767425499,
       "tag": "0018_more_notification_alerts",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1793768196946,
+      "tag": "0019_invite_only_onboarding",
+      "breakpoints": true
     }
   ]
 }

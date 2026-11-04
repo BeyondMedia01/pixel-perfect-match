@@ -120,7 +120,11 @@ export const enableDemo = createServerFn({ method: "POST" })
           throw new Error(`Couldn't create ${acct.email}: ${error?.message ?? "unknown error"}`);
         ids[acct.role] = data.user.id;
       }
-      await db.from("profiles").update({ full_name: acct.name }).eq("id", ids[acct.role]!);
+      // Demo accounts skip first-time onboarding.
+      await db
+        .from("profiles")
+        .update({ full_name: acct.name, onboarded_at: new Date().toISOString() })
+        .eq("id", ids[acct.role]!);
     }
 
     const { error } = await db.from("demo_settings").upsert({

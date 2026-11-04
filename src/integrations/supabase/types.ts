@@ -1022,6 +1022,8 @@ export type Database = {
           email: string | null
           full_name: string
           id: string
+          onboarded_at: string | null
+          phone: string | null
           title: string | null
         }
         Insert: {
@@ -1029,6 +1031,8 @@ export type Database = {
           email?: string | null
           full_name?: string
           id: string
+          onboarded_at?: string | null
+          phone?: string | null
           title?: string | null
         }
         Update: {
@@ -1036,6 +1040,8 @@ export type Database = {
           email?: string | null
           full_name?: string
           id?: string
+          onboarded_at?: string | null
+          phone?: string | null
           title?: string | null
         }
         Relationships: []
@@ -1270,6 +1276,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      complete_onboarding: {
+        Args: { _firm?: Json; _full_name: string; _phone: string; _title: string }
+        Returns: undefined
+      }
+      platform_invite_owner: {
+        Args: { _email: string; _firm_name: string; _full_name: string }
+        Returns: string
+      }
       accept_inquiry: {
         Args: {
           _existing_client_id?: string

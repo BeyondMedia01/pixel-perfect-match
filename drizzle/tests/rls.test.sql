@@ -36,10 +36,43 @@ grant execute on all functions in schema tests to anon, authenticated;
 \set C10 '11111111-0000-0000-0000-000000000010'
 
 -- ===== Sign-up and approval =====
-insert into auth.users(id, email) values (:'P', 'partner@test');
+insert into auth.users(id, email) values ('aaaaaaaa-0000-0000-0000-0000000000ff', 'walkin@test');
+select tests.ok('signing up without an invitation gives no role, even on an empty workspace',
+  not exists (select 1 from user_roles));
+select tests.login('aaaaaaaa-0000-0000-0000-0000000000ff'); set role authenticated;
+select tests.ok('a signed-in person cannot invite a firm owner',
+  tests.refused($$select platform_invite_owner('x@firm.test', 'X', 'X')$$));
+reset role;
+select tests.login(null);
+-- the platform (service role) invites the managing partner
+select platform_invite_owner('Partner@Firm.test', 'Pat Partner', 'Moyo & Co') as owner_invite \gset
+select tests.ok('the platform invites a firm owner and suggests the firm name',
+  :'owner_invite' = 'invited' and (select firm_name from firm_settings) = 'Moyo & Co');
+insert into auth.users(id, email) values (:'P', 'partner@firm.test');
 insert into auth.users(id, email) values (:'L', 'lawyer@test'), (:'A', 'para@test'), (:'F', 'desk@test'), (:'X', 'pending@test');
-select tests.ok('first sign-up becomes partner, later ones get no role',
-  (select array_agg(user_id) from user_roles) = array[:'P'::uuid]);
+select tests.ok('the invited owner becomes partner; uninvited sign-ups get no role',
+  (select array_agg(user_id) from user_roles) = array[:'P'::uuid]
+  and (select full_name from profiles where id = :'P') = 'Pat Partner');
+select tests.ok('new accounts start onboarding',
+  (select count(*) from profiles where onboarded_at is null and id in (:'P', :'L')) = 2);
+
+-- ===== Onboarding =====
+select tests.login(:'P'); set role authenticated;
+select tests.ok('a partner must give the firm a name',
+  tests.refused($$select complete_onboarding('Pat Partner', 'Managing Partner', '', '{"firm_name":" "}'::jsonb)$$));
+select complete_onboarding('Pat Partner', 'Managing Partner', '+263 77 000 0000',
+  '{"firm_name":"Moyo & Partners","address":"1 Main St","email":"Accounts@Moyo.test","vat_number":"123","vat_rate":"15"}'::jsonb);
+select tests.ok('partner onboarding saves their details and the firm''s',
+  (select title = 'Managing Partner' and phone = '+263 77 000 0000' and onboarded_at is not null from profiles where id = :'P')
+  and (select firm_name = 'Moyo & Partners' and email = 'accounts@moyo.test' and vat_rate = 15 from firm_settings));
+reset role;
+select platform_invite_owner('second@firm.test', 'Sam Second', 'Something Else') as second_invite \gset
+select tests.ok('a suggested name never overwrites the firm''s own',
+  :'second_invite' = 'invited' and (select firm_name from firm_settings) = 'Moyo & Partners');
+select tests.login(:'X'); set role authenticated;
+select tests.ok('someone without access cannot complete onboarding',
+  tests.refused($$select complete_onboarding('Pending Person', '', '')$$));
+reset role;
 
 select tests.login(:'X'); set role authenticated;
 select tests.ok('pending user sees no clients, matters, documents, inquiries or announcements',
@@ -56,6 +89,16 @@ reset role;
 select tests.login(:'P'); set role authenticated;
 insert into user_roles(user_id, role) values (:'L', 'lawyer'), (:'A', 'paralegal'), (:'F', 'frontdesk');
 select tests.ok('partner sees the pending account', exists (select 1 from profiles where id = :'X'));
+reset role;
+select tests.login(:'L'); set role authenticated;
+select tests.ok('a lawyer cannot change the firm''s details while onboarding',
+  tests.refused($$select complete_onboarding('Lee Lawyer', '', '', '{"firm_name":"Mine"}'::jsonb)$$));
+select complete_onboarding('Lee Lawyer', 'Associate', '');
+select tests.ok('a lawyer finishes onboarding with their own details only',
+  (select full_name = 'Lee Lawyer' and title = 'Associate' and onboarded_at is not null from profiles where id = :'L')
+  and (select firm_name from firm_settings) = 'Moyo & Partners');
+select tests.ok('people cannot finish onboarding with an empty name',
+  tests.refused($$select complete_onboarding(' ', '', '')$$));
 reset role;
 
 -- Fixtures (as the database owner): L runs M1, A is assigned to M5,
@@ -373,6 +416,9 @@ select tests.ok('signed-in users cannot run the demo reset or read its settings'
 
 -- ===== Firm profile and VAT =====
 select tests.login(null);
+-- start from a blank profile (onboarding tests above filled it in)
+update firm_settings set firm_name = null, address = null, phone = null, email = null,
+  registration_no = null, vat_number = null, vat_rate = 0;
 select seed_demo_firm_profile();
 set role anon;
 select tests.ok('anyone can see the firm name for the intake page', (select firm_name from public_firm_profile()) = 'Makoni & Partners');
