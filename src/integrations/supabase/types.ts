@@ -384,6 +384,57 @@ export type Database = {
           },
         ]
       }
+      firm_settings: {
+        Row: {
+          address: string | null
+          bank_details: string | null
+          email: string | null
+          firm_name: string | null
+          id: number
+          invoice_footer: string | null
+          logo_path: string | null
+          phone: string | null
+          registration_no: string | null
+          updated_at: string
+          updated_by: string | null
+          vat_number: string | null
+          vat_rate: number
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          bank_details?: string | null
+          email?: string | null
+          firm_name?: string | null
+          id?: number
+          invoice_footer?: string | null
+          logo_path?: string | null
+          phone?: string | null
+          registration_no?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          vat_number?: string | null
+          vat_rate?: number
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          bank_details?: string | null
+          email?: string | null
+          firm_name?: string | null
+          id?: number
+          invoice_footer?: string | null
+          logo_path?: string | null
+          phone?: string | null
+          registration_no?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          vat_number?: string | null
+          vat_rate?: number
+          website?: string | null
+        }
+        Relationships: []
+      }
       inquiries: {
         Row: {
           consult_event_id: string | null
@@ -517,6 +568,7 @@ export type Database = {
       }
       invoices: {
         Row: {
+          tax_rate: number | null
           client_id: string
           created_at: string
           created_by: string | null
@@ -529,6 +581,7 @@ export type Database = {
           status: Database["public"]["Enums"]["invoice_status"]
         }
         Insert: {
+          tax_rate?: number | null
           client_id: string
           created_at?: string
           created_by?: string | null
@@ -541,6 +594,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["invoice_status"]
         }
         Update: {
+          tax_rate?: number | null
           client_id?: string
           created_at?: string
           created_by?: string | null
@@ -1180,7 +1234,9 @@ export type Database = {
         }[]
       }
       next_invoice_number: { Args: never; Returns: string }
+      public_firm_profile: { Args: never; Returns: { firm_name: string | null; logo_path: string | null }[] }
       refresh_demo_data: { Args: never; Returns: undefined }
+      seed_demo_firm_profile: { Args: never; Returns: undefined }
       remove_team_member: { Args: { _user_id: string }; Returns: undefined }
       set_user_role: {
         Args: {

@@ -19,7 +19,7 @@
 - [x] End-to-end browser verification (log time, create invoice, no console errors)
 
 ## Later
-- [ ] Reports
+- [x] Reports: work in progress, money owed by age, billing, time by person, open matters by area and lawyer, intake conversion, upcoming deadlines.
 
 ## Notifications and public intake
 - [ ] Per-person, per-alert in-app/email/WhatsApp preferences with explicit disconnected channel states; verify saved choices and bell filtering.
@@ -42,4 +42,8 @@
 - [x] Demo workspace (Settings → Demo workspace): partner, lawyer, paralegal and front-desk sign-ins with their own matters, tasks, deadlines, inquiries, time and invoices; one-click reset to this week; sign-in buttons on the sign-in page while it's on.
 - [x] Forgot password (reset email + /reset-password) and change password in Settings.
 - [x] Edit matter details and client records.
-
+- [x] Firm profile (Settings): name, logo, contact and invoice details, VAT rate. Shown on invoices, the intake form and the sidebar.
+- [x] Invoice page with letterhead, VAT and payment details; print or save as PDF.
+- [x] Landing page copy no longer promises a client portal.
+- [ ] Client portal.
+- [ ] Payment dates on invoices (reports use the issue date for "paid").

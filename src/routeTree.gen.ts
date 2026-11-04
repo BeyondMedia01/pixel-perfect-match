@@ -27,6 +27,7 @@ import { Route as AuthenticatedClientsIndexRouteImport } from './routes/_authent
 import { Route as AuthenticatedClientsIdRouteImport } from './routes/_authenticated/clients.$id'
 import { Route as AuthenticatedInquiriesIndexRouteImport } from './routes/_authenticated/inquiries.index'
 import { Route as AuthenticatedInquiriesIdRouteImport } from './routes/_authenticated/inquiries.$id'
+import { Route as AuthenticatedInvoicesIdRouteImport } from './routes/_authenticated/invoices.$id'
 import { Route as AuthenticatedMattersIndexRouteImport } from './routes/_authenticated/matters.index'
 import { Route as AuthenticatedMattersIdRouteImport } from './routes/_authenticated/matters.$id'
 import { Route as ApiCalendarTokenRouteImport } from './routes/api/calendar.$token'
@@ -124,6 +125,11 @@ const AuthenticatedInquiriesIdRoute =
     path: '/inquiries/$id',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedInvoicesIdRoute = AuthenticatedInvoicesIdRouteImport.update({
+  id: '/invoices/$id',
+  path: '/invoices/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedMattersIndexRoute =
   AuthenticatedMattersIndexRouteImport.update({
     id: '/matters/',
@@ -157,6 +163,7 @@ export interface FileRoutesByFullPath {
   '/team': typeof AuthenticatedTeamRoute
   '/clients/$id': typeof AuthenticatedClientsIdRoute
   '/inquiries/$id': typeof AuthenticatedInquiriesIdRoute
+  '/invoices/$id': typeof AuthenticatedInvoicesIdRoute
   '/matters/$id': typeof AuthenticatedMattersIdRoute
   '/api/calendar/$token': typeof ApiCalendarTokenRoute
   '/clients/': typeof AuthenticatedClientsIndexRoute
@@ -179,6 +186,7 @@ export interface FileRoutesByTo {
   '/team': typeof AuthenticatedTeamRoute
   '/clients/$id': typeof AuthenticatedClientsIdRoute
   '/inquiries/$id': typeof AuthenticatedInquiriesIdRoute
+  '/invoices/$id': typeof AuthenticatedInvoicesIdRoute
   '/matters/$id': typeof AuthenticatedMattersIdRoute
   '/api/calendar/$token': typeof ApiCalendarTokenRoute
   '/clients': typeof AuthenticatedClientsIndexRoute
@@ -203,6 +211,7 @@ export interface FileRoutesById {
   '/_authenticated/team': typeof AuthenticatedTeamRoute
   '/_authenticated/clients/$id': typeof AuthenticatedClientsIdRoute
   '/_authenticated/inquiries/$id': typeof AuthenticatedInquiriesIdRoute
+  '/_authenticated/invoices/$id': typeof AuthenticatedInvoicesIdRoute
   '/_authenticated/matters/$id': typeof AuthenticatedMattersIdRoute
   '/api/calendar/$token': typeof ApiCalendarTokenRoute
   '/_authenticated/clients/': typeof AuthenticatedClientsIndexRoute
@@ -227,6 +236,7 @@ export interface FileRouteTypes {
     | '/team'
     | '/clients/$id'
     | '/inquiries/$id'
+    | '/invoices/$id'
     | '/matters/$id'
     | '/api/calendar/$token'
     | '/clients/'
@@ -249,6 +259,7 @@ export interface FileRouteTypes {
     | '/team'
     | '/clients/$id'
     | '/inquiries/$id'
+    | '/invoices/$id'
     | '/matters/$id'
     | '/api/calendar/$token'
     | '/clients'
@@ -272,6 +283,7 @@ export interface FileRouteTypes {
     | '/_authenticated/team'
     | '/_authenticated/clients/$id'
     | '/_authenticated/inquiries/$id'
+    | '/_authenticated/invoices/$id'
     | '/_authenticated/matters/$id'
     | '/api/calendar/$token'
     | '/_authenticated/clients/'
@@ -416,6 +428,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedInquiriesIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/invoices/$id': {
+      id: '/_authenticated/invoices/$id'
+      path: '/invoices/$id'
+      fullPath: '/invoices/$id'
+      preLoaderRoute: typeof AuthenticatedInvoicesIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/matters/': {
       id: '/_authenticated/matters/'
       path: '/matters'
@@ -452,6 +471,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedTeamRoute: typeof AuthenticatedTeamRoute
   AuthenticatedClientsIdRoute: typeof AuthenticatedClientsIdRoute
   AuthenticatedInquiriesIdRoute: typeof AuthenticatedInquiriesIdRoute
+  AuthenticatedInvoicesIdRoute: typeof AuthenticatedInvoicesIdRoute
   AuthenticatedMattersIdRoute: typeof AuthenticatedMattersIdRoute
   AuthenticatedClientsIndexRoute: typeof AuthenticatedClientsIndexRoute
   AuthenticatedInquiriesIndexRoute: typeof AuthenticatedInquiriesIndexRoute
@@ -470,6 +490,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedTeamRoute: AuthenticatedTeamRoute,
   AuthenticatedClientsIdRoute: AuthenticatedClientsIdRoute,
   AuthenticatedInquiriesIdRoute: AuthenticatedInquiriesIdRoute,
+  AuthenticatedInvoicesIdRoute: AuthenticatedInvoicesIdRoute,
   AuthenticatedMattersIdRoute: AuthenticatedMattersIdRoute,
   AuthenticatedClientsIndexRoute: AuthenticatedClientsIndexRoute,
   AuthenticatedInquiriesIndexRoute: AuthenticatedInquiriesIndexRoute,

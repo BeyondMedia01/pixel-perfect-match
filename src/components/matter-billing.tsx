@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -38,6 +39,7 @@ export type Invoice = {
   issue_date: string;
   due_date: string;
   notes: string | null;
+  tax_rate: number | null;
 };
 
 export function useTimeEntries(matterId?: string) {
@@ -73,8 +75,14 @@ export function useInvoices(matterId?: string) {
   });
 }
 
-export function invoiceTotal(inv: { invoice_items: { quantity: number; unit_price: number }[] }) {
+export function invoiceSubtotal(inv: { invoice_items: { quantity: number; unit_price: number }[] }) {
   return inv.invoice_items.reduce((s, it) => s + it.quantity * it.unit_price, 0);
+}
+
+/** Total including VAT at the rate the invoice was issued with, rounded to cents. */
+export function invoiceTotal(inv: { invoice_items: { quantity: number; unit_price: number }[]; tax_rate?: number | null }) {
+  const sub = invoiceSubtotal(inv);
+  return Math.round(sub * (1 + (inv.tax_rate ?? 0) / 100) * 100) / 100;
 }
 
 function LogTimeDialog({ matterId, onDone }: { matterId: string; onDone: () => void }) {
@@ -273,7 +281,7 @@ export function MatterBilling({ matterId, clientId }: { matterId: string; client
           <ul className="divide-y rounded-lg border bg-card">
             {(invoices ?? []).map((inv) => (
               <li key={inv.id} className="flex items-center gap-4 px-4 py-3 text-sm">
-                <span className="tabular font-medium">{inv.invoice_number}</span>
+                <Link to="/invoices/$id" params={{ id: inv.id }} className="tabular font-medium hover:underline">{inv.invoice_number}</Link>
                 <span className="flex-1 text-xs text-muted-foreground">Issued {format(new Date(inv.issue_date), "d MMM yyyy")} · due {format(new Date(inv.due_date), "d MMM yyyy")}</span>
                 <span className="tabular font-semibold">{fmtMoney(invoiceTotal(inv))}</span>
                 <InvoiceStatusSelect invoice={inv} onDone={refresh} />

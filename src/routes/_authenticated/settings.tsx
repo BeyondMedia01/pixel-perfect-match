@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +13,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import { useFirmProfile, firmLogoUrl, FIRM_ASSETS_BUCKET } from "@/lib/firm";
 import { DEMO_ACCOUNTS, disableDemo, enableDemo, getDemoStatus, resetDemo } from "@/lib/demo.functions";
 import { formatDistanceToNow } from "date-fns";
 
@@ -28,6 +30,7 @@ function Settings() {
   return (
     <div className="mx-auto max-w-4xl space-y-10">
       <PageHeader title="Settings" />
+      {isPartner(me?.role) && <FirmProfileSection />}
       <ProfileSection />
       {!isDemoAccount(me?.user.email) && <PasswordSection />}
       {(isInternalRole(me?.role) || isFrontdesk(me?.role)) && <NotificationPreferences />}
@@ -35,6 +38,114 @@ function Settings() {
       {isPartner(me?.role) && <EthicalWallsSection />}
       {isPartner(me?.role) && <DemoSection />}
     </div>
+  );
+}
+
+type FirmForm = {
+  firm_name: string; address: string; phone: string; email: string; website: string;
+  registration_no: string; vat_number: string; vat_rate: string; bank_details: string; invoice_footer: string;
+};
+const FIRM_FIELDS: { key: keyof FirmForm; label: string; long?: boolean; placeholder?: string; wide?: boolean }[] = [
+  { key: "firm_name", label: "Firm name", placeholder: "e.g. Makoni & Partners", wide: true },
+  { key: "address", label: "Address", long: true },
+  { key: "bank_details", label: "Bank details for invoices", long: true, placeholder: "Bank, branch, account name and number" },
+  { key: "phone", label: "Phone" },
+  { key: "email", label: "Accounts email" },
+  { key: "website", label: "Website" },
+  { key: "registration_no", label: "Law Society / registration no." },
+  { key: "vat_number", label: "VAT number" },
+  { key: "vat_rate", label: "VAT rate (%)", placeholder: "0" },
+  { key: "invoice_footer", label: "Invoice footer", long: true, placeholder: "e.g. Payment is due within 30 days.", wide: true },
+];
+
+function FirmProfileSection() {
+  const qc = useQueryClient();
+  const { data: firm } = useFirmProfile();
+  const [f, setF] = useState<FirmForm | null>(null);
+  const [busy, setBusy] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+  if (!firm) return null;
+  const value: FirmForm = f ?? {
+    firm_name: firm.firm_name ?? "", address: firm.address ?? "", phone: firm.phone ?? "", email: firm.email ?? "",
+    website: firm.website ?? "", registration_no: firm.registration_no ?? "", vat_number: firm.vat_number ?? "",
+    vat_rate: String(firm.vat_rate ?? 0), bank_details: firm.bank_details ?? "", invoice_footer: firm.invoice_footer ?? "",
+  };
+  const set = (k: keyof FirmForm) => (v: string) => setF({ ...value, [k]: v });
+  const logo = firmLogoUrl(firm.logo_path);
+  const refresh = () => { qc.invalidateQueries({ queryKey: ["firm-profile"] }); qc.invalidateQueries({ queryKey: ["firm-brand"] }); };
+
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
+    const rate = parseFloat(value.vat_rate || "0");
+    if (!(rate >= 0 && rate <= 100)) { toast.error("VAT rate must be between 0 and 100"); return; }
+    setBusy(true);
+    const blank = (v: string) => v.trim() || null;
+    const { error } = await supabase.from("firm_settings").update({
+      firm_name: blank(value.firm_name), address: blank(value.address), phone: blank(value.phone), email: blank(value.email),
+      website: blank(value.website), registration_no: blank(value.registration_no), vat_number: blank(value.vat_number),
+      vat_rate: rate, bank_details: blank(value.bank_details), invoice_footer: blank(value.invoice_footer),
+      updated_at: new Date().toISOString(),
+    }).eq("id", 1);
+    setBusy(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Firm profile saved");
+    setF(null);
+    refresh();
+  }
+
+  async function uploadLogo(file: File | undefined) {
+    if (!file) return;
+    if (!/^image\/(png|jpeg|svg\+xml|webp)$/.test(file.type)) { toast.error("Use a PNG, JPG, SVG or WebP image"); return; }
+    if (file.size > 1024 * 1024) { toast.error("Keep the logo under 1 MB"); return; }
+    setBusy(true);
+    const path = `logo-${Date.now()}.${file.name.split(".").pop()?.toLowerCase() || "png"}`;
+    const up = await supabase.storage.from(FIRM_ASSETS_BUCKET).upload(path, file, { contentType: file.type, upsert: false });
+    if (up.error) { setBusy(false); toast.error(up.error.message); return; }
+    const old = firm!.logo_path;
+    const { error } = await supabase.from("firm_settings").update({ logo_path: path, updated_at: new Date().toISOString() }).eq("id", 1);
+    if (!error && old) await supabase.storage.from(FIRM_ASSETS_BUCKET).remove([old]);
+    setBusy(false);
+    if (fileRef.current) fileRef.current.value = "";
+    if (error) toast.error(error.message); else { toast.success("Logo updated"); refresh(); }
+  }
+
+  async function removeLogo() {
+    const old = firm!.logo_path;
+    const { error } = await supabase.from("firm_settings").update({ logo_path: null }).eq("id", 1);
+    if (error) { toast.error(error.message); return; }
+    if (old) await supabase.storage.from(FIRM_ASSETS_BUCKET).remove([old]);
+    refresh();
+  }
+
+  return (
+    <section id="firm-profile" className="scroll-mt-20 rounded-lg border bg-card p-5">
+      <h2 className="eyebrow mb-1">Firm profile</h2>
+      <p className="mb-4 text-sm text-muted-foreground">Shown on invoices, the client intake form and the sidebar. VAT applies to invoices created from now on.</p>
+      <div className="mb-5 flex flex-wrap items-center gap-4">
+        <div className="flex h-16 w-40 items-center justify-center rounded-md border bg-white p-2">
+          {logo ? <img src={logo} alt="Firm logo" className="max-h-12 max-w-36 object-contain" /> : <span className="text-xs text-muted-foreground">No logo</span>}
+        </div>
+        <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp" className="hidden" onChange={(e) => uploadLogo(e.target.files?.[0])} />
+        <Button type="button" variant="outline" size="sm" disabled={busy} onClick={() => fileRef.current?.click()}>{logo ? "Replace logo" : "Upload logo"}</Button>
+        {logo && <Button type="button" variant="ghost" size="sm" onClick={removeLogo}>Remove</Button>}
+        <p className="text-xs text-muted-foreground">PNG, JPG, SVG or WebP, under 1 MB. A wide logo on a transparent background works best.</p>
+      </div>
+      <form onSubmit={save} className="grid gap-4 sm:grid-cols-2">
+        {FIRM_FIELDS.map((fld) => (
+          <div key={fld.key} className={"space-y-1.5 " + (fld.wide ? "sm:col-span-2" : "")}>
+            <Label htmlFor={`firm-${fld.key}`}>{fld.label}</Label>
+            {fld.long ? (
+              <Textarea id={`firm-${fld.key}`} rows={3} value={value[fld.key]} placeholder={fld.placeholder} onChange={(e) => set(fld.key)(e.target.value)} />
+            ) : (
+              <Input id={`firm-${fld.key}`} type={fld.key === "vat_rate" ? "number" : "text"} min={0} max={100} step="0.5" value={value[fld.key]} placeholder={fld.placeholder} onChange={(e) => set(fld.key)(e.target.value)} />
+            )}
+          </div>
+        ))}
+        <div className="flex justify-end sm:col-span-2">
+          <Button type="submit" disabled={busy || !f}>{busy ? "Saving…" : "Save firm profile"}</Button>
+        </div>
+      </form>
+    </section>
   );
 }
 

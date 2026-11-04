@@ -19,6 +19,7 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { ActaLogo } from "@/components/acta-logo";
 import { NotificationBell } from "@/components/notification-bell";
 import { ConfirmProvider } from "@/components/confirm";
+import { useFirmBrand } from "@/lib/firm";
 
 const NAV = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -37,12 +38,13 @@ const NAV = [
 
 function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const { data: me } = useMe();
+  const { data: brand } = useFirmBrand();
   const role = me?.role;
   return (
     <div className="flex h-full flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
       <div className="px-5 pb-4 pt-6">
         <ActaLogo className="text-night" />
-        <p className="mt-1.5 pl-7 text-xs text-sidebar-quiet">by Revixions</p>
+        <p className="mt-1.5 truncate pl-7 text-xs text-sidebar-quiet" title={brand?.name ?? undefined}>{brand?.name ?? "by Revixions"}</p>
       </div>
       <nav className="flex-1 space-y-0.5 px-3">
         {NAV.filter((n) => {
@@ -166,12 +168,12 @@ export function AppShell() {
   return (
     <ConfirmProvider>
     <div className="flex min-h-screen">
-      <aside className="sticky top-0 hidden h-screen w-60 shrink-0 md:block"><SidebarNav /></aside>
+      <aside className="sticky top-0 hidden h-screen w-60 shrink-0 md:block print:hidden"><SidebarNav /></aside>
       <Sheet open={mobile} onOpenChange={setMobile}>
         <SheetContent side="left" className="w-64 border-0 p-0"><SidebarNav onNavigate={() => setMobile(false)} /></SheetContent>
       </Sheet>
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-10 flex h-14 items-center gap-3 border-b bg-card px-4 md:px-8">
+        <header className="sticky top-0 z-10 flex h-14 items-center gap-3 border-b bg-card px-4 md:px-8 print:hidden">
           <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setMobile(true)} aria-label="Menu"><Menu className="h-4 w-4" /></Button>
           <button onClick={() => setOpen(true)} className="flex h-9 w-full max-w-md items-center gap-2 rounded-md border bg-card px-3 text-sm text-muted-foreground hover:bg-accent">
             <Search className="h-4 w-4" /> Search…
@@ -184,7 +186,7 @@ export function AppShell() {
             <Button variant="ghost" size="icon" onClick={signOut} aria-label="Sign out"><LogOut className="h-4 w-4" /></Button>
           </div>
         </header>
-        <main className="flex-1 px-4 py-8 md:px-8"><Outlet /></main>
+        <main className="flex-1 px-4 py-8 md:px-8 print:p-0"><Outlet /></main>
       </div>
       <GlobalSearch open={open} setOpen={setOpen} />
     </div>

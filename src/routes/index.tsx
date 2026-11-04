@@ -42,7 +42,7 @@ function Index() {
           Every matter, deadline and hour — in order.
         </h1>
         <p className="mt-6 max-w-xl text-lg">
-          A quiet, secure workspace for partners, lawyers and staff, with a portal your clients can trust.
+          A quiet, secure workspace for partners, lawyers and front desk: conflict checks, matters, deadlines, documents and billing in one place.
         </p>
         <div className="mt-10">
           <Button asChild size="lg" className="bg-mist text-brand hover:bg-mist/90">

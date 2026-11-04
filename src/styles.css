@@ -203,3 +203,10 @@
 @utility tabular {
   font-variant-numeric: tabular-nums;
 }
+
+/* Printing (invoices): plain white page, no app chrome, real margins. */
+@media print {
+  @page { margin: 16mm; }
+  html, body { background: #ffffff !important; }
+  .invoice-sheet { color: #01141b; }
+}

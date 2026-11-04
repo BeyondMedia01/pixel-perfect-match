@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { ActaLogo } from "@/components/acta-logo";
+import { useFirmBrand } from "@/lib/firm";
 import { ArrowRight, CheckCircle2, ShieldCheck } from "lucide-react";
 import { intakeSchema } from "@/lib/intake-schema";
 import { submitIntake } from "@/lib/intake.functions";
@@ -26,6 +27,7 @@ export const Route = createFileRoute("/intake")({
 function IntakePage() {
   const submit = useServerFn(submitIntake);
   const [done, setDone] = useState(false);
+  const { data: brand } = useFirmBrand();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [consent, setConsent] = useState(false);
@@ -52,7 +54,7 @@ function IntakePage() {
     return <div className="space-y-2"><Label htmlFor={name}>{label}</Label><Input id={name} name={name} {...options} aria-invalid={!!errors[name]} aria-describedby={errors[name] ? `${name}-error` : undefined} />{errors[name] && <p id={`${name}-error`} className="text-xs text-destructive">{errors[name]}</p>}</div>;
   }
   return <div className="min-h-screen bg-background">
-    <header className="border-b bg-sidebar text-sidebar-foreground"><div className="mx-auto flex max-w-3xl items-center gap-3 px-6 py-5"><ActaLogo className="text-night" /><span className="ml-auto text-xs text-sidebar-quiet">Client inquiries</span></div></header>
+    <header className="border-b bg-sidebar text-sidebar-foreground"><div className="mx-auto flex max-w-3xl items-center gap-3 px-6 py-5">{brand?.logoUrl ? <img src={brand.logoUrl} alt={brand.name ?? "Firm logo"} className="max-h-9 max-w-48 object-contain" /> : brand?.name ? <span className="text-lg font-semibold">{brand.name}</span> : <ActaLogo className="text-night" />}<span className="ml-auto text-xs text-sidebar-quiet">Client inquiries</span></div></header>
     <main className="mx-auto max-w-3xl px-6 py-10 sm:py-14">
       {done ? <section className="py-12 text-center"><CheckCircle2 className="mx-auto h-12 w-12 text-success" /><h1 className="mt-6 text-4xl">Inquiry received</h1><p className="mx-auto mt-4 max-w-md text-muted-foreground">Your details have been sent to the legal team for review. Submitting this inquiry does not create a lawyer-client relationship.</p></section> : <>
         <p className="eyebrow">New-client intake</p><h1 className="mt-2 text-4xl">Tell us about your matter</h1><p className="mt-4 max-w-xl text-sm leading-6 text-muted-foreground">Share your contact details and a brief outline. Please do not include identity numbers, passwords, or sensitive documents at this stage.</p>

@@ -371,6 +371,28 @@ select tests.ok('signed-in users cannot run the demo reset or read its settings'
   (select not has_function_privilege('authenticated', 'refresh_demo_data()', 'execute'))
   and not has_table_privilege('authenticated', 'demo_settings', 'select'));
 
+-- ===== Firm profile and VAT =====
+select tests.login(null);
+select seed_demo_firm_profile();
+set role anon;
+select tests.ok('anyone can see the firm name for the intake page', (select firm_name from public_firm_profile()) = 'Makoni & Partners');
+select tests.ok('signed-out visitors cannot read the full firm profile', tests.refused($$select bank_details from firm_settings$$));
+reset role;
+select tests.login(:'F'); set role authenticated;
+select tests.ok('front desk can read the firm profile', (select count(*) from firm_settings) = 1);
+reset role;
+select tests.login(:'L'); set role authenticated;
+select tests.ok('a lawyer cannot change the firm profile', tests.refused($$update firm_settings set firm_name = 'Other'$$));
+reset role;
+select tests.login(:'P'); set role authenticated;
+update firm_settings set vat_rate = 15;
+insert into time_entries(matter_id, user_id, description, hours) values (:'M1', :'P', 'VAT check', 1);
+select invoice_number as vat_number from create_invoice(:'M1', array(select id from time_entries where description = 'VAT check'), current_date + 30) \gset
+select tests.ok('new invoices carry the firm''s VAT rate', (select tax_rate from invoices where invoice_number = :'vat_number') = 15);
+update firm_settings set vat_rate = 0;
+select tests.ok('changing the VAT rate later leaves old invoices alone', (select tax_rate from invoices where invoice_number = :'vat_number') = 15);
+reset role;
+
 -- ===== Storage =====
 select tests.ok('documents bucket is private', not (select public from storage.buckets where id = 'matter-documents'));
 

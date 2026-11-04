@@ -76,6 +76,7 @@ export const enableDemo = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     const { error: rErr } = await db.rpc("refresh_demo_data");
     if (rErr) throw new Error(rErr.message);
+    await db.rpc("seed_demo_firm_profile");
     return { ok: true };
   });
 
@@ -87,6 +88,7 @@ export const resetDemo = createServerFn({ method: "POST" })
     const db = await admin();
     const { error } = await db.rpc("refresh_demo_data");
     if (error) throw new Error(error.message);
+    await db.rpc("seed_demo_firm_profile");
     return { ok: true };
   });
 

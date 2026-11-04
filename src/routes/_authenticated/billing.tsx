@@ -47,7 +47,7 @@ function BillingPage() {
         <ul className="mb-10 divide-y rounded-lg border bg-card">
           {inv.map((i) => (
             <li key={i.id} className="flex items-center gap-4 px-4 py-3 text-sm">
-              <span className="tabular font-medium">{i.invoice_number}</span>
+              <Link to="/invoices/$id" params={{ id: i.id }} className="tabular font-medium hover:underline">{i.invoice_number}</Link>
               <span className="flex-1">
                 <Link to="/matters/$id" params={{ id: i.matter_id }} className="hover:underline">{i.matters?.title ?? "Matter"}</Link>
                 <span className="block text-xs text-muted-foreground">{i.clients?.name ?? ""} · issued {format(new Date(i.issue_date), "d MMM yyyy")} · due {format(new Date(i.due_date), "d MMM yyyy")}</span>
