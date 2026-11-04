@@ -28,15 +28,12 @@ vi.mock("@/integrations/supabase/client", () => ({
     rpc: (...a: unknown[]) => rpc(...a),
     from: (table: string) => ({
       select: () => ({
+        // firm_settings: row security picks the firm, so no filter
+        maybeSingle: async () => ({ data: firm, error: null }),
         eq: () =>
           table === "user_roles"
             ? Promise.resolve({ data: role ? [{ role }] : [], error: null })
-            : {
-                maybeSingle: async () => ({
-                  data: table === "profiles" ? profile : firm,
-                  error: null,
-                }),
-              },
+            : { maybeSingle: async () => ({ data: profile, error: null }) },
       }),
     }),
   },
@@ -127,10 +124,14 @@ describe("onboarding", () => {
     expect(navigate).toHaveBeenCalledWith({ to: "/team" });
   });
 
-  it("asks a team member only for their own details", async () => {
+  it("asks a team member for a password and their own details only", async () => {
     role = "lawyer";
     user = { id: "u2", email: "lee@moyo.test", user_metadata: {} };
     show();
+    expect(await screen.findByRole("heading", { name: "Welcome to Acta" })).toBeInTheDocument();
+    type("Password", "correct horse");
+    type("Type it again", "correct horse");
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
     expect(await screen.findByRole("heading", { name: "About you" })).toBeInTheDocument();
     expect(screen.queryByText("Your firm")).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Finish" }));

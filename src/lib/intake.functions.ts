@@ -23,13 +23,16 @@ export const submitIntake = createServerFn({ method: "POST" })
       _related: data.related_names,
       _summary: data.summary,
       ...(ipHash ? { _ip_hash: ipHash } : {}),
+      ...(data.firm ? { _firm: data.firm } : {}),
     });
     if (error)
       return {
         ok: false,
         error: error.message.includes("INTAKE_RATE_LIMIT")
           ? "Too many requests. Please try again in an hour."
-          : "Your inquiry could not be saved. Please try again.",
+          : error.message.includes("INTAKE_UNKNOWN_FIRM")
+            ? "This inquiry link isn't complete. Please use the link the firm gave you."
+            : "Your inquiry could not be saved. Please try again.",
       };
     return { ok: true, error: null };
   });

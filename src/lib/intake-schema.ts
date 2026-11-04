@@ -26,6 +26,13 @@ export const intakeSchema = z.object({
     .max(3000),
   consent: z.literal(true, { error: "Please agree to the use of your details for this inquiry." }),
   website: z.string().max(0),
+  /** The firm's web address (slug), from the form's link. */
+  firm: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .regex(/^[a-z0-9-]{3,40}$/)
+    .optional(),
 });
 
 export type IntakeInput = z.infer<typeof intakeSchema>;

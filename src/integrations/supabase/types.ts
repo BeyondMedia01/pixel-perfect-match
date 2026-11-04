@@ -14,6 +14,150 @@ export type Database = {
   }
   public: {
     Tables: {
+      firms: {
+        Row: {
+          billing_cycle: string
+          billing_email: string | null
+          created_at: string
+          custom_price: number | null
+          id: string
+          name: string
+          next_billing_date: string | null
+          notes: string | null
+          plan_id: string | null
+          slug: string
+          status: string
+          trial_ends_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          billing_cycle?: string
+          billing_email?: string | null
+          created_at?: string
+          custom_price?: number | null
+          id?: string
+          name: string
+          next_billing_date?: string | null
+          notes?: string | null
+          plan_id?: string | null
+          slug: string
+          status?: string
+          trial_ends_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          billing_cycle?: string
+          billing_email?: string | null
+          created_at?: string
+          custom_price?: number | null
+          id?: string
+          name?: string
+          next_billing_date?: string | null
+          notes?: string | null
+          plan_id?: string | null
+          slug?: string
+          status?: string
+          trial_ends_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      platform_plans: {
+        Row: {
+          active: boolean
+          annual_price: number | null
+          created_at: string
+          currency: string
+          description: string | null
+          id: string
+          monthly_price: number
+          name: string
+          sort_order: number
+          user_limit: number | null
+        }
+        Insert: {
+          active?: boolean
+          annual_price?: number | null
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          monthly_price: number
+          name: string
+          sort_order?: number
+          user_limit?: number | null
+        }
+        Update: {
+          active?: boolean
+          annual_price?: number | null
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          monthly_price?: number
+          name?: string
+          sort_order?: number
+          user_limit?: number | null
+        }
+        Relationships: []
+      }
+      platform_invoices: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          description: string
+          due_date: string
+          firm_id: string
+          id: string
+          invoice_number: string
+          issued_on: string
+          notes: string | null
+          paid_on: string | null
+          payment_method: string | null
+          payment_reference: string | null
+          period_end: string | null
+          period_start: string | null
+          status: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string
+          description: string
+          due_date: string
+          firm_id: string
+          id?: string
+          invoice_number: string
+          issued_on?: string
+          notes?: string | null
+          paid_on?: string | null
+          payment_method?: string | null
+          payment_reference?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          status?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          description?: string
+          due_date?: string
+          firm_id?: string
+          id?: string
+          invoice_number?: string
+          issued_on?: string
+          notes?: string | null
+          paid_on?: string | null
+          payment_method?: string | null
+          payment_reference?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       activity_log: {
         Row: {
           action: string
@@ -21,6 +165,7 @@ export type Database = {
           created_at: string
           entity_id: string
           entity_type: string
+          firm_id: string
           id: string
           matter_id: string | null
           summary: string | null
@@ -32,6 +177,7 @@ export type Database = {
           created_at?: string
           entity_id: string
           entity_type: string
+          firm_id?: string
           id?: string
           matter_id?: string | null
           summary?: string | null
@@ -43,6 +189,7 @@ export type Database = {
           created_at?: string
           entity_id?: string
           entity_type?: string
+          firm_id?: string
           id?: string
           matter_id?: string | null
           summary?: string | null
@@ -55,6 +202,7 @@ export type Database = {
           body: string
           created_at: string
           created_by: string | null
+          firm_id: string
           id: string
           matter_id: string | null
           title: string
@@ -63,6 +211,7 @@ export type Database = {
           body: string
           created_at?: string
           created_by?: string | null
+          firm_id?: string
           id?: string
           matter_id?: string | null
           title: string
@@ -71,6 +220,7 @@ export type Database = {
           body?: string
           created_at?: string
           created_by?: string | null
+          firm_id?: string
           id?: string
           matter_id?: string | null
           title?: string
@@ -94,18 +244,21 @@ export type Database = {
       }
       billing_rates: {
         Row: {
+          firm_id: string
           hourly_rate: number
           updated_at: string
           updated_by: string | null
           user_id: string
         }
         Insert: {
+          firm_id?: string
           hourly_rate: number
           updated_at?: string
           updated_by?: string | null
           user_id: string
         }
         Update: {
+          firm_id?: string
           hourly_rate?: number
           updated_at?: string
           updated_by?: string | null
@@ -247,6 +400,7 @@ export type Database = {
         Row: {
           created_at: string
           email: string
+          firm_id: string
           id: string
           inquiry_id: string
           name: string
@@ -255,6 +409,7 @@ export type Database = {
         Insert: {
           created_at?: string
           email: string
+          firm_id?: string
           id?: string
           inquiry_id: string
           name: string
@@ -263,6 +418,7 @@ export type Database = {
         Update: {
           created_at?: string
           email?: string
+          firm_id?: string
           id?: string
           inquiry_id?: string
           name?: string
@@ -284,6 +440,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           email: string | null
+          firm_id: string
           id: string
           id_number: string | null
           name: string
@@ -297,6 +454,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           email?: string | null
+          firm_id?: string
           id?: string
           id_number?: string | null
           name: string
@@ -310,6 +468,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           email?: string | null
+          firm_id?: string
           id?: string
           id_number?: string | null
           name?: string
@@ -362,6 +521,7 @@ export type Database = {
           content_type: string | null
           created_at: string
           file_path: string
+          firm_id: string
           id: string
           matter_id: string | null
           name: string
@@ -373,6 +533,7 @@ export type Database = {
           content_type?: string | null
           created_at?: string
           file_path: string
+          firm_id?: string
           id?: string
           matter_id?: string | null
           name: string
@@ -384,6 +545,7 @@ export type Database = {
           content_type?: string | null
           created_at?: string
           file_path?: string
+          firm_id?: string
           id?: string
           matter_id?: string | null
           name?: string
@@ -414,6 +576,7 @@ export type Database = {
           ends_at: string | null
           entered_by: string | null
           filed_at: string | null
+          firm_id: string
           id: string
           inquiry_id: string | null
           location: string | null
@@ -430,6 +593,7 @@ export type Database = {
           ends_at?: string | null
           entered_by?: string | null
           filed_at?: string | null
+          firm_id?: string
           id?: string
           inquiry_id?: string | null
           location?: string | null
@@ -446,6 +610,7 @@ export type Database = {
           ends_at?: string | null
           entered_by?: string | null
           filed_at?: string | null
+          firm_id?: string
           id?: string
           inquiry_id?: string | null
           location?: string | null
@@ -485,8 +650,8 @@ export type Database = {
           address: string | null
           bank_details: string | null
           email: string | null
+          firm_id: string
           firm_name: string | null
-          id: number
           invoice_footer: string | null
           logo_path: string | null
           phone: string | null
@@ -501,8 +666,8 @@ export type Database = {
           address?: string | null
           bank_details?: string | null
           email?: string | null
+          firm_id: string
           firm_name?: string | null
-          id?: number
           invoice_footer?: string | null
           logo_path?: string | null
           phone?: string | null
@@ -517,8 +682,8 @@ export type Database = {
           address?: string | null
           bank_details?: string | null
           email?: string | null
+          firm_id?: string
           firm_name?: string | null
-          id?: number
           invoice_footer?: string | null
           logo_path?: string | null
           phone?: string | null
@@ -538,6 +703,7 @@ export type Database = {
           contact: string | null
           created_at: string
           decline_reason: string | null
+          firm_id: string
           id: string
           logged_by: string | null
           matter_id: string | null
@@ -559,6 +725,7 @@ export type Database = {
           contact?: string | null
           created_at?: string
           decline_reason?: string | null
+          firm_id?: string
           id?: string
           logged_by?: string | null
           matter_id?: string | null
@@ -580,6 +747,7 @@ export type Database = {
           contact?: string | null
           created_at?: string
           decline_reason?: string | null
+          firm_id?: string
           id?: string
           logged_by?: string | null
           matter_id?: string | null
@@ -617,14 +785,17 @@ export type Database = {
       }
       invoice_counters: {
         Row: {
+          firm_id: string
           last_number: number
           year: number
         }
         Insert: {
+          firm_id: string
           last_number: number
           year: number
         }
         Update: {
+          firm_id?: string
           last_number?: number
           year?: number
         }
@@ -633,6 +804,7 @@ export type Database = {
       invoice_items: {
         Row: {
           description: string
+          firm_id: string
           id: string
           invoice_id: string
           quantity: number
@@ -640,6 +812,7 @@ export type Database = {
         }
         Insert: {
           description: string
+          firm_id?: string
           id?: string
           invoice_id: string
           quantity?: number
@@ -647,6 +820,7 @@ export type Database = {
         }
         Update: {
           description?: string
+          firm_id?: string
           id?: string
           invoice_id?: string
           quantity?: number
@@ -664,43 +838,46 @@ export type Database = {
       }
       invoices: {
         Row: {
-          tax_rate: number | null
           client_id: string
           created_at: string
           created_by: string | null
           due_date: string
+          firm_id: string
           id: string
           invoice_number: string
           issue_date: string
           matter_id: string
           notes: string | null
           status: Database["public"]["Enums"]["invoice_status"]
+          tax_rate: number | null
         }
         Insert: {
-          tax_rate?: number | null
           client_id: string
           created_at?: string
           created_by?: string | null
           due_date?: string
+          firm_id?: string
           id?: string
           invoice_number: string
           issue_date?: string
           matter_id: string
           notes?: string | null
           status?: Database["public"]["Enums"]["invoice_status"]
+          tax_rate?: number | null
         }
         Update: {
-          tax_rate?: number | null
           client_id?: string
           created_at?: string
           created_by?: string | null
           due_date?: string
+          firm_id?: string
           id?: string
           invoice_number?: string
           issue_date?: string
           matter_id?: string
           notes?: string | null
           status?: Database["public"]["Enums"]["invoice_status"]
+          tax_rate?: number | null
         }
         Relationships: [
           {
@@ -729,18 +906,21 @@ export type Database = {
       matter_assignments: {
         Row: {
           created_at: string
+          firm_id: string
           id: string
           matter_id: string
           user_id: string
         }
         Insert: {
           created_at?: string
+          firm_id?: string
           id?: string
           matter_id: string
           user_id: string
         }
         Update: {
           created_at?: string
+          firm_id?: string
           id?: string
           matter_id?: string
           user_id?: string
@@ -766,6 +946,7 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
+          firm_id: string
           id: string
           matter_id: string
           reason: string | null
@@ -774,6 +955,7 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by?: string | null
+          firm_id?: string
           id?: string
           matter_id: string
           reason?: string | null
@@ -782,6 +964,7 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string | null
+          firm_id?: string
           id?: string
           matter_id?: string
           reason?: string | null
@@ -814,6 +997,7 @@ export type Database = {
           date_closed: string | null
           date_opened: string
           description: string | null
+          firm_id: string
           id: string
           matter_number: string | null
           opposing_counsel: string | null
@@ -833,6 +1017,7 @@ export type Database = {
           date_closed?: string | null
           date_opened?: string
           description?: string | null
+          firm_id?: string
           id?: string
           matter_number?: string | null
           opposing_counsel?: string | null
@@ -852,6 +1037,7 @@ export type Database = {
           date_closed?: string | null
           date_opened?: string
           description?: string | null
+          firm_id?: string
           id?: string
           matter_number?: string | null
           opposing_counsel?: string | null
@@ -884,6 +1070,7 @@ export type Database = {
           author_id: string | null
           body: string
           created_at: string
+          firm_id: string
           id: string
           matter_id: string
         }
@@ -891,6 +1078,7 @@ export type Database = {
           author_id?: string | null
           body: string
           created_at?: string
+          firm_id?: string
           id?: string
           matter_id: string
         }
@@ -898,6 +1086,7 @@ export type Database = {
           author_id?: string | null
           body?: string
           created_at?: string
+          firm_id?: string
           id?: string
           matter_id?: string
         }
@@ -1020,6 +1209,7 @@ export type Database = {
         Row: {
           created_at: string
           email: string | null
+          firm_id: string | null
           full_name: string
           id: string
           onboarded_at: string | null
@@ -1029,6 +1219,7 @@ export type Database = {
         Insert: {
           created_at?: string
           email?: string | null
+          firm_id?: string | null
           full_name?: string
           id: string
           onboarded_at?: string | null
@@ -1038,6 +1229,7 @@ export type Database = {
         Update: {
           created_at?: string
           email?: string | null
+          firm_id?: string | null
           full_name?: string
           id?: string
           onboarded_at?: string | null
@@ -1050,6 +1242,7 @@ export type Database = {
         Row: {
           created_at: string
           email: string | null
+          firm_id: string
           id: string
           matter_id: string
           name: string
@@ -1060,6 +1253,7 @@ export type Database = {
         Insert: {
           created_at?: string
           email?: string | null
+          firm_id?: string
           id?: string
           matter_id: string
           name: string
@@ -1070,6 +1264,7 @@ export type Database = {
         Update: {
           created_at?: string
           email?: string | null
+          firm_id?: string
           id?: string
           matter_id?: string
           name?: string
@@ -1094,6 +1289,7 @@ export type Database = {
           created_by: string | null
           description: string | null
           due_date: string | null
+          firm_id: string
           id: string
           matter_id: string | null
           priority: Database["public"]["Enums"]["task_priority"]
@@ -1106,6 +1302,7 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           due_date?: string | null
+          firm_id?: string
           id?: string
           matter_id?: string | null
           priority?: Database["public"]["Enums"]["task_priority"]
@@ -1118,6 +1315,7 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           due_date?: string | null
+          firm_id?: string
           id?: string
           matter_id?: string | null
           priority?: Database["public"]["Enums"]["task_priority"]
@@ -1147,6 +1345,7 @@ export type Database = {
           accepted_user_id: string | null
           created_at: string
           email: string
+          firm_id: string
           full_name: string | null
           id: string
           invited_by: string | null
@@ -1158,6 +1357,7 @@ export type Database = {
           accepted_user_id?: string | null
           created_at?: string
           email: string
+          firm_id?: string
           full_name?: string | null
           id?: string
           invited_by?: string | null
@@ -1169,6 +1369,7 @@ export type Database = {
           accepted_user_id?: string | null
           created_at?: string
           email?: string
+          firm_id?: string
           full_name?: string | null
           id?: string
           invited_by?: string | null
@@ -1198,6 +1399,7 @@ export type Database = {
           created_at: string
           description: string
           entry_date: string
+          firm_id: string
           hourly_rate: number
           hours: number
           id: string
@@ -1210,6 +1412,7 @@ export type Database = {
           created_at?: string
           description: string
           entry_date?: string
+          firm_id?: string
           hourly_rate?: number
           hours: number
           id?: string
@@ -1222,6 +1425,7 @@ export type Database = {
           created_at?: string
           description?: string
           entry_date?: string
+          firm_id?: string
           hourly_rate?: number
           hours?: number
           id?: string
@@ -1281,9 +1485,73 @@ export type Database = {
         Returns: undefined
       }
       platform_invite_owner: {
-        Args: { _email: string; _firm_name: string; _full_name: string }
+        Args: { _email: string; _firm_id: string; _full_name: string }
         Returns: string
       }
+      platform_create_firm: {
+        Args: {
+          _billing_cycle: string
+          _billing_email: string
+          _name: string
+          _plan_id: string | null
+          _slug: string
+          _trial_days: number
+        }
+        Returns: string
+      }
+      platform_next_invoice_number: { Args: never; Returns: string }
+      platform_firm_overview: {
+        Args: never
+        Returns: {
+          amount_due: number
+          billing_cycle: string
+          billing_email: string | null
+          created_at: string
+          currency: string
+          id: string
+          last_active: string | null
+          matters: number
+          members: number
+          name: string
+          next_billing_date: string | null
+          notes: string | null
+          overdue: number
+          owner_email: string | null
+          plan_id: string | null
+          plan_name: string | null
+          price: number | null
+          seats_used: number
+          slug: string
+          status: string
+          trial_ends_at: string | null
+          user_limit: number | null
+        }[]
+      }
+      my_firm: {
+        Args: never
+        Returns: {
+          billing_cycle: string
+          currency: string
+          id: string
+          name: string
+          next_billing_date: string | null
+          plan_name: string | null
+          price: number | null
+          seats_used: number
+          slug: string
+          status: string
+          trial_ends_at: string | null
+          user_limit: number | null
+        }[]
+      }
+      current_firm_id: { Args: never; Returns: string }
+      revoke_invitation: { Args: { _id: string }; Returns: undefined }
+      can_link_invitee: { Args: { _email: string; _firm_id: string }; Returns: boolean }
+      account_by_email: {
+        Args: { _email: string }
+        Returns: { confirmed: boolean; firm_id: string | null; id: string }[]
+      }
+      user_firm_id: { Args: { _user_id: string }; Returns: string }
       accept_inquiry: {
         Args: {
           _existing_client_id?: string
@@ -1400,7 +1668,10 @@ export type Database = {
         }[]
       }
       next_invoice_number: { Args: never; Returns: string }
-      public_firm_profile: { Args: never; Returns: { firm_name: string | null; logo_path: string | null }[] }
+      public_firm_profile: {
+        Args: { _slug?: string }
+        Returns: { firm_name: string | null; logo_path: string | null; slug: string }[]
+      }
       refresh_demo_data: { Args: never; Returns: undefined }
       seed_demo_firm_profile: { Args: never; Returns: undefined }
       remove_team_member: { Args: { _user_id: string }; Returns: undefined }
@@ -1415,6 +1686,7 @@ export type Database = {
         Args: {
           _area: Database["public"]["Enums"]["practice_area"]
           _email: string
+          _firm?: string
           _ip_hash?: string
           _name: string
           _opposing: string

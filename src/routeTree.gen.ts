@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IntakeRouteImport } from './routes/intake'
+import { Route as PlatformRouteImport } from './routes/platform'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as WelcomeRouteImport } from './routes/welcome'
 import { Route as AuthenticatedAnnouncementsRouteImport } from './routes/_authenticated/announcements'
@@ -24,7 +25,9 @@ import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedTasksRouteImport } from './routes/_authenticated/tasks'
 import { Route as AuthenticatedTeamRouteImport } from './routes/_authenticated/team'
-import { Route as PlatformInviteRouteImport } from './routes/platform.invite'
+import { Route as PlatformIndexRouteImport } from './routes/platform.index'
+import { Route as PlatformBillingRouteImport } from './routes/platform.billing'
+import { Route as PlatformPlansRouteImport } from './routes/platform.plans'
 import { Route as AuthenticatedClientsIndexRouteImport } from './routes/_authenticated/clients.index'
 import { Route as AuthenticatedClientsIdRouteImport } from './routes/_authenticated/clients.$id'
 import { Route as AuthenticatedInquiriesIndexRouteImport } from './routes/_authenticated/inquiries.index'
@@ -34,6 +37,7 @@ import { Route as AuthenticatedMattersIndexRouteImport } from './routes/_authent
 import { Route as AuthenticatedMattersIdRouteImport } from './routes/_authenticated/matters.$id'
 import { Route as ApiCalendarTokenRouteImport } from './routes/api/calendar.$token'
 import { Route as ApiCalendarSyncAllRouteImport } from './routes/api/calendar.sync-all'
+import { Route as PlatformFirmsIdRouteImport } from './routes/platform.firms.$id'
 import { Route as ApiCalendarOauthProviderCallbackRouteImport } from './routes/api/calendar.oauth.$provider.callback'
 
 const IndexRoute = IndexRouteImport.update({
@@ -53,6 +57,11 @@ const AuthRoute = AuthRouteImport.update({
 const IntakeRoute = IntakeRouteImport.update({
   id: '/intake',
   path: '/intake',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlatformRoute = PlatformRouteImport.update({
+  id: '/platform',
+  path: '/platform',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -111,10 +120,20 @@ const AuthenticatedTeamRoute = AuthenticatedTeamRouteImport.update({
   path: '/team',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const PlatformInviteRoute = PlatformInviteRouteImport.update({
-  id: '/platform/invite',
-  path: '/platform/invite',
-  getParentRoute: () => rootRouteImport,
+const PlatformIndexRoute = PlatformIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PlatformRoute,
+} as any)
+const PlatformBillingRoute = PlatformBillingRouteImport.update({
+  id: '/billing',
+  path: '/billing',
+  getParentRoute: () => PlatformRoute,
+} as any)
+const PlatformPlansRoute = PlatformPlansRouteImport.update({
+  id: '/plans',
+  path: '/plans',
+  getParentRoute: () => PlatformRoute,
 } as any)
 const AuthenticatedClientsIndexRoute =
   AuthenticatedClientsIndexRouteImport.update({
@@ -165,6 +184,11 @@ const ApiCalendarSyncAllRoute = ApiCalendarSyncAllRouteImport.update({
   path: '/api/calendar/sync-all',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlatformFirmsIdRoute = PlatformFirmsIdRouteImport.update({
+  id: '/firms/$id',
+  path: '/firms/$id',
+  getParentRoute: () => PlatformRoute,
+} as any)
 const ApiCalendarOauthProviderCallbackRoute =
   ApiCalendarOauthProviderCallbackRouteImport.update({
     id: '/api/calendar/oauth/$provider/callback',
@@ -176,6 +200,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/intake': typeof IntakeRoute
+  '/platform': typeof PlatformRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/welcome': typeof WelcomeRoute
   '/announcements': typeof AuthenticatedAnnouncementsRoute
@@ -187,13 +212,16 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthenticatedSettingsRoute
   '/tasks': typeof AuthenticatedTasksRoute
   '/team': typeof AuthenticatedTeamRoute
-  '/platform/invite': typeof PlatformInviteRoute
+  '/platform/billing': typeof PlatformBillingRoute
+  '/platform/plans': typeof PlatformPlansRoute
+  '/platform/': typeof PlatformIndexRoute
   '/clients/$id': typeof AuthenticatedClientsIdRoute
   '/inquiries/$id': typeof AuthenticatedInquiriesIdRoute
   '/invoices/$id': typeof AuthenticatedInvoicesIdRoute
   '/matters/$id': typeof AuthenticatedMattersIdRoute
   '/api/calendar/$token': typeof ApiCalendarTokenRoute
   '/api/calendar/sync-all': typeof ApiCalendarSyncAllRoute
+  '/platform/firms/$id': typeof PlatformFirmsIdRoute
   '/clients/': typeof AuthenticatedClientsIndexRoute
   '/inquiries/': typeof AuthenticatedInquiriesIndexRoute
   '/matters/': typeof AuthenticatedMattersIndexRoute
@@ -214,13 +242,16 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsRoute
   '/tasks': typeof AuthenticatedTasksRoute
   '/team': typeof AuthenticatedTeamRoute
-  '/platform/invite': typeof PlatformInviteRoute
+  '/platform/billing': typeof PlatformBillingRoute
+  '/platform/plans': typeof PlatformPlansRoute
+  '/platform': typeof PlatformIndexRoute
   '/clients/$id': typeof AuthenticatedClientsIdRoute
   '/inquiries/$id': typeof AuthenticatedInquiriesIdRoute
   '/invoices/$id': typeof AuthenticatedInvoicesIdRoute
   '/matters/$id': typeof AuthenticatedMattersIdRoute
   '/api/calendar/$token': typeof ApiCalendarTokenRoute
   '/api/calendar/sync-all': typeof ApiCalendarSyncAllRoute
+  '/platform/firms/$id': typeof PlatformFirmsIdRoute
   '/clients': typeof AuthenticatedClientsIndexRoute
   '/inquiries': typeof AuthenticatedInquiriesIndexRoute
   '/matters': typeof AuthenticatedMattersIndexRoute
@@ -232,6 +263,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/intake': typeof IntakeRoute
+  '/platform': typeof PlatformRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/welcome': typeof WelcomeRoute
   '/_authenticated/announcements': typeof AuthenticatedAnnouncementsRoute
@@ -243,13 +275,16 @@ export interface FileRoutesById {
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/tasks': typeof AuthenticatedTasksRoute
   '/_authenticated/team': typeof AuthenticatedTeamRoute
-  '/platform/invite': typeof PlatformInviteRoute
+  '/platform/billing': typeof PlatformBillingRoute
+  '/platform/plans': typeof PlatformPlansRoute
+  '/platform/': typeof PlatformIndexRoute
   '/_authenticated/clients/$id': typeof AuthenticatedClientsIdRoute
   '/_authenticated/inquiries/$id': typeof AuthenticatedInquiriesIdRoute
   '/_authenticated/invoices/$id': typeof AuthenticatedInvoicesIdRoute
   '/_authenticated/matters/$id': typeof AuthenticatedMattersIdRoute
   '/api/calendar/$token': typeof ApiCalendarTokenRoute
   '/api/calendar/sync-all': typeof ApiCalendarSyncAllRoute
+  '/platform/firms/$id': typeof PlatformFirmsIdRoute
   '/_authenticated/clients/': typeof AuthenticatedClientsIndexRoute
   '/_authenticated/inquiries/': typeof AuthenticatedInquiriesIndexRoute
   '/_authenticated/matters/': typeof AuthenticatedMattersIndexRoute
@@ -261,6 +296,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/intake'
+    | '/platform'
     | '/reset-password'
     | '/welcome'
     | '/announcements'
@@ -272,13 +308,16 @@ export interface FileRouteTypes {
     | '/settings'
     | '/tasks'
     | '/team'
-    | '/platform/invite'
+    | '/platform/billing'
+    | '/platform/plans'
+    | '/platform/'
     | '/clients/$id'
     | '/inquiries/$id'
     | '/invoices/$id'
     | '/matters/$id'
     | '/api/calendar/$token'
     | '/api/calendar/sync-all'
+    | '/platform/firms/$id'
     | '/clients/'
     | '/inquiries/'
     | '/matters/'
@@ -299,13 +338,16 @@ export interface FileRouteTypes {
     | '/settings'
     | '/tasks'
     | '/team'
-    | '/platform/invite'
+    | '/platform/billing'
+    | '/platform/plans'
+    | '/platform'
     | '/clients/$id'
     | '/inquiries/$id'
     | '/invoices/$id'
     | '/matters/$id'
     | '/api/calendar/$token'
     | '/api/calendar/sync-all'
+    | '/platform/firms/$id'
     | '/clients'
     | '/inquiries'
     | '/matters'
@@ -316,6 +358,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/intake'
+    | '/platform'
     | '/reset-password'
     | '/welcome'
     | '/_authenticated/announcements'
@@ -327,13 +370,16 @@ export interface FileRouteTypes {
     | '/_authenticated/settings'
     | '/_authenticated/tasks'
     | '/_authenticated/team'
-    | '/platform/invite'
+    | '/platform/billing'
+    | '/platform/plans'
+    | '/platform/'
     | '/_authenticated/clients/$id'
     | '/_authenticated/inquiries/$id'
     | '/_authenticated/invoices/$id'
     | '/_authenticated/matters/$id'
     | '/api/calendar/$token'
     | '/api/calendar/sync-all'
+    | '/platform/firms/$id'
     | '/_authenticated/clients/'
     | '/_authenticated/inquiries/'
     | '/_authenticated/matters/'
@@ -345,9 +391,9 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   IntakeRoute: typeof IntakeRoute
+  PlatformRoute: typeof PlatformRouteWithChildren
   ResetPasswordRoute: typeof ResetPasswordRoute
   WelcomeRoute: typeof WelcomeRoute
-  PlatformInviteRoute: typeof PlatformInviteRoute
   ApiCalendarTokenRoute: typeof ApiCalendarTokenRoute
   ApiCalendarSyncAllRoute: typeof ApiCalendarSyncAllRoute
   ApiCalendarOauthProviderCallbackRoute: typeof ApiCalendarOauthProviderCallbackRoute
@@ -381,6 +427,13 @@ declare module '@tanstack/react-router' {
       path: '/intake'
       fullPath: '/intake'
       preLoaderRoute: typeof IntakeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/platform': {
+      id: '/platform'
+      path: '/platform'
+      fullPath: '/platform'
+      preLoaderRoute: typeof PlatformRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reset-password': {
@@ -460,12 +513,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTeamRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/platform/invite': {
-      id: '/platform/invite'
-      path: '/platform/invite'
-      fullPath: '/platform/invite'
-      preLoaderRoute: typeof PlatformInviteRouteImport
-      parentRoute: typeof rootRouteImport
+    '/platform/': {
+      id: '/platform/'
+      path: '/'
+      fullPath: '/platform/'
+      preLoaderRoute: typeof PlatformIndexRouteImport
+      parentRoute: typeof PlatformRoute
+    }
+    '/platform/billing': {
+      id: '/platform/billing'
+      path: '/billing'
+      fullPath: '/platform/billing'
+      preLoaderRoute: typeof PlatformBillingRouteImport
+      parentRoute: typeof PlatformRoute
+    }
+    '/platform/plans': {
+      id: '/platform/plans'
+      path: '/plans'
+      fullPath: '/platform/plans'
+      preLoaderRoute: typeof PlatformPlansRouteImport
+      parentRoute: typeof PlatformRoute
     }
     '/_authenticated/clients/': {
       id: '/_authenticated/clients/'
@@ -530,6 +597,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiCalendarSyncAllRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/platform/firms/$id': {
+      id: '/platform/firms/$id'
+      path: '/firms/$id'
+      fullPath: '/platform/firms/$id'
+      preLoaderRoute: typeof PlatformFirmsIdRouteImport
+      parentRoute: typeof PlatformRoute
+    }
     '/api/calendar/oauth/$provider/callback': {
       id: '/api/calendar/oauth/$provider/callback'
       path: '/api/calendar/oauth/$provider/callback'
@@ -581,14 +655,32 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface PlatformRouteChildren {
+  PlatformBillingRoute: typeof PlatformBillingRoute
+  PlatformPlansRoute: typeof PlatformPlansRoute
+  PlatformIndexRoute: typeof PlatformIndexRoute
+  PlatformFirmsIdRoute: typeof PlatformFirmsIdRoute
+}
+
+const PlatformRouteChildren: PlatformRouteChildren = {
+  PlatformBillingRoute: PlatformBillingRoute,
+  PlatformPlansRoute: PlatformPlansRoute,
+  PlatformIndexRoute: PlatformIndexRoute,
+  PlatformFirmsIdRoute: PlatformFirmsIdRoute,
+}
+
+const PlatformRouteWithChildren = PlatformRoute._addFileChildren(
+  PlatformRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   IntakeRoute: IntakeRoute,
+  PlatformRoute: PlatformRouteWithChildren,
   ResetPasswordRoute: ResetPasswordRoute,
   WelcomeRoute: WelcomeRoute,
-  PlatformInviteRoute: PlatformInviteRoute,
   ApiCalendarTokenRoute: ApiCalendarTokenRoute,
   ApiCalendarSyncAllRoute: ApiCalendarSyncAllRoute,
   ApiCalendarOauthProviderCallbackRoute: ApiCalendarOauthProviderCallbackRoute,

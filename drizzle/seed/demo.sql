@@ -2,6 +2,12 @@
 -- Not a migration: run it by hand on a demo database only, after all migrations.
 -- The billing rows attach to the profile with the email below; change it to your demo account.
 
+-- Everything below belongs to the workspace's first firm (see migration 0020).
+insert into public.firms (id, name, slug, status) values ('00000000-0000-4000-8000-0000000000f1', 'Makoni & Partners', 'firm-1', 'active')
+  on conflict (id) do nothing;
+insert into public.firm_settings (firm_id) values ('00000000-0000-4000-8000-0000000000f1') on conflict do nothing;
+select set_config('acta.firm_id', '00000000-0000-4000-8000-0000000000f1', false);
+
 insert into public.clients (id, type, name, id_number, email, phone, address, notes) values
 ('11111111-0000-0000-0000-000000000001','company','Mhondoro Holdings (Pvt) Ltd','REG 4471/2011','legal@mhondoro.co.zw','+263 242 700 112','14 Samora Machel Ave, Harare','Long-standing corporate client. Retainer agreement in place.'),
 ('11111111-0000-0000-0000-000000000002','individual','Tendai Moyo','63-221874-K-42','tendai.moyo@gmail.com','+263 77 412 3390','22 Borrowdale Rd, Harare','Referred by Mhondoro Holdings.'),

@@ -141,6 +141,13 @@
       "when": 1793768196946,
       "tag": "0019_invite_only_onboarding",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1793769266445,
+      "tag": "0020_multi_firm_platform",
+      "breakpoints": true
     }
   ]
 }

@@ -21,7 +21,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { TwoWayCalendarSync } from "@/components/two-way-calendar";
 import { Textarea } from "@/components/ui/textarea";
-import { useFirmProfile, firmLogoUrl, FIRM_ASSETS_BUCKET } from "@/lib/firm";
+import { getPlatformAccess } from "@/lib/platform.functions";
+import { useFirmProfile, firmLogoUrl, FIRM_ASSETS_BUCKET, useMyFirm, money } from "@/lib/firm";
 import {
   DEMO_ACCOUNTS,
   disableDemo,
@@ -49,16 +50,23 @@ export const Route = createFileRoute("/_authenticated/settings")({
 
 function Settings() {
   const { data: me } = useMe();
+  const { data: platform } = useQuery({
+    queryKey: ["platform-access"],
+    queryFn: () => getPlatformAccess(),
+    staleTime: 5 * 60_000,
+    retry: false,
+  });
   return (
     <div className="mx-auto max-w-4xl space-y-10">
       <PageHeader title="Settings" />
       {isPartner(me?.role) && <FirmProfileSection />}
+      {isPartner(me?.role) && <SubscriptionSection />}
       <ProfileSection />
       {!isDemoAccount(me?.user.email) && <PasswordSection />}
       {(isInternalRole(me?.role) || isFrontdesk(me?.role)) && <NotificationPreferences />}
       {isInternalRole(me?.role) && <CalendarSyncSection />}
       {isPartner(me?.role) && <EthicalWallsSection />}
-      {isPartner(me?.role) && <DemoSection />}
+      {platform?.admin && <DemoSection />}
     </div>
   );
 }
@@ -155,7 +163,7 @@ function FirmProfileSection() {
         invoice_footer: blank(value.invoice_footer),
         updated_at: new Date().toISOString(),
       })
-      .eq("id", 1);
+      .eq("firm_id", firm!.firm_id);
     setBusy(false);
     if (error) {
       toast.error(error.message);
@@ -177,7 +185,7 @@ function FirmProfileSection() {
       return;
     }
     setBusy(true);
-    const path = `logo-${Date.now()}.${file.name.split(".").pop()?.toLowerCase() || "png"}`;
+    const path = `${firm!.firm_id}/logo-${Date.now()}.${file.name.split(".").pop()?.toLowerCase() || "png"}`;
     const up = await supabase.storage
       .from(FIRM_ASSETS_BUCKET)
       .upload(path, file, { contentType: file.type, upsert: false });
@@ -190,7 +198,7 @@ function FirmProfileSection() {
     const { error } = await supabase
       .from("firm_settings")
       .update({ logo_path: path, updated_at: new Date().toISOString() })
-      .eq("id", 1);
+      .eq("firm_id", firm!.firm_id);
     if (!error && old) await supabase.storage.from(FIRM_ASSETS_BUCKET).remove([old]);
     setBusy(false);
     if (fileRef.current) fileRef.current.value = "";
@@ -203,7 +211,10 @@ function FirmProfileSection() {
 
   async function removeLogo() {
     const old = firm!.logo_path;
-    const { error } = await supabase.from("firm_settings").update({ logo_path: null }).eq("id", 1);
+    const { error } = await supabase
+      .from("firm_settings")
+      .update({ logo_path: null })
+      .eq("firm_id", firm!.firm_id);
     if (error) {
       toast.error(error.message);
       return;
@@ -770,6 +781,119 @@ function EthicalWallsSection() {
         </ul>
       ) : (
         <p className="text-sm text-muted-foreground">No ethical walls in place.</p>
+      )}
+    </section>
+  );
+}
+
+/** The firm's Acta plan and the invoices Revixions has sent. Read-only. */
+function SubscriptionSection() {
+  const { data: firm } = useMyFirm();
+  const { data: invoices } = useQuery({
+    queryKey: ["acta-invoices"],
+    queryFn: async () =>
+      (
+        await supabase
+          .from("platform_invoices")
+          .select("id, invoice_number, description, amount, currency, status, due_date, paid_on")
+          .neq("status", "void")
+          .order("issued_on", { ascending: false })
+          .limit(24)
+      ).data ?? [],
+  });
+  if (!firm) return null;
+  const today = new Date().toISOString().slice(0, 10);
+  const status: Record<string, string> = {
+    trial: "Free trial",
+    active: "Active",
+    past_due: "Payment overdue",
+    suspended: "Suspended",
+    cancelled: "Cancelled",
+  };
+  const day = (iso: string | null) =>
+    iso
+      ? new Date(`${iso}T00:00:00`).toLocaleDateString("en-GB", {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        })
+      : "—";
+  return (
+    <section
+      id="subscription"
+      className="scroll-mt-20 border-t pt-6"
+      aria-labelledby="subscription-heading"
+    >
+      <h2 id="subscription-heading" className="mb-1 text-xl">
+        Subscription
+      </h2>
+      <p className="mb-5 text-sm text-muted-foreground">
+        Your firm's Acta plan. To change plan or billing details, contact Revixions.
+      </p>
+      <dl className="grid gap-4 sm:grid-cols-4">
+        <div>
+          <dt className="text-xs text-muted-foreground">Plan</dt>
+          <dd className="mt-0.5 font-medium">{firm.plan_name ?? "—"}</dd>
+        </div>
+        <div>
+          <dt className="text-xs text-muted-foreground">Status</dt>
+          <dd className="mt-0.5 font-medium">
+            {status[firm.status]}
+            {firm.status === "trial" && firm.trial_ends_at && (
+              <span className="block text-xs font-normal text-muted-foreground">
+                until {day(firm.trial_ends_at)}
+              </span>
+            )}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-xs text-muted-foreground">Price</dt>
+          <dd className="tabular mt-0.5 font-medium">
+            {money(firm.price, firm.currency)}
+            <span className="font-normal text-muted-foreground">
+              {" "}
+              / {firm.billing_cycle === "annual" ? "year" : "month"}
+            </span>
+          </dd>
+        </div>
+        <div>
+          <dt className="text-xs text-muted-foreground">People</dt>
+          <dd className="tabular mt-0.5 font-medium">
+            {firm.seats_used}
+            {firm.user_limit ? ` of ${firm.user_limit}` : ""}
+            <span className="block text-xs font-normal text-muted-foreground">
+              including open invitations
+            </span>
+          </dd>
+        </div>
+      </dl>
+      {firm.next_billing_date && (
+        <p className="mt-4 text-sm text-muted-foreground">
+          Next bill around {day(firm.next_billing_date)}.
+        </p>
+      )}
+      <h3 className="eyebrow mb-2 mt-6">Invoices from Revixions</h3>
+      {!invoices?.length ? (
+        <p className="text-sm text-muted-foreground">No invoices yet.</p>
+      ) : (
+        <ul className="divide-y rounded-lg border bg-card text-sm">
+          {invoices.map((i) => (
+            <li key={i.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
+              <div className="min-w-0 flex-1">
+                <div className="tabular font-medium">{i.invoice_number}</div>
+                <div className="text-xs text-muted-foreground">{i.description}</div>
+              </div>
+              <span className="tabular">{money(Number(i.amount), i.currency)}</span>
+              {i.status === "paid" ? (
+                <Badge variant="active">Paid {day(i.paid_on)}</Badge>
+              ) : i.due_date < today ? (
+                <Badge variant="urgent">Overdue since {day(i.due_date)}</Badge>
+              ) : (
+                <Badge variant="hold">Due {day(i.due_date)}</Badge>
+              )}
+            </li>
+          ))}
+        </ul>
       )}
     </section>
   );

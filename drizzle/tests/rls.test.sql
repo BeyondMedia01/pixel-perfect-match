@@ -35,23 +35,34 @@ grant execute on all functions in schema tests to anon, authenticated;
 \set C4  '11111111-0000-0000-0000-000000000004'
 \set C10 '11111111-0000-0000-0000-000000000010'
 
--- ===== Sign-up and approval =====
+\set FIRM1 '00000000-0000-4000-8000-0000000000f1'
+
+-- ===== Sign-up and invitations =====
 insert into auth.users(id, email) values ('aaaaaaaa-0000-0000-0000-0000000000ff', 'walkin@test');
-select tests.ok('signing up without an invitation gives no role, even on an empty workspace',
-  not exists (select 1 from user_roles));
+select tests.ok('signing up without an invitation gives no role and no firm',
+  not exists (select 1 from user_roles)
+  and (select firm_id from profiles where id = 'aaaaaaaa-0000-0000-0000-0000000000ff') is null);
 select tests.login('aaaaaaaa-0000-0000-0000-0000000000ff'); set role authenticated;
 select tests.ok('a signed-in person cannot invite a firm owner',
-  tests.refused($$select platform_invite_owner('x@firm.test', 'X', 'X')$$));
+  tests.refused(format($$select platform_invite_owner(%L, 'x@firm.test', 'X')$$, :'FIRM1')));
+select tests.ok('a signed-in person cannot create a firm',
+  tests.refused($$select platform_create_firm('Mine', '', null, 'monthly', 0, '')$$));
 reset role;
 select tests.login(null);
 -- the platform (service role) invites the managing partner
-select platform_invite_owner('Partner@Firm.test', 'Pat Partner', 'Moyo & Co') as owner_invite \gset
-select tests.ok('the platform invites a firm owner and suggests the firm name',
-  :'owner_invite' = 'invited' and (select firm_name from firm_settings) = 'Moyo & Co');
+select platform_invite_owner(:'FIRM1', 'Partner@Firm.test', 'Pat Partner') as owner_invite \gset
+select tests.ok('the platform invites a firm owner', :'owner_invite' = 'invited');
 insert into auth.users(id, email) values (:'P', 'partner@firm.test');
-insert into auth.users(id, email) values (:'L', 'lawyer@test'), (:'A', 'para@test'), (:'F', 'desk@test'), (:'X', 'pending@test');
-select tests.ok('the invited owner becomes partner; uninvited sign-ups get no role',
-  (select array_agg(user_id) from user_roles) = array[:'P'::uuid]
+select tests.login(:'P'); set role authenticated;
+select invite_team_member('lawyer@firm.test', '', 'lawyer'), invite_team_member('para@firm.test', '', 'paralegal'),
+       invite_team_member('desk@firm.test', '', 'frontdesk');
+reset role;
+select tests.login(null);
+insert into auth.users(id, email) values (:'L', 'lawyer@firm.test'), (:'A', 'para@firm.test'), (:'F', 'desk@firm.test'), (:'X', 'pending@firm.test');
+select tests.ok('invited people get their role and firm; uninvited sign-ups get nothing',
+  (select string_agg(role::text, ',' order by user_id) from user_roles) = 'partner,lawyer,paralegal,frontdesk'
+  and (select count(*) from profiles where firm_id = :'FIRM1' and id in (:'P', :'L', :'A', :'F')) = 4
+  and (select firm_id from profiles where id = :'X') is null
   and (select full_name from profiles where id = :'P') = 'Pat Partner');
 select tests.ok('new accounts start onboarding',
   (select count(*) from profiles where onboarded_at is null and id in (:'P', :'L')) = 2);
@@ -66,9 +77,6 @@ select tests.ok('partner onboarding saves their details and the firm''s',
   (select title = 'Managing Partner' and phone = '+263 77 000 0000' and onboarded_at is not null from profiles where id = :'P')
   and (select firm_name = 'Moyo & Partners' and email = 'accounts@moyo.test' and vat_rate = 15 from firm_settings));
 reset role;
-select platform_invite_owner('second@firm.test', 'Sam Second', 'Something Else') as second_invite \gset
-select tests.ok('a suggested name never overwrites the firm''s own',
-  :'second_invite' = 'invited' and (select firm_name from firm_settings) = 'Moyo & Partners');
 select tests.login(:'X'); set role authenticated;
 select tests.ok('someone without access cannot complete onboarding',
   tests.refused($$select complete_onboarding('Pending Person', '', '')$$));
@@ -87,8 +95,9 @@ select tests.ok('signed-out visitor cannot call has_role', tests.refused($$selec
 reset role;
 
 select tests.login(:'P'); set role authenticated;
-insert into user_roles(user_id, role) values (:'L', 'lawyer'), (:'A', 'paralegal'), (:'F', 'frontdesk');
-select tests.ok('partner sees the pending account', exists (select 1 from profiles where id = :'X'));
+select tests.ok('partner cannot see accounts outside the firm', not exists (select 1 from profiles where id = :'X'));
+select tests.ok('partner cannot give a role to someone outside the firm',
+  tests.refused(format($$insert into user_roles(user_id, role) values (%L, 'lawyer')$$, :'X')));
 reset role;
 select tests.login(:'L'); set role authenticated;
 select tests.ok('a lawyer cannot change the firm''s details while onboarding',
@@ -295,9 +304,12 @@ select tests.ok('only partners can change roles', tests.refused(format($$select 
 reset role;
 select tests.login(:'P'); set role authenticated;
 select tests.ok('partner cannot change their own role', tests.refused(format($$select set_user_role(%L, 'lawyer')$$, :'P')));
-select set_user_role(:'X', 'paralegal');
-select tests.ok('partner approves a pending account in one step',
-  (select array_agg(role::text) from user_roles where user_id = :'X') = array['paralegal']);
+select tests.ok('partner cannot give a role to an account outside the firm',
+  tests.refused(format($$select set_user_role(%L, 'paralegal')$$, :'X')));
+select set_user_role(:'F', 'paralegal');
+select tests.ok('partner changes a team member''s role in one step',
+  (select array_agg(role::text) from user_roles where user_id = :'F') = array['paralegal']);
+select set_user_role(:'F', 'frontdesk');
 reset role;
 
 -- ===== Team invitations =====
@@ -306,7 +318,7 @@ select tests.ok('only partners can invite', tests.refused($$select invite_team_m
 reset role;
 select tests.login(:'P'); set role authenticated;
 select tests.ok('partner invites a new person by email', invite_team_member('  Newbie@Firm.test ', 'New Bie', 'lawyer') = 'invited');
-select tests.ok('cannot invite someone already on the team', tests.refused($$select invite_team_member('lawyer@test', 'L', 'paralegal')$$));
+select tests.ok('cannot invite someone already on the team', tests.refused($$select invite_team_member('lawyer@firm.test', 'L', 'paralegal')$$));
 reset role;
 insert into auth.users(id, email) values ('aaaaaaaa-0000-0000-0000-000000000006', 'newbie@firm.test');
 select tests.ok('invited person gets their role on sign-up and the invitation is used up',
@@ -421,7 +433,7 @@ update firm_settings set firm_name = null, address = null, phone = null, email =
   registration_no = null, vat_number = null, vat_rate = 0;
 select seed_demo_firm_profile();
 set role anon;
-select tests.ok('anyone can see the firm name for the intake page', (select firm_name from public_firm_profile()) = 'Makoni & Partners');
+select tests.ok('anyone can see the firm name for the intake page', (select firm_name from public_firm_profile('firm-1')) = 'Makoni & Partners');
 select tests.ok('signed-out visitors cannot read the full firm profile', tests.refused($$select bank_details from firm_settings$$));
 reset role;
 select tests.login(:'F'); set role authenticated;
@@ -463,5 +475,177 @@ select tests.ok('the sync list matches the subscription feed''s events',
 
 -- ===== Storage =====
 select tests.ok('documents bucket is private', not (select public from storage.buckets where id = 'matter-documents'));
+
+-- ===== Firms are walled off from each other =====
+\set Q 'aaaaaaaa-0000-0000-0000-0000000000a2'
+select tests.login(null);
+select platform_create_firm('Chikwanha Law', '', (select id from platform_plans where name = 'Starter'), 'monthly', 14, 'Billing@Chik.test') as f2 \gset
+select tests.ok('the platform creates a firm on a trial, with its own profile and web address',
+  (select slug = 'chikwanha-law' and status = 'trial' and trial_ends_at = current_date + 14 and billing_email = 'billing@chik.test' from firms where id = :'f2')
+  and (select firm_name from firm_settings where firm_id = :'f2') = 'Chikwanha Law');
+select tests.ok('two firms cannot share a web address',
+  tests.refused($$select platform_create_firm('Another', 'chikwanha-law', null, 'monthly', 0, '')$$));
+select tests.ok('a firm owner already at another firm cannot be invited',
+  tests.refused(format($$select platform_invite_owner(%L, 'lawyer@firm.test', 'L')$$, :'f2')));
+select platform_invite_owner(:'f2', 'owner@chik.test', 'Owner Two');
+insert into auth.users(id, email) values (:'Q', 'owner@chik.test');
+select tests.ok('the new firm''s owner joins it as partner',
+  (select firm_id from profiles where id = :'Q') = :'f2'
+  and (select role::text from user_roles where user_id = :'Q') = 'partner');
+
+select tests.login(:'Q'); set role authenticated;
+select tests.ok('a new firm sees none of another firm''s data',
+  (select count(*) from clients) + (select count(*) from matters) + (select count(*) from documents)
+  + (select count(*) from inquiries) + (select count(*) from events) + (select count(*) from tasks)
+  + (select count(*) from invoices) + (select count(*) from time_entries) + (select count(*) from announcements)
+  + (select count(*) from activity_log) + (select count(*) from matter_ethical_walls) + (select count(*) from billing_rates)
+  + (select count(*) from team_invitations where firm_id <> :'f2') + (select count(*) from client_directory()) = 0);
+select tests.ok('people in another firm are invisible',
+  (select array_agg(id) from profiles) = array[:'Q'::uuid] and (select count(*) from user_roles) = 1);
+select tests.ok('the conflict check only searches your own firm', conflict_check_count('Moyo') = 0 and not exists (select 1 from conflict_check('a')));
+select tests.ok('a partner cannot open another firm''s matter, even by id', not can_access_matter(:'M1'));
+select tests.ok('or read its document files', not can_read_document_file(:'L' || '/brief.pdf'));
+select tests.ok('the firm profile is only their own', (select array_agg(firm_name) from firm_settings) = array['Chikwanha Law']);
+select tests.ok('nothing can be written into another firm',
+  tests.refused(format($$insert into clients(firm_id, name) values (%L, 'Planted')$$, :'FIRM1'))
+  and tests.refused(format($$update matters set title = 'x' where id = %L$$, :'M1'))
+  and tests.refused(format($$delete from clients where id = %L$$, :'C1'))
+  and tests.refused(format($$insert into matter_assignments(matter_id, user_id) values (%L, %L)$$, :'M1', :'Q')));
+select tests.ok('roles of another firm''s people cannot be changed',
+  tests.refused(format($$select set_user_role(%L, 'partner')$$, :'L'))
+  and tests.refused(format($$select remove_team_member(%L)$$, :'L'))
+  and tests.refused(format($$update user_roles set role = 'partner' where user_id = %L$$, :'A')));
+select tests.ok('people already at another firm cannot be invited', tests.refused($$select invite_team_member('para@firm.test', '', 'lawyer')$$));
+select tests.ok('people cannot move themselves to another firm',
+  tests.refused(format($$update profiles set firm_id = %L where id = %L$$, :'FIRM1', :'Q')));
+insert into clients(name) values ('Own client') returning firm_id = :'f2' as own_firm \gset
+select tests.ok('new rows land in your own firm', :'own_firm');
+insert into matters(title, client_id, created_by) select 'First matter', id, :'Q' from clients where name = 'Own client';
+select tests.ok('matter numbers start again for each firm',
+  (select matter_number from matters where title = 'First matter') = extract(year from current_date)::int || '-0001');
+select tests.ok('the plan''s user limit applies to invitations',
+  invite_team_member('one@chik.test', '', 'lawyer') = 'invited'
+  and invite_team_member('two@chik.test', '', 'paralegal') = 'invited'
+  and tests.refused($$select invite_team_member('three@chik.test', '', 'lawyer')$$));
+select tests.ok('invitations only go through invite_team_member', tests.refused($$insert into team_invitations(email, role) values ('side@chik.test', 'lawyer')$$));
+select tests.ok('a partner sees their firm, plan and price', (select name = 'Chikwanha Law' and plan_name = 'Starter' and user_limit = 3 and seats_used = 3 and price = 49 from my_firm()));
+reset role;
+select tests.login(:'P'); set role authenticated;
+select tests.ok('the first firm cannot see the new firm''s client', not exists (select 1 from clients where name = 'Own client'));
+reset role;
+select tests.login(:'L'); set role authenticated;
+select tests.ok('staff see their firm but not its price', (select price is null and name is not null from my_firm()));
+reset role;
+
+-- Attempts found in the security review
+select tests.login(:'Q'); set role authenticated;
+select tests.ok('nobody can change their own sign-in email on their profile',
+  tests.refused(format($$update profiles set email = 'partner@firm.test' where id = %L$$, :'Q')));
+select tests.ok('invitations cannot be rewritten or brought back',
+  tests.refused($$update team_invitations set email = 'partner@firm.test' where email = 'one@chik.test'$$)
+  and tests.refused($$update team_invitations set revoked_at = null$$)
+  and tests.refused($$delete from team_invitations$$));
+select revoke_invitation((select id from team_invitations where email = 'two@chik.test'));
+select tests.ok('a partner cancels an invitation, freeing the seat', (select seats_used from my_firm()) = 2);
+select tests.ok('a firm cannot point its rows at another firm''s records',
+  tests.refused(format($$insert into matters(title, client_id, created_by) values ('Probe', %L, %L)$$, :'C1', :'Q'))
+  and tests.refused(format($$insert into invoice_items(invoice_id, description, quantity, unit_price) values ((select id from invoices limit 1), 'x', 1, 1)$$))
+  and tests.refused(format($$insert into tasks(title, assignee_id) values ('x', %L)$$, :'L'))
+  and tests.refused(format($$insert into billing_rates(user_id, hourly_rate) values (%L, 1)$$, :'A')));
+select tests.ok('role checks say nothing about other firms'' people',
+  not has_role(:'P', 'partner') and not is_internal(:'L') and not is_frontdesk(:'F'));
+select tests.ok('a logo can only point inside the firm''s own folder',
+  tests.refused(format($$update firm_settings set logo_path = %L$$, :'FIRM1' || '/logo.png')));
+select tests.ok('documents cannot name another firm''s client',
+  tests.refused(format($$insert into documents(name, file_path, uploaded_by, client_id) values ('x', %L, %L, %L)$$, :'Q' || '/x.pdf', :'Q', :'C1')));
+select tests.ok('documents must point at the uploader''s own folder',
+  tests.refused(format($$insert into documents(name, file_path, uploaded_by) values ('x', %L, %L)$$, :'L' || '/brief.pdf', :'Q')));
+reset role;
+select tests.login(:'P'); set role authenticated;
+select tests.ok('onboarding can''t be undone', tests.refused(format($$update profiles set onboarded_at = null where id = %L$$, :'P')));
+select invite_team_member('temp@firm.test', 'Temp', 'paralegal');
+select invite_team_member('pre@firm.test', 'Pre', 'lawyer');
+reset role;
+select tests.login(null);
+insert into auth.users(id, email, email_confirmed_at) values ('aaaaaaaa-0000-0000-0000-0000000000b1', 'pre@firm.test', null);
+select tests.ok('an unconfirmed sign-up does not claim an open invitation',
+  not exists (select 1 from user_roles where user_id = 'aaaaaaaa-0000-0000-0000-0000000000b1'));
+update auth.users set email_confirmed_at = now() where id = 'aaaaaaaa-0000-0000-0000-0000000000b1';
+select tests.ok('nor once that sign-up is confirmed: someone could have signed up ahead of the invitee',
+  not exists (select 1 from user_roles where user_id = 'aaaaaaaa-0000-0000-0000-0000000000b1'));
+update auth.users set invited_at = now() where id = 'aaaaaaaa-0000-0000-0000-0000000000b1';
+select tests.ok('the invitation is used when Acta sends it to the account',
+  (select role::text from user_roles where user_id = 'aaaaaaaa-0000-0000-0000-0000000000b1') = 'lawyer'
+  and (select firm_id from profiles where id = 'aaaaaaaa-0000-0000-0000-0000000000b1') = :'FIRM1');
+insert into auth.users(id, email, email_confirmed_at) values ('aaaaaaaa-0000-0000-0000-0000000000b2', 'ghost@chik.test', null);
+select tests.login(:'Q'); set role authenticated;
+select tests.ok('an unconfirmed account cannot be pulled into a firm', tests.refused($$select invite_team_member('ghost@chik.test', '', 'lawyer')$$));
+reset role;
+select tests.login(null);
+insert into auth.users(id, email) values ('aaaaaaaa-0000-0000-0000-0000000000b3', 'temp@firm.test');
+insert into matter_assignments(firm_id, matter_id, user_id) values (:'FIRM1', :'M1', 'aaaaaaaa-0000-0000-0000-0000000000b3');
+select tests.login('aaaaaaaa-0000-0000-0000-0000000000b3'); set role authenticated;
+select tests.ok('an assigned paralegal sees the matter', exists (select 1 from matters where id = :'M1'));
+insert into matters(title, client_id, created_by) values ('Opened by temp', :'C1', 'aaaaaaaa-0000-0000-0000-0000000000b3');
+reset role;
+select tests.login(null);
+select coalesce(responsible_lawyer_id::text, '') as m5_lawyer, status::text as m5_status from matters where id = :'M5' \gset
+update matters set responsible_lawyer_id = 'aaaaaaaa-0000-0000-0000-0000000000b3' where id = :'M5';
+select tests.login(:'P'); set role authenticated;
+select remove_team_member('aaaaaaaa-0000-0000-0000-0000000000b3');
+reset role;
+select tests.login('aaaaaaaa-0000-0000-0000-0000000000b3'); set role authenticated;
+select tests.ok('someone removed from the team loses their matters, even ones they opened or are assigned to',
+  not exists (select 1 from matters) and not exists (select 1 from matter_assignments));
+reset role;
+select tests.login(null);
+select platform_invite_owner(:'f2', 'temp@firm.test', 'Temp');
+select tests.login(:'P'); set role authenticated;
+update matters set status = 'active' where id = :'M5';
+select tests.ok('a matter naming someone who has since left the firm can still be edited',
+  (select status::text from matters where id = :'M5') = 'active');
+reset role;
+select tests.login(null);
+update matters set responsible_lawyer_id = nullif(:'m5_lawyer', '')::uuid, status = :'m5_status' where id = :'M5';
+select tests.login(null);
+select tests.ok('demo mode refuses to run in a workspace with several firms', tests.refused($$select refresh_demo_data()$$));
+
+-- Billing and suspension (the platform acts with the service role)
+select tests.login(null);
+insert into platform_invoices(firm_id, invoice_number, description, amount, due_date)
+  values (:'f2', platform_next_invoice_number(), 'Starter plan, monthly', 49, current_date - 1);
+select tests.ok('platform invoice numbers run on', platform_next_invoice_number() like 'ACTA-%-0002');
+select tests.ok('the overview shows each firm''s people, balance and overdue invoices',
+  (select members = 2 and seats_used = 3 and amount_due = 49 and overdue = 1 and owner_email = 'owner@chik.test' and matters = 1
+   from platform_firm_overview() where id = :'f2'));
+select tests.login(:'Q'); set role authenticated;
+select tests.ok('a partner sees their own Acta invoices', (select count(*) from platform_invoices) = 1);
+select tests.ok('but cannot change them', tests.refused($$update platform_invoices set status = 'paid', paid_on = current_date$$));
+select tests.ok('plans, firms and other firms'' accounts are hidden',
+  tests.refused($$select * from firms$$) and tests.refused($$select * from platform_plans$$)
+  and tests.refused($$select * from platform_firm_overview()$$));
+reset role;
+select tests.login(:'P'); set role authenticated;
+select tests.ok('other firms'' Acta invoices are hidden', (select count(*) from platform_invoices) = 0);
+reset role;
+update firms set status = 'suspended' where id = :'f2';
+select tests.login(:'Q'); set role authenticated;
+select tests.ok('a suspended firm sees none of its data',
+  (select count(*) from clients) + (select count(*) from matters) + (select count(*) from firm_settings) = 0);
+select tests.ok('or its document files', not can_read_document_file(:'Q' || '/anything.pdf'));
+select tests.ok('but can see why, and its unpaid invoice',
+  (select status from my_firm()) = 'suspended' and (select count(*) from platform_invoices) = 1);
+reset role;
+update firms set status = 'active' where id = :'f2';
+
+-- Public intake goes to the named firm
+select tests.login(null); set role anon;
+select tests.ok('a firm''s name is public by its web address', (select firm_name from public_firm_profile('chikwanha-law')) = 'Chikwanha Law');
+select tests.ok('a suspended or unknown firm shows nothing', not exists (select 1 from public_firm_profile('no-such-firm')));
+reset role;
+select submit_client_intake('Rudo Banda', 'rudo@mail.test', '', 'family', 'Ex', '', 'Needs help with maintenance.', null, 'chikwanha-law') as intake_id \gset
+select tests.ok('intake submissions go to the named firm', (select firm_id from inquiries where id = :'intake_id') = :'f2');
+select tests.ok('with several firms, an intake must name one',
+  tests.refused($$select submit_client_intake('Rudo Banda', 'rudo2@mail.test', '', 'family', 'Ex', '', 'Needs help with maintenance.')$$));
 
 select 'All access-rule checks passed.';

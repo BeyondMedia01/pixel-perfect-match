@@ -9,11 +9,15 @@ const settings = {
   frontdesk_id: "f",
 };
 let current: Record<string, unknown> | null = settings;
+let firmCount = 1;
 const updateUserById = vi.fn(async () => ({ error: null }));
 vi.mock("@/integrations/supabase/client.server", () => ({
   supabaseAdmin: {
-    from: () => ({
-      select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: current }) }) }),
+    from: (table: string) => ({
+      select: () =>
+        table === "firms"
+          ? { neq: async () => ({ count: firmCount }) }
+          : { eq: () => ({ maybeSingle: async () => ({ data: current }) }) },
     }),
     auth: { admin: { updateUserById } },
   },
@@ -54,6 +58,14 @@ describe("demo sign-in", () => {
     signIn.mockReset();
     updateUserById.mockClear();
     current = settings;
+    firmCount = 1;
+  });
+
+  it("refuses in a workspace that holds real firms too", async () => {
+    firmCount = 2;
+    const r = await demoSignIn({ data: { role: "partner" } });
+    expect(r.ok).toBe(false);
+    expect(signIn).not.toHaveBeenCalled();
   });
 
   it("signs in as the chosen role and returns the session", async () => {

@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMe, isPartner } from "@/lib/auth";
 import { ROLE_LABELS, type AppRole } from "@/lib/legal";
 import { inviteTeamMember, invitationLink } from "@/lib/team.functions";
+import { useMyFirm } from "@/lib/firm";
 import { PageHeader, EmptyState } from "@/components/app-shell";
 import { useConfirm } from "@/components/confirm";
 import { Field } from "@/components/matter-form";
@@ -124,9 +125,11 @@ function TeamPage() {
       ).data ?? [],
   });
 
+  const { data: firm } = useMyFirm(partner);
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["team"] });
     qc.invalidateQueries({ queryKey: ["team-invitations"] });
+    qc.invalidateQueries({ queryKey: ["my-firm"] });
   };
   const nameOf = (u: { full_name: string; email: string | null }) =>
     u.full_name || u.email || "this person";
@@ -192,10 +195,7 @@ function TeamPage() {
       }))
     )
       return;
-    const { error } = await supabase
-      .from("team_invitations")
-      .update({ revoked_at: new Date().toISOString() })
-      .eq("id", id);
+    const { error } = await supabase.rpc("revoke_invitation", { _id: id });
     if (error) toast.error(error.message);
     else {
       toast.success("Invitation cancelled");
@@ -209,6 +209,16 @@ function TeamPage() {
   return (
     <div className="mx-auto max-w-4xl space-y-8">
       <PageHeader title="Team" actions={partner ? <InviteDialog onDone={refresh} /> : undefined} />
+      {partner && firm?.user_limit && (
+        <p
+          className={`-mt-4 text-sm ${firm.seats_used >= firm.user_limit ? "text-warning" : "text-muted-foreground"}`}
+        >
+          {firm.seats_used} of {firm.user_limit} people on your {firm.plan_name} plan, counting open
+          invitations.
+          {firm.seats_used >= firm.user_limit &&
+            " To invite more, ask Revixions for a bigger plan."}
+        </p>
+      )}
 
       {partner && waiting.length > 0 && (
         <section>

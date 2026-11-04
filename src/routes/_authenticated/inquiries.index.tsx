@@ -1,3 +1,4 @@
+import { useMyFirm } from "@/lib/firm";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
@@ -65,6 +66,8 @@ function InquiriesPage() {
       }));
     },
   });
+  const { data: firm } = useMyFirm();
+  const intakeSearch = firm ? { firm: firm.slug } : {};
   const open = (inquiries ?? []).filter((i) => i.status === "new" || i.status === "consult");
   const done = (inquiries ?? []).filter((i) => i.status === "accepted" || i.status === "declined");
 
@@ -80,7 +83,9 @@ function InquiriesPage() {
                 variant="outline"
                 onClick={async () => {
                   try {
-                    await navigator.clipboard.writeText(`${window.location.origin}/intake`);
+                    await navigator.clipboard.writeText(
+                      `${window.location.origin}/intake${firm ? `?firm=${firm.slug}` : ""}`,
+                    );
                     toast.success("Intake link copied");
                   } catch {
                     toast.error(
@@ -93,7 +98,12 @@ function InquiriesPage() {
                 Copy intake link
               </Button>
               <Button asChild variant="outline" size="icon" title="Open intake form">
-                <Link to="/intake" target="_blank" aria-label="Open intake form">
+                <Link
+                  to="/intake"
+                  search={intakeSearch as never}
+                  target="_blank"
+                  aria-label="Open intake form"
+                >
                   <ExternalLink className="h-4 w-4" />
                 </Link>
               </Button>

@@ -43,7 +43,11 @@ export const Route = createFileRoute("/intake")({
 function IntakePage() {
   const submit = useServerFn(submitIntake);
   const [done, setDone] = useState(false);
-  const { data: brand } = useFirmBrand();
+  // Each firm's form is /intake?firm=<its web address>.
+  const [firm] = useState(() =>
+    typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("firm"),
+  );
+  const { data: brand } = useFirmBrand(firm);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [consent, setConsent] = useState(false);
@@ -52,7 +56,12 @@ function IntakePage() {
   async function save(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const values = Object.fromEntries(new FormData(event.currentTarget));
-    const parsed = intakeSchema.safeParse({ ...values, practice_area: area, consent });
+    const parsed = intakeSchema.safeParse({
+      ...values,
+      practice_area: area,
+      consent,
+      ...(firm ? { firm } : {}),
+    });
     setError("");
     if (!parsed.success) {
       setErrors(Object.fromEntries(parsed.error.issues.map((i) => [String(i.path[0]), i.message])));

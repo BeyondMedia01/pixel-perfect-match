@@ -69,35 +69,13 @@ export const invitationLink = createServerFn({ method: "POST" })
       data,
       context,
     }): Promise<{ ok: true; link: string } | { ok: false; message: string }> => {
-      const { data: partner } = await context.supabase.rpc("has_role", {
-        _user_id: context.userId,
-        _role: "admin",
-      });
-      if (!partner) return { ok: false, message: "Only a partner can do this." };
-      // Read as the partner, so the invitation rules still apply.
-      const { data: invite } = await context.supabase
-        .from("team_invitations")
-        .select("id, full_name")
-        .eq("email", data.email)
-        .is("accepted_at", null)
-        .is("revoked_at", null)
-        .maybeSingle();
-      if (invite)
-        return (await import("@/lib/invitations.server")).makeInvitationLink(
-          data.email,
-          invite.full_name ?? "",
-        );
-      // Or someone on the team who hasn't opened their invitation yet.
-      const { data: member } = await context.supabase
-        .from("profiles")
-        .select("full_name, onboarded_at")
-        .eq("email", data.email)
-        .maybeSingle();
-      if (member && !member.onboarded_at)
-        return (await import("@/lib/invitations.server")).makeInvitationLink(
-          data.email,
-          member.full_name,
-        );
-      return { ok: false, message: "That person has already joined. They can sign in as usual." };
+      const [{ data: partner }, { data: firmId }] = await Promise.all([
+        context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" }),
+        context.supabase.rpc("current_firm_id"),
+      ]);
+      if (!partner || !firmId) return { ok: false, message: "Only a partner can do this." };
+      // Only for someone invited to this firm, or in it and not yet joined.
+      const { makeInvitationLink } = await import("@/lib/invitations.server");
+      return makeInvitationLink(data.email, "", { firmId });
     },
   );

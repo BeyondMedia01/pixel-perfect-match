@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { isPartner } from "@/lib/auth";
 import type { AppRole } from "@/lib/legal";
-import { PASSWORD_MIN, needsPassword, onboarded } from "@/lib/onboarding";
+import { PASSWORD_MIN, onboarded } from "@/lib/onboarding";
 
 export const Route = createFileRoute("/welcome")({
   ssr: false,
@@ -56,7 +56,7 @@ async function load(): Promise<Loaded | null> {
   const [{ data: profile }, { data: roles }, { data: firm }] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", u.user.id).maybeSingle(),
     supabase.from("user_roles").select("role").eq("user_id", u.user.id),
-    supabase.from("firm_settings").select("*").eq("id", 1).maybeSingle(),
+    supabase.from("firm_settings").select("*").maybeSingle(),
   ]);
   const list = (roles ?? []).map((r) => r.role as AppRole);
   const role = list.includes("partner") || list.includes("admin") ? "partner" : (list[0] ?? null);
@@ -108,7 +108,9 @@ function Welcome() {
         return;
       }
       setData(d);
-      const ask = needsPassword(d.user);
+      // Everyone chooses their own password while onboarding. That also replaces
+      // any password set by someone who signed up with their email beforehand.
+      const ask = true;
       setAskPassword(ask);
       setStep(ask ? "password" : "you");
       setState(d.role ? "ready" : "pending");

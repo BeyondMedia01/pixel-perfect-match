@@ -33,7 +33,9 @@
 
 ## Team, tasks and calendar
 - [x] Team page: invite by email with a role (Supabase invitation email, or a one-time invitation link to send yourself), change roles, remove access, hourly rates.
-- [x] Invite-only access and onboarding: no public sign-up; the platform invites a firm's managing partner (/platform/invite, ACTA_PLATFORM_KEY); invited people choose a password, enter their details and, as a partner, the firm details used on invoices (/welcome).
+- [x] Invite-only access and onboarding: no public sign-up; the platform invites a firm's managing partner; invited people choose a password, enter their details and, as a partner, the firm details used on invoices (/welcome).
+- [x] Many firms in one Acta, walled off from each other; platform dashboard for Revixions: firms, plans (tiers with user limits), trials, manual invoicing and payment recording, suspension; partners see their subscription and Acta invoices.
+- [ ] Online subscription payments (Paynow / card) and automatic renewal invoices.
 - [x] Tasks: create, assign to any staff member, edit, delete; on the Tasks page and each matter's Tasks tab. Walls respected.
 - [x] Calendar: month and list views, create/edit/delete events, deadline confirmation enforced in the database.
 - [x] Calendar sync: private subscription link per person for Google, Outlook and Apple Calendar; "Add to calendar" for single events (Google, Outlook, .ics).

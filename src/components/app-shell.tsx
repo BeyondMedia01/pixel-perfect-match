@@ -19,6 +19,8 @@ import {
   Menu,
   Megaphone,
   UsersRound,
+  Building2,
+  AlertTriangle,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useMe, isPartner } from "@/lib/auth";
@@ -39,7 +41,17 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { ActaLogo } from "@/components/acta-logo";
 import { NotificationBell } from "@/components/notification-bell";
 import { ConfirmProvider } from "@/components/confirm";
-import { useFirmBrand } from "@/lib/firm";
+import { useFirmBrand, useMyFirm, FIRM_OPEN, money, type MyFirm } from "@/lib/firm";
+import { getPlatformAccess } from "@/lib/platform.functions";
+
+function usePlatformAccess() {
+  return useQuery({
+    queryKey: ["platform-access"],
+    queryFn: () => getPlatformAccess(),
+    staleTime: 5 * 60_000,
+    retry: false,
+  });
+}
 
 const NAV = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -64,6 +76,7 @@ const NAV = [
 function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const { data: me } = useMe();
   const { data: brand } = useFirmBrand();
+  const { data: platform } = usePlatformAccess();
   const role = me?.role;
   return (
     <div className="flex h-full flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
@@ -96,6 +109,16 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
             {n.label}
           </Link>
         ))}
+        {platform?.admin && (
+          <Link
+            to="/platform"
+            onClick={onNavigate}
+            className="relative mt-3 flex items-center gap-3 rounded-md border border-sidebar-border px-3 py-2 text-sm font-medium transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground [&_svg]:text-sidebar-quiet"
+          >
+            <Building2 className="h-[18px] w-[18px]" />
+            Platform
+          </Link>
+        )}
       </nav>
       <div className="flex items-center gap-3 border-t border-sidebar-border p-4">
         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
@@ -214,6 +237,7 @@ export function AppShell() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { data: me } = useMe();
+  const { data: firm } = useMyFirm(!!me && !me.pending);
 
   useEffect(() => {
     setDark(document.documentElement.classList.contains("dark"));
@@ -242,6 +266,8 @@ export function AppShell() {
   }
 
   if (me?.pending) return <PendingApproval email={me.user.email} onSignOut={signOut} />;
+  if (firm && !FIRM_OPEN.has(firm.status))
+    return <FirmPaused firm={firm} partner={isPartner(me?.role)} onSignOut={signOut} />;
   // People who joined from an emailed invitation have no password yet.
   if (me?.user.user_metadata?.["invited"] === true) return <SetPassword onSignOut={signOut} />;
 
@@ -285,6 +311,7 @@ export function AppShell() {
               </Button>
             </div>
           </header>
+          {firm && isPartner(me?.role) && <SubscriptionNotice firm={firm} />}
           <main className="flex-1 px-4 py-8 md:px-8 print:p-0">
             <Outlet />
           </main>
@@ -351,11 +378,12 @@ function PendingApproval({
   email: string | undefined;
   onSignOut: () => void;
 }) {
+  const { data: platform } = usePlatformAccess();
   return (
     <main className="flex min-h-screen items-center justify-center p-6">
       <div className="w-full max-w-sm">
         <ActaLogo />
-        <h1 className="page-title mt-8">Waiting for approval</h1>
+        <h1 className="page-title mt-8">No firm yet</h1>
         <p className="mt-2 text-sm text-muted-foreground">
           Your account
           {email ? (
@@ -364,9 +392,121 @@ function PendingApproval({
               (<strong>{email}</strong>)
             </>
           ) : null}{" "}
-          has been created. A partner at your firm needs to give you a role before you can see any
-          matters or client records.
+          isn't part of a firm on Acta yet. Ask a partner at your firm to invite you.
         </p>
+        <div className="mt-6 flex flex-wrap gap-2">
+          {platform?.admin && (
+            <Button asChild>
+              <Link to="/platform">Open the platform dashboard</Link>
+            </Button>
+          )}
+          <Button variant="outline" onClick={onSignOut}>
+            <LogOut className="mr-2 h-4 w-4" /> Sign out
+          </Button>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+/** Partners see when the firm's Acta bill is overdue or its trial is ending. */
+function SubscriptionNotice({ firm }: { firm: MyFirm }) {
+  const { data: overdue } = useQuery({
+    queryKey: ["acta-invoices-overdue"],
+    staleTime: 5 * 60_000,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("platform_invoices")
+        .select("amount, currency")
+        .eq("status", "due")
+        .lt("due_date", new Date().toISOString().slice(0, 10));
+      return data ?? [];
+    },
+  });
+  const daysLeft = firm.trial_ends_at
+    ? Math.ceil((new Date(`${firm.trial_ends_at}T23:59:59`).getTime() - Date.now()) / 86_400_000)
+    : null;
+  const owed = (overdue ?? []).reduce((s, i) => s + Number(i.amount), 0);
+  let text: string | null = null;
+  if (owed > 0 || firm.status === "past_due")
+    text = `Your Acta subscription has ${owed > 0 ? `${money(owed, overdue?.[0]?.currency ?? firm.currency)} ` : "a payment "}overdue. Please pay it to keep your firm's access.`;
+  else if (firm.status === "trial" && daysLeft !== null && daysLeft <= 7)
+    text =
+      daysLeft <= 0
+        ? "Your free trial has ended."
+        : `Your free trial ends in ${daysLeft} day${daysLeft === 1 ? "" : "s"}.`;
+  if (!text) return null;
+  return (
+    <div
+      role="status"
+      className="flex flex-wrap items-center gap-2 border-b border-warning/40 bg-warning/10 px-4 py-2 text-sm md:px-8 print:hidden"
+    >
+      <AlertTriangle className="h-4 w-4 shrink-0 text-warning" aria-hidden />
+      <span>{text}</span>
+      <Link to="/settings" hash="subscription" className="font-medium underline underline-offset-2">
+        See your subscription
+      </Link>
+    </div>
+  );
+}
+
+/** A suspended or cancelled firm: nothing is shown, but people can see why. */
+function FirmPaused({
+  firm,
+  partner,
+  onSignOut,
+}: {
+  firm: MyFirm;
+  partner: boolean;
+  onSignOut: () => void;
+}) {
+  const { data: invoices } = useQuery({
+    queryKey: ["acta-invoices-due"],
+    enabled: partner,
+    queryFn: async () =>
+      (
+        await supabase
+          .from("platform_invoices")
+          .select("id, invoice_number, description, amount, currency, due_date")
+          .eq("status", "due")
+          .order("due_date")
+      ).data ?? [],
+  });
+  return (
+    <main className="flex min-h-screen items-center justify-center p-6">
+      <div className="w-full max-w-md">
+        <ActaLogo />
+        <h1 className="page-title mt-8">
+          {firm.status === "cancelled"
+            ? `${firm.name} has left Acta`
+            : `${firm.name}'s access is paused`}
+        </h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {firm.status === "cancelled"
+            ? "The firm's Acta subscription has ended. Its records are kept safe; contact Revixions to restore access."
+            : "Nobody at the firm can open its matters or records right now. Nothing has been deleted."}{" "}
+          {partner
+            ? "Contact Revixions to restore access."
+            : "A partner at your firm can sort this out with Revixions."}
+        </p>
+        {partner && !!invoices?.length && (
+          <div className="mt-6">
+            <h2 className="eyebrow mb-2">Waiting to be paid</h2>
+            <ul className="divide-y rounded-lg border bg-card text-sm">
+              {invoices.map((i) => (
+                <li key={i.id} className="flex items-center justify-between gap-3 px-4 py-3">
+                  <div>
+                    <div className="tabular font-medium">{i.invoice_number}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {i.description} · due {i.due_date}
+                    </div>
+                  </div>
+                  <span className="tabular">{money(Number(i.amount), i.currency)}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         <Button variant="outline" className="mt-6" onClick={onSignOut}>
           <LogOut className="mr-2 h-4 w-4" /> Sign out
         </Button>

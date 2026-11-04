@@ -10,7 +10,7 @@ create schema auth;
 create schema storage;
 grant usage on schema public, auth, storage to anon, authenticated, service_role;
 
-create table auth.users (id uuid primary key default gen_random_uuid(), email text, raw_user_meta_data jsonb default '{}');
+create table auth.users (id uuid primary key default gen_random_uuid(), email text, raw_user_meta_data jsonb default '{}', email_confirmed_at timestamptz default now(), invited_at timestamptz);
 -- The signed-in user is whatever request.jwt.claim.sub is set to.
 create function auth.uid() returns uuid language sql stable as $$
   select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid

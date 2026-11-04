@@ -49,20 +49,11 @@ function newPassword() {
   return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-async function requirePartner(context: {
-  supabase: {
-    rpc: (
-      fn: "has_role",
-      args: { _user_id: string; _role: "admin" },
-    ) => PromiseLike<{ data: boolean | null }>;
-  };
-  userId: string;
-}) {
-  const { data } = await context.supabase.rpc("has_role", {
-    _user_id: context.userId,
-    _role: "admin",
-  });
-  if (!data) throw new Error("Only a partner can manage the demo workspace");
+/** Demo mode is a platform setting: only Revixions switches it on or off. */
+async function requirePartner(context: { userId: string }) {
+  const { checkPlatformAdmin } = await import("@/lib/platform.server");
+  if (!(await checkPlatformAdmin(context.userId)))
+    throw new Error("Only the Acta team can manage the demo workspace");
 }
 
 /** Public: is demo mode on, and which roles can be tried. */
@@ -86,7 +77,7 @@ export const getDemoStatus = createServerFn({ method: "GET" }).handler(async () 
   }
 });
 
-/** Partner: create or repair the four demo accounts, load their data and switch demo mode on. */
+/** Platform admin: create or repair the four demo accounts, load their data and switch demo mode on. */
 export const enableDemo = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -144,7 +135,7 @@ export const enableDemo = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-/** Partner: put the demo data back the way it started, with dates around today. */
+/** Platform admin: put the demo data back the way it started, with dates around today. */
 export const resetDemo = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -156,7 +147,7 @@ export const resetDemo = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-/** Partner: switch demo mode off. The demo accounts lose their roles and their password changes. */
+/** Platform admin: switch demo mode off. The demo accounts lose their roles and their password changes. */
 export const disableDemo = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -185,6 +176,13 @@ export const demoSignIn = createServerFn({ method: "POST" })
     const db = await admin();
     const { data: s } = await db.from("demo_settings").select("*").eq("id", 1).maybeSingle();
     if (!s?.enabled || !s.password)
+      return { ok: false as const, message: "The demo isn't available right now." };
+    // Never in a workspace with real firms in it.
+    const { count } = await db
+      .from("firms")
+      .select("id", { count: "exact", head: true })
+      .neq("status", "cancelled");
+    if ((count ?? 0) > 1)
       return { ok: false as const, message: "The demo isn't available right now." };
     const acct = DEMO_ACCOUNTS.find((a) => a.role === data.role)!;
     const userId = {

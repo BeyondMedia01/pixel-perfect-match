@@ -62,10 +62,20 @@ export function supabaseStore(db: Admin): SyncStore {
       must(await db.from("events").update(patch).eq("id", eventId));
     },
     async createPersonalEvent(userId, ev) {
+      // The service role has no firm of its own, so name the person's firm.
+      const firm = must(await db.rpc("user_firm_id", { _user_id: userId }));
+      if (!firm) throw new Error("This person's firm can't use Acta right now");
       const row = must(
         await db
           .from("events")
-          .insert({ ...ev, type: "meeting", owner_id: userId, entered_by: userId, matter_id: null })
+          .insert({
+            ...ev,
+            firm_id: firm as string,
+            type: "meeting",
+            owner_id: userId,
+            entered_by: userId,
+            matter_id: null,
+          })
           .select("id")
           .single(),
       );
