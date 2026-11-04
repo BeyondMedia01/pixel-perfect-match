@@ -121,6 +121,81 @@ export type Database = {
           },
         ]
       }
+      calendar_connections: {
+        Row: {
+          access_token: string
+          account_email: string | null
+          calendar_id: string | null
+          created_at: string
+          expires_at: string | null
+          id: string
+          last_error: string | null
+          last_synced_at: string | null
+          provider: string
+          refresh_token: string | null
+          sync_state: string | null
+          user_id: string
+        }
+        Insert: {
+          access_token: string
+          account_email?: string | null
+          calendar_id?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          last_error?: string | null
+          last_synced_at?: string | null
+          provider: string
+          refresh_token?: string | null
+          sync_state?: string | null
+          user_id: string
+        }
+        Update: {
+          access_token?: string
+          account_email?: string | null
+          calendar_id?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          last_error?: string | null
+          last_synced_at?: string | null
+          provider?: string
+          refresh_token?: string | null
+          sync_state?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      calendar_event_links: {
+        Row: {
+          connection_id: string
+          event_id: string | null
+          id: string
+          pushed_hash: string | null
+          remote_id: string
+          remote_version: string | null
+          updated_at: string
+        }
+        Insert: {
+          connection_id: string
+          event_id?: string | null
+          id?: string
+          pushed_hash?: string | null
+          remote_id: string
+          remote_version?: string | null
+          updated_at?: string
+        }
+        Update: {
+          connection_id?: string
+          event_id?: string | null
+          id?: string
+          pushed_hash?: string | null
+          remote_id?: string
+          remote_version?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       calendar_feeds: {
         Row: {
           created_at: string
@@ -146,6 +221,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      calendar_oauth_states: {
+        Row: {
+          created_at: string
+          provider: string
+          state: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          provider: string
+          state: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          provider?: string
+          state?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       client_intake_submissions: {
         Row: {
@@ -1155,6 +1251,22 @@ export type Database = {
           matter_id: string
         }[]
       }
+      calendar_events_for_user: {
+        Args: { _user_id: string }
+        Returns: {
+          created_at: string
+          description: string | null
+          ends_at: string | null
+          id: string
+          inquiry_id: string | null
+          location: string | null
+          matter_id: string | null
+          owner_id: string | null
+          starts_at: string
+          title: string
+          type: string
+        }[]
+      }
       calendar_feed: {
         Args: { _token: string }
         Returns: {
@@ -1231,6 +1343,16 @@ export type Database = {
           practice_area: Database["public"]["Enums"]["practice_area"]
           status: Database["public"]["Enums"]["matter_status"]
           title: string
+        }[]
+      }
+      my_calendar_connections: {
+        Args: never
+        Returns: {
+          account_email: string | null
+          created_at: string
+          last_error: string | null
+          last_synced_at: string | null
+          provider: string
         }[]
       }
       next_invoice_number: { Args: never; Returns: string }

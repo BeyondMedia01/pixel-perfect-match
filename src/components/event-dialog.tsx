@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { syncMyCalendars } from "@/lib/calendar-sync.functions";
 import { useMe, isLawyerish } from "@/lib/auth";
 import { EVENT_LABELS, isDeadlineType, type EventType } from "@/lib/legal";
 import { useConfirm } from "@/components/confirm";
@@ -109,6 +110,8 @@ export function EventDialog({
   const deadline = isDeadlineType(f.type);
 
   function done() {
+    // Push the change to connected Google / Outlook calendars straight away (best effort).
+    syncMyCalendars({ data: { force: true } }).catch(() => {});
     qc.invalidateQueries({ queryKey: ["calendar-events"] });
     qc.invalidateQueries({ queryKey: ["matter"] });
     qc.invalidateQueries({ queryKey: ["staff-notifications"] });

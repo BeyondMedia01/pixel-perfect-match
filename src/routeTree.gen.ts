@@ -31,6 +31,8 @@ import { Route as AuthenticatedInvoicesIdRouteImport } from './routes/_authentic
 import { Route as AuthenticatedMattersIndexRouteImport } from './routes/_authenticated/matters.index'
 import { Route as AuthenticatedMattersIdRouteImport } from './routes/_authenticated/matters.$id'
 import { Route as ApiCalendarTokenRouteImport } from './routes/api/calendar.$token'
+import { Route as ApiCalendarSyncAllRouteImport } from './routes/api/calendar.sync-all'
+import { Route as ApiCalendarOauthProviderCallbackRouteImport } from './routes/api/calendar.oauth.$provider.callback'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -146,6 +148,17 @@ const ApiCalendarTokenRoute = ApiCalendarTokenRouteImport.update({
   path: '/api/calendar/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiCalendarSyncAllRoute = ApiCalendarSyncAllRouteImport.update({
+  id: '/api/calendar/sync-all',
+  path: '/api/calendar/sync-all',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCalendarOauthProviderCallbackRoute =
+  ApiCalendarOauthProviderCallbackRouteImport.update({
+    id: '/api/calendar/oauth/$provider/callback',
+    path: '/api/calendar/oauth/$provider/callback',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -166,9 +179,11 @@ export interface FileRoutesByFullPath {
   '/invoices/$id': typeof AuthenticatedInvoicesIdRoute
   '/matters/$id': typeof AuthenticatedMattersIdRoute
   '/api/calendar/$token': typeof ApiCalendarTokenRoute
+  '/api/calendar/sync-all': typeof ApiCalendarSyncAllRoute
   '/clients/': typeof AuthenticatedClientsIndexRoute
   '/inquiries/': typeof AuthenticatedInquiriesIndexRoute
   '/matters/': typeof AuthenticatedMattersIndexRoute
+  '/api/calendar/oauth/$provider/callback': typeof ApiCalendarOauthProviderCallbackRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -189,9 +204,11 @@ export interface FileRoutesByTo {
   '/invoices/$id': typeof AuthenticatedInvoicesIdRoute
   '/matters/$id': typeof AuthenticatedMattersIdRoute
   '/api/calendar/$token': typeof ApiCalendarTokenRoute
+  '/api/calendar/sync-all': typeof ApiCalendarSyncAllRoute
   '/clients': typeof AuthenticatedClientsIndexRoute
   '/inquiries': typeof AuthenticatedInquiriesIndexRoute
   '/matters': typeof AuthenticatedMattersIndexRoute
+  '/api/calendar/oauth/$provider/callback': typeof ApiCalendarOauthProviderCallbackRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -214,9 +231,11 @@ export interface FileRoutesById {
   '/_authenticated/invoices/$id': typeof AuthenticatedInvoicesIdRoute
   '/_authenticated/matters/$id': typeof AuthenticatedMattersIdRoute
   '/api/calendar/$token': typeof ApiCalendarTokenRoute
+  '/api/calendar/sync-all': typeof ApiCalendarSyncAllRoute
   '/_authenticated/clients/': typeof AuthenticatedClientsIndexRoute
   '/_authenticated/inquiries/': typeof AuthenticatedInquiriesIndexRoute
   '/_authenticated/matters/': typeof AuthenticatedMattersIndexRoute
+  '/api/calendar/oauth/$provider/callback': typeof ApiCalendarOauthProviderCallbackRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -239,9 +258,11 @@ export interface FileRouteTypes {
     | '/invoices/$id'
     | '/matters/$id'
     | '/api/calendar/$token'
+    | '/api/calendar/sync-all'
     | '/clients/'
     | '/inquiries/'
     | '/matters/'
+    | '/api/calendar/oauth/$provider/callback'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -262,9 +283,11 @@ export interface FileRouteTypes {
     | '/invoices/$id'
     | '/matters/$id'
     | '/api/calendar/$token'
+    | '/api/calendar/sync-all'
     | '/clients'
     | '/inquiries'
     | '/matters'
+    | '/api/calendar/oauth/$provider/callback'
   id:
     | '__root__'
     | '/'
@@ -286,9 +309,11 @@ export interface FileRouteTypes {
     | '/_authenticated/invoices/$id'
     | '/_authenticated/matters/$id'
     | '/api/calendar/$token'
+    | '/api/calendar/sync-all'
     | '/_authenticated/clients/'
     | '/_authenticated/inquiries/'
     | '/_authenticated/matters/'
+    | '/api/calendar/oauth/$provider/callback'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -298,6 +323,8 @@ export interface RootRouteChildren {
   IntakeRoute: typeof IntakeRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   ApiCalendarTokenRoute: typeof ApiCalendarTokenRoute
+  ApiCalendarSyncAllRoute: typeof ApiCalendarSyncAllRoute
+  ApiCalendarOauthProviderCallbackRoute: typeof ApiCalendarOauthProviderCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -456,6 +483,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiCalendarTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/calendar/sync-all': {
+      id: '/api/calendar/sync-all'
+      path: '/api/calendar/sync-all'
+      fullPath: '/api/calendar/sync-all'
+      preLoaderRoute: typeof ApiCalendarSyncAllRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/calendar/oauth/$provider/callback': {
+      id: '/api/calendar/oauth/$provider/callback'
+      path: '/api/calendar/oauth/$provider/callback'
+      fullPath: '/api/calendar/oauth/$provider/callback'
+      preLoaderRoute: typeof ApiCalendarOauthProviderCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -507,6 +548,8 @@ const rootRouteChildren: RootRouteChildren = {
   IntakeRoute: IntakeRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   ApiCalendarTokenRoute: ApiCalendarTokenRoute,
+  ApiCalendarSyncAllRoute: ApiCalendarSyncAllRoute,
+  ApiCalendarOauthProviderCallbackRoute: ApiCalendarOauthProviderCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

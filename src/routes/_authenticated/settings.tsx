@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { TwoWayCalendarSync } from "@/components/two-way-calendar";
 import { Textarea } from "@/components/ui/textarea";
 import { useFirmProfile, firmLogoUrl, FIRM_ASSETS_BUCKET } from "@/lib/firm";
 import {
@@ -560,9 +561,9 @@ function CalendarSyncSection() {
       <p className="mb-4 text-sm text-muted-foreground">
         See your Acta dates in Google Calendar, Outlook or Apple Calendar: court dates, deadlines
         and events on your matters, consultations booked with you, your own events, and your open
-        tasks with due dates. Ethical walls apply. It's read-only: changes are made in Acta and show
-        up in your calendar at its next refresh, usually within an hour (Google can take up to a
-        day).
+        tasks with due dates. Ethical walls apply. The subscription link is read-only: changes are
+        made in Acta and show up in your calendar at its next refresh, usually within an hour
+        (Google can take up to a day). For changes in both directions, use two-way sync below.
       </p>
       {isLoading ? null : !feed ? (
         <Button onClick={create} disabled={busy}>
@@ -626,6 +627,7 @@ function CalendarSyncSection() {
           </Button>
         </div>
       )}
+      <TwoWayCalendarSync />
     </section>
   );
 }

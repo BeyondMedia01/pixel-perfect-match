@@ -393,6 +393,28 @@ update firm_settings set vat_rate = 0;
 select tests.ok('changing the VAT rate later leaves old invoices alone', (select tax_rate from invoices where invoice_number = :'vat_number') = 15);
 reset role;
 
+-- ===== Two-way calendar sync =====
+insert into calendar_connections(user_id, provider, account_email, access_token, refresh_token)
+  values (:'L', 'google', 'lawyer@gmail.test', 'secret-access', 'secret-refresh');
+select tests.login(:'L'); set role authenticated;
+select tests.ok('nobody can read calendar tokens from the browser, not even their own',
+  tests.refused($$select access_token from calendar_connections$$)
+  and tests.refused($$select * from calendar_event_links$$)
+  and tests.refused($$select * from calendar_oauth_states$$));
+select tests.ok('people see their own connection status, without tokens',
+  (select count(*) from my_calendar_connections()) = 1
+  and (select account_email from my_calendar_connections()) = 'lawyer@gmail.test');
+select tests.ok('signed-in users cannot list someone''s calendar events through the sync function',
+  tests.refused(format($$select * from calendar_events_for_user(%L)$$, :'P')));
+reset role;
+select tests.login(:'A'); set role authenticated;
+select tests.ok('colleagues cannot see each other''s connections', (select count(*) from my_calendar_connections()) = 0);
+reset role;
+select tests.login(null);
+select tests.ok('the sync list matches the subscription feed''s events',
+  (select count(*) from calendar_events_for_user(:'L'))
+  = (select count(*) from calendar_feed((select token from calendar_feeds where user_id = :'L')) where kind <> 'task'));
+
 -- ===== Storage =====
 select tests.ok('documents bucket is private', not (select public from storage.buckets where id = 'matter-documents'));
 

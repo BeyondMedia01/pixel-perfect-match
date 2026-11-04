@@ -22,6 +22,7 @@ import { useMe, isInternalRole } from "@/lib/auth";
 import { EVENT_LABELS, isDeadlineType, isUrgent, type EventType } from "@/lib/legal";
 import { PageHeader, EmptyState } from "@/components/app-shell";
 import { AddToCalendar } from "@/components/add-to-calendar";
+import { useBackgroundCalendarSync } from "@/components/two-way-calendar";
 import { EventDialog, type EditableEvent } from "@/components/event-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -79,6 +80,7 @@ function calendarItem(e: EventRow) {
 function CalendarPage() {
   const { data: me } = useMe();
   const canEdit = isInternalRole(me?.role);
+  useBackgroundCalendarSync(canEdit);
   const [view, setView] = useState<"month" | "list">("month");
   const [cursor, setCursor] = useState(() => startOfMonth(new Date()));
   const [typeFilter, setTypeFilter] = useState<string>("all");

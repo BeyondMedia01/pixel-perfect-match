@@ -36,7 +36,7 @@
 - [x] Tasks: create, assign to any staff member, edit, delete; on the Tasks page and each matter's Tasks tab. Walls respected.
 - [x] Calendar: month and list views, create/edit/delete events, deadline confirmation enforced in the database.
 - [x] Calendar sync: private subscription link per person for Google, Outlook and Apple Calendar; "Add to calendar" for single events (Google, Outlook, .ics).
-- [ ] Two-way calendar sync (would need Google and Microsoft app registrations).
+- [x] Two-way calendar sync with Google and Microsoft (code done; needs the app registrations and secrets in docs/calendar-sync-setup.md before anyone can connect).
 
 ## Demo readiness
 - [x] Demo workspace (Settings → Demo workspace): partner, lawyer, paralegal and front-desk sign-ins with their own matters, tasks, deadlines, inquiries, time and invoices; one-click reset to this week; sign-in buttons on the sign-in page while it's on.
