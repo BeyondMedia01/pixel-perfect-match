@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { allRows } from "@/lib/paging";
 import { useMe, useProfiles } from "@/lib/auth";
 import { PRACTICE_AREAS, MATTER_STATUSES, type PracticeArea, type MatterStatus } from "@/lib/legal";
 import {
@@ -38,7 +39,7 @@ export function NewMatterDialog({
   const { data: clients } = useQuery({
     queryKey: ["clients-min"],
     // Names of every client you aren't walled from, so a matter can be opened for any of them.
-    queryFn: async () => (await supabase.rpc("client_directory")).data ?? [],
+    queryFn: async () => allRows(supabase.rpc("client_directory").order("name").order("id")),
   });
   const qc = useQueryClient();
   const navigate = useNavigate();

@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format, isToday, isPast, parseISO } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { allRows } from "@/lib/paging";
 import { useMe } from "@/lib/auth";
 import { TASK_STATUS_LABELS, type TaskStatus } from "@/lib/legal";
 import { PageHeader, EmptyState } from "@/components/app-shell";
@@ -51,12 +52,13 @@ function TasksPage() {
   const { data: tasks } = useQuery({
     queryKey: ["tasks"],
     queryFn: async () =>
-      ((
-        await supabase
+      (await allRows(
+        supabase
           .from("tasks")
           .select("*, matter:matters(title, matter_number), assignee:profiles(full_name)")
           .order("due_date", { nullsFirst: false })
-      ).data as TaskRow[]) ?? [],
+          .order("id"),
+      )) as TaskRow[],
   });
 
   async function setStatus(t: TaskRow, status: TaskStatus) {

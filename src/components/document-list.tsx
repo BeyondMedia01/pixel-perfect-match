@@ -4,6 +4,8 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import { Download, Trash2, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Pager } from "@/components/pager";
+import { allRows, usePager } from "@/lib/paging";
 import { isPartner, useMe, useProfiles } from "@/lib/auth";
 import { EmptyState } from "./app-shell";
 import { useConfirm } from "./confirm";
@@ -32,13 +34,15 @@ export function DocumentList({ matterId, clientId }: { matterId?: string; client
       let q = supabase
         .from("documents")
         .select("*, matters(matter_number, title)")
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .order("id");
       if (matterId) q = q.eq("matter_id", matterId);
       if (clientId) q = q.eq("client_id", clientId);
-      return (await q).data ?? [];
+      return allRows(q);
     },
   });
 
+  const pager = usePager(docs ?? [], 50);
   const uploaderName = (id: string | null) => profiles?.find((p) => p.id === id)?.full_name ?? "—";
 
   async function upload(files: FileList | null) {
@@ -143,7 +147,7 @@ export function DocumentList({ matterId, clientId }: { matterId?: string; client
         />
       ) : (
         <ul className="divide-y rounded-lg border bg-card">
-          {docs.map((d) => (
+          {pager.visible.map((d) => (
             <li key={d.id} className="flex items-center gap-4 px-4 py-3 text-sm">
               <button
                 onClick={() => download(d)}
@@ -187,6 +191,7 @@ export function DocumentList({ matterId, clientId }: { matterId?: string; client
           ))}
         </ul>
       )}
+      <Pager pager={pager} noun="documents" />
     </div>
   );
 }

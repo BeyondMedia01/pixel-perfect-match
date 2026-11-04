@@ -5,6 +5,8 @@ import { format, parseISO } from "date-fns";
 import { toast } from "sonner";
 import { Megaphone, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Pager } from "@/components/pager";
+import { allRows, usePager } from "@/lib/paging";
 import { useMe, isInternalRole, isPartner } from "@/lib/auth";
 import { PageHeader, EmptyState } from "@/components/app-shell";
 import { useConfirm } from "@/components/confirm";
@@ -173,13 +175,16 @@ function AnnouncementsPage() {
   const { data: items } = useQuery({
     queryKey: ["announcements"],
     queryFn: async () =>
-      ((
-        await supabase
+      (await allRows(
+        supabase
           .from("announcements")
           .select("*, author:profiles(full_name), matter:matters(title, matter_number)")
           .order("created_at", { ascending: false })
-      ).data as Announcement[]) ?? [],
+          .order("id"),
+      )) as Announcement[],
   });
+
+  const pager = usePager(items ?? [], 20);
 
   async function remove(a: Announcement) {
     if (
@@ -216,7 +221,7 @@ function AnnouncementsPage() {
         />
       ) : (
         <ul className="space-y-4">
-          {items.map((a) => (
+          {pager.visible.map((a) => (
             <li key={a.id} className="rounded-lg border bg-card p-5">
               <div className="flex flex-wrap items-center gap-2">
                 <h3 className="flex-1 text-base font-medium">{a.title}</h3>
@@ -255,6 +260,7 @@ function AnnouncementsPage() {
           ))}
         </ul>
       )}
+      <Pager pager={pager} noun="announcements" />
     </div>
   );
 }

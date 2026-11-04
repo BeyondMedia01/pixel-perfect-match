@@ -2,6 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
+import { Pager } from "@/components/pager";
+import { allRows, usePager } from "@/lib/paging";
 import { useMe, useProfiles } from "@/lib/auth";
 import { areaLabel, INQUIRY_STATUS_LABELS } from "@/lib/legal";
 import { PageHeader, EmptyState } from "@/components/app-shell";
@@ -40,10 +42,18 @@ function InquiriesPage() {
     queryKey: ["inquiries"],
     queryFn: async () => {
       const [inq, matters, directory] = await Promise.all([
-        supabase.from("inquiries").select("*").order("received_at", { ascending: false }),
-        supabase.from("matters").select("id, matter_number"),
+        allRows(
+          supabase
+            .from("inquiries")
+            .select("*")
+            .order("received_at", { ascending: false })
+            .order("id"),
+        ).then((data) => ({ data })),
+        allRows(supabase.from("matters").select("id, matter_number").order("id")).then((data) => ({
+          data,
+        })),
         // Front desk can't read matter records; for them the directory has the numbers (it's empty for everyone else).
-        supabase.rpc("matter_directory"),
+        allRows(supabase.rpc("matter_directory").order("id")).then((data) => ({ data })),
       ]);
       const numberByMatter = new Map(
         [...(matters.data ?? []), ...(directory.data ?? [])].map((m) => [m.id, m.matter_number]),
@@ -113,6 +123,7 @@ function InquiriesPage() {
 }
 
 function InquiryTable({ title, rows }: { title: string; rows: any[] }) {
+  const pager = usePager(rows, 25, rows.length);
   return (
     <section>
       <h2 className="eyebrow mb-3">
@@ -124,7 +135,7 @@ function InquiryTable({ title, rows }: { title: string; rows: any[] }) {
         </p>
       ) : (
         <ul className="divide-y rounded-lg border bg-card">
-          {rows.map((i) => (
+          {pager.visible.map((i) => (
             <li key={i.id}>
               <Link
                 to="/inquiries/$id"
@@ -161,6 +172,7 @@ function InquiryTable({ title, rows }: { title: string; rows: any[] }) {
           ))}
         </ul>
       )}
+      <Pager pager={pager} noun="inquiries" />
     </section>
   );
 }

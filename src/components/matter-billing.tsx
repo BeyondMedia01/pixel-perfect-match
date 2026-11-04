@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import { Plus, FilePlus2, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { allRows } from "@/lib/paging";
 import { useMe, useProfiles, isPartner } from "@/lib/auth";
 import {
   INVOICE_STATUS_LABELS,
@@ -64,11 +65,13 @@ export function useTimeEntries(matterId?: string) {
   return useQuery({
     queryKey: ["time-entries", matterId ?? "all"],
     queryFn: async () => {
-      let q = supabase.from("time_entries").select("*").order("entry_date", { ascending: false });
+      let q = supabase
+        .from("time_entries")
+        .select("*")
+        .order("entry_date", { ascending: false })
+        .order("id");
       if (matterId) q = q.eq("matter_id", matterId);
-      const { data, error } = await q;
-      if (error) throw error;
-      return (data ?? []) as TimeEntry[];
+      return (await allRows(q)) as TimeEntry[];
     },
   });
 }
@@ -82,11 +85,11 @@ export function useInvoices(matterId?: string) {
         .select(
           "*, invoice_items(quantity, unit_price), matters(matter_number, title), clients(name)",
         )
-        .order("issue_date", { ascending: false });
+        .order("issue_date", { ascending: false })
+        .order("id");
       if (matterId) q = q.eq("matter_id", matterId);
-      const { data, error } = await q;
-      if (error) throw error;
-      return (data ?? []) as (Invoice & {
+      const data = await allRows(q);
+      return data as (Invoice & {
         invoice_items: { quantity: number; unit_price: number }[];
         matters: { matter_number: string; title: string } | null;
         clients: { name: string } | null;

@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { addDays, differenceInCalendarDays, format, parseISO, subDays } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
+import { allRows } from "@/lib/paging";
 import { useMe, isPartner } from "@/lib/auth";
 import { fmtHours, fmtMoney } from "@/lib/billing";
 import { PRACTICE_AREAS, isDeadlineType, type EventType, type PracticeArea } from "@/lib/legal";
@@ -47,18 +48,28 @@ function useReportData() {
     queryKey: ["reports"],
     queryFn: async () => {
       const soon = addDays(new Date(), 14).toISOString();
+      // Totals must count every row, so these page past the 1,000-row limit.
       const [time, invoices, matters, events, inquiries, profiles] = await Promise.all([
-        supabase
-          .from("time_entries")
-          .select("id, user_id, matter_id, entry_date, hours, hourly_rate, billable, invoice_id"),
-        supabase
-          .from("invoices")
-          .select(
-            "id, invoice_number, status, issue_date, due_date, tax_rate, matter_id, invoice_items(quantity, unit_price), clients(name)",
-          ),
-        supabase
-          .from("matters")
-          .select("id, status, practice_area, date_opened, date_closed, responsible_lawyer_id"),
+        allRows(
+          supabase
+            .from("time_entries")
+            .select("id, user_id, matter_id, entry_date, hours, hourly_rate, billable, invoice_id")
+            .order("id"),
+        ).then((data) => ({ data })),
+        allRows(
+          supabase
+            .from("invoices")
+            .select(
+              "id, invoice_number, status, issue_date, due_date, tax_rate, matter_id, invoice_items(quantity, unit_price), clients(name)",
+            )
+            .order("id"),
+        ).then((data) => ({ data })),
+        allRows(
+          supabase
+            .from("matters")
+            .select("id, status, practice_area, date_opened, date_closed, responsible_lawyer_id")
+            .order("id"),
+        ).then((data) => ({ data })),
         supabase
           .from("events")
           .select(
@@ -67,8 +78,12 @@ function useReportData() {
           .gte("starts_at", new Date().toISOString())
           .lte("starts_at", soon)
           .order("starts_at"),
-        supabase.from("inquiries").select("id, status, received_at"),
-        supabase.from("profiles").select("id, full_name, email"),
+        allRows(supabase.from("inquiries").select("id, status, received_at").order("id")).then(
+          (data) => ({ data }),
+        ),
+        allRows(supabase.from("profiles").select("id, full_name, email").order("id")).then(
+          (data) => ({ data }),
+        ),
       ]);
       return {
         time: time.data ?? [],

@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 import { format } from "date-fns";
 import { ArrowUpDown, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Pager } from "@/components/pager";
+import { allRows, usePager } from "@/lib/paging";
 import { useMe, isFrontdesk } from "@/lib/auth";
 import {
   MATTER_STATUSES,
@@ -78,8 +80,7 @@ function Matters() {
     queryFn: async () => {
       if (fd) {
         // Front desk gets names and stages only, from the directory.
-        const { data, error } = await supabase.rpc("matter_directory");
-        if (error) throw error;
+        const data = await allRows(supabase.rpc("matter_directory").order("id"));
         return data.map((m): MatterRow => ({
           id: m.id,
           matter_number: m.matter_number,
@@ -92,12 +93,14 @@ function Matters() {
           lawyer: m.lawyer_name ? { full_name: m.lawyer_name } : null,
         }));
       }
-      const { data, error } = await supabase
-        .from("matters")
-        .select(
-          "*, clients(id, name), lawyer:profiles!matters_responsible_lawyer_id_fkey(full_name)",
-        );
-      if (error) throw error;
+      const data = await allRows(
+        supabase
+          .from("matters")
+          .select(
+            "*, clients(id, name), lawyer:profiles!matters_responsible_lawyer_id_fkey(full_name)",
+          )
+          .order("id"),
+      );
       return data as MatterRow[];
     },
   });
@@ -119,6 +122,7 @@ function Matters() {
       return sort.asc ? x.localeCompare(y) : y.localeCompare(x);
     });
   }, [data, q, status, area, sort]);
+  const pager = usePager(rows, 50, `${q}|${status}|${area}|${sort.k}|${sort.asc}`);
   const toggle = (k: SortKey) => setSort((s) => ({ k, asc: s.k === k ? !s.asc : true }));
 
   return (
@@ -199,7 +203,7 @@ function Matters() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {rows.map((m) => (
+              {pager.visible.map((m) => (
                 <TableRow key={m.id}>
                   <TableCell className="tabular py-3.5 text-xs">{m.matter_number}</TableCell>
                   <TableCell className="max-w-sm">
@@ -248,6 +252,7 @@ function Matters() {
           </Table>
         </div>
       )}
+      <Pager pager={pager} noun="matters" />
     </div>
   );
 }

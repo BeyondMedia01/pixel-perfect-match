@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Pager } from "@/components/pager";
+import { allRows, usePager } from "@/lib/paging";
 import { useMe } from "@/lib/auth";
 import { PageHeader } from "@/components/app-shell";
 import { NewClientDialog } from "@/components/client-form";
@@ -34,8 +36,9 @@ function Clients() {
   const { data: me } = useMe();
   const { data } = useQuery({
     queryKey: ["clients"],
-    queryFn: async () => (await supabase.from("clients").select("*").order("name")).data ?? [],
+    queryFn: async () => allRows(supabase.from("clients").select("*").order("name").order("id")),
   });
+  const pager = usePager(data ?? [], 50);
   return (
     <div className="mx-auto max-w-6xl">
       <PageHeader
@@ -65,7 +68,7 @@ function Clients() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data?.map((c) => (
+            {pager.visible.map((c) => (
               <TableRow key={c.id}>
                 <TableCell className="py-3.5">
                   <Link
@@ -89,6 +92,7 @@ function Clients() {
           </TableBody>
         </Table>
       </div>
+      <Pager pager={pager} noun="clients" />
     </div>
   );
 }

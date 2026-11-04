@@ -1,4 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { usePager } from "@/lib/paging";
+import { Pager } from "@/components/pager";
 import { useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { useProfiles } from "@/lib/auth";
@@ -39,6 +41,8 @@ function BillingPage() {
 
   const inv = invoices ?? [];
   const unbilled = (entries ?? []).filter((e) => e.billable && !e.invoice_id);
+  const invoicePager = usePager(inv, 25);
+  const entryPager = usePager(entries ?? [], 25);
   const unbilledValue = unbilled.reduce((s, e) => s + e.hours * e.hourly_rate, 0);
   const outstanding = inv
     .filter((i) => i.status === "sent")
@@ -98,8 +102,8 @@ function BillingPage() {
           body="Open a matter's Time & Billing tab to invoice unbilled time."
         />
       ) : (
-        <ul className="mb-10 divide-y rounded-lg border bg-card">
-          {inv.map((i) => (
+        <ul className="divide-y rounded-lg border bg-card">
+          {invoicePager.visible.map((i) => (
             <li key={i.id} className="flex items-center gap-4 px-4 py-3 text-sm">
               <Link
                 to="/invoices/$id"
@@ -123,13 +127,16 @@ function BillingPage() {
           ))}
         </ul>
       )}
+      <div className="mb-10">
+        <Pager pager={invoicePager} noun="invoices" />
+      </div>
 
-      <h2 className="mb-3 text-lg">Recent time entries</h2>
+      <h2 className="mb-3 text-lg">Time entries</h2>
       {(entries ?? []).length === 0 ? (
         <p className="text-sm text-muted-foreground">No time has been logged yet.</p>
       ) : (
         <ul className="divide-y rounded-lg border bg-card">
-          {(entries ?? []).slice(0, 20).map((e) => (
+          {entryPager.visible.map((e) => (
             <li key={e.id} className="flex items-center gap-4 px-4 py-3 text-sm">
               <span className="flex-1">
                 {e.description}
@@ -147,6 +154,7 @@ function BillingPage() {
           ))}
         </ul>
       )}
+      <Pager pager={entryPager} noun="time entries" />
     </div>
   );
 }

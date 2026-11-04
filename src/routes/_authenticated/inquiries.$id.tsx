@@ -5,6 +5,7 @@ import { format, formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { allRows } from "@/lib/paging";
 import { useMe, useProfiles, isPartner, isFrontdesk } from "@/lib/auth";
 import { areaLabel, INQUIRY_STATUS_LABELS, type InquiryStatus } from "@/lib/legal";
 import {
@@ -409,7 +410,7 @@ function NextSteps({
   const { data: directory } = useQuery({
     queryKey: ["client-directory"],
     enabled: dialog === "accept",
-    queryFn: async () => (await supabase.rpc("client_directory")).data ?? [],
+    queryFn: async () => allRows(supabase.rpc("client_directory").order("name").order("id")),
   });
   const [clientChoice, setClientChoice] = useState("new");
   const nameKey = i.name.trim().toLowerCase();
